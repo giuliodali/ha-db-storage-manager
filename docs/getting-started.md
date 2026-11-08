@@ -9,7 +9,7 @@
 ## Install
 
 1. Back up Home Assistant (Settings → System → Backups).
-2. **HACS:** ⋮ → Custom repositories → `https://github.com/giuliodali/ha-db-storage-manager` → category **Integration** → Download. Or copy `custom_components/db_storage_manager` into `/config/custom_components/`.
+2. In HACS: ⋮ → **Custom repositories** → `https://github.com/giuliodali/ha-db-storage-manager` → category **Integration** → **Download**. (HACS is the supported way to install and update.)
 3. Restart Home Assistant.
 4. Settings → Devices & services → **Add integration** → DB Storage Manager. There is nothing to fill in.
 5. Open **DB Storage** in the sidebar.

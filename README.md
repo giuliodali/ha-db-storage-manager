@@ -59,16 +59,12 @@ costing you space, **whether anything uses it**, or let you **take it back** if 
   <img src="docs/images/entities.png" width="880" alt="Entities filtered to Remove history">
 </p>
 
-## Install
-
-**With HACS (recommended)**
+## Install (via HACS)
 
 1. HACS → ⋮ → **Custom repositories** → add `https://github.com/giuliodali/ha-db-storage-manager`, category **Integration**.
 2. Download **DB Storage Manager**, then restart Home Assistant.
 3. **Settings → Devices & services → Add integration → DB Storage Manager**.
 4. Open **DB Storage** in the sidebar (administrators only).
-
-**Manually:** copy `custom_components/db_storage_manager` into `/config/custom_components/`, restart, then add the integration.
 
 Take a backup first (Settings → System → Backups). The integration only changes what you ask it to, and backs that up, but a backup is cheap.
 
