@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "DB Storage Manager",
+        "description": "Adds a DB Storage panel to the sidebar. Nothing is changed until you apply an action in the panel."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DB Storage Manager",
+        "description": "How often to record the database size for the size-over-time chart (the size sensors update at the same time), and when the nightly retention job runs. The job only applies rules you created on the Entities tab; you can also turn it off and run it from your own automation with the db_storage_manager.run_retention action.",
+        "data": {
+          "sample_interval": "Snapshot frequency",
+          "retention_enabled": "Run retention rules nightly",
+          "retention_time": "Retention run time"
+        }
+      }
+    }
+  },
+  "services": {
+    "run_retention": {
+      "name": "Run retention rules",
+      "description": "Delete detailed states older than each entity's retention rule (set in the DB Storage panel). Long-term statistics are not touched.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "all (default) runs the whole job. count and record are the first and last steps of the maintained automation."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+run_retention:
+  name: Run retention rules
+  description: Delete detailed states older than each entity's retention rule (set in the DB Storage panel). Long-term statistics are not touched. Called with no mode it does everything in one go; the maintained automation uses "count" first and "record" last around its own purge steps.
+  fields:
+    mode:
+      name: Mode
+      description: all (default) runs the whole job. count and record are the first and last steps of the maintained automation.
+      required: false
+      default: all
+      selector:
+        select:
+          options:
+            - all
+            - count
+            - record

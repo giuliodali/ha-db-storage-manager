@@ -1,0 +1,23 @@
+name: Release
+
+# Publishing a GitHub release attaches a zip of the integration, for people who install by hand.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches the manifest version
+        run: |
+          v=$(python3 -c "import json;print(json.load(open('custom_components/db_storage_manager/manifest.json'))['version'])")
+          [ "v$v" = "${{ github.event.release.tag_name }}" ] || { echo "manifest version $v does not match tag ${{ github.event.release.tag_name }}"; exit 1; }
+      - run: cd custom_components/db_storage_manager && zip -r ../../db_storage_manager.zip . -x "__pycache__/*"
+      - run: gh release upload "${{ github.event.release.tag_name }}" db_storage_manager.zip --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
