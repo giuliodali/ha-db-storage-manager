@@ -2,7 +2,8 @@
   "domain": "db_storage_manager",
   "name": "DB Storage Manager",
   "after_dependencies": [
-    "automation"
+    "automation",
+    "lovelace"
   ],
   "codeowners": [
     "@giuliodali"
