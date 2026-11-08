@@ -34,4 +34,4 @@ The page title shows active filters as chips. Click one to remove it, or **Clear
 
 ## Size over time
 
-The chart stacks three series, bottom to top: **undo data** (backups kept beside the database), **long-term statistics**, and **everything else**. The top edge is the database size. Drag across a period to see which entities wrote data then. Samples are taken on the schedule in the integration options (daily by default) and also after every Re-Scan, action and undo.
+The chart stacks three series, bottom to top: **free space / undo data** (empty space inside the database file, plus the backups kept beside it), **long-term statistics**, and **everything else**. The top edge is the database size plus the undo backups. Drag across a period to see which entities wrote data then. Samples are taken on the schedule in the integration options (daily by default) and also after every Re-Scan, action and undo.

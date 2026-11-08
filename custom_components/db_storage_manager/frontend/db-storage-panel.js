@@ -24536,7 +24536,7 @@ class gc extends Ae {
         yAxis: { type: "value", min: 0, axisLabel: { color: e.muted, formatter: (s) => Q(s) }, splitLine: { lineStyle: { color: e.line } } },
         legend: { show: !1 },
         series: [
-          { name: "Undo data", type: "line", stack: "size", showSymbol: !1, itemStyle: { color: jn }, lineStyle: { width: 1, color: jn }, areaStyle: { color: jn, opacity: 0.55 }, data: i.map((s) => [s.ts * 1e3, s.undo_bytes || 0]) },
+          { name: "Free Space/Undo Data", type: "line", stack: "size", showSymbol: !1, itemStyle: { color: jn }, lineStyle: { width: 1, color: jn }, areaStyle: { color: jn, opacity: 0.55 }, data: i.map((s) => [s.ts * 1e3, (s.undo_bytes || 0) + (s.free_bytes || 0)]) },
           { name: "Long-term statistics", type: "line", stack: "size", showSymbol: !1, itemStyle: { color: a }, lineStyle: { width: 1, color: a }, areaStyle: { color: a, opacity: 0.7 }, data: i.map((s) => [s.ts * 1e3, s.stats_bytes || 0]) },
           {
             name: "Everything else",
@@ -24546,7 +24546,7 @@ class gc extends Ae {
             itemStyle: { color: n },
             lineStyle: { width: 1, color: n },
             areaStyle: { color: n, opacity: 0.45 },
-            data: i.map((s) => [s.ts * 1e3, s.file_bytes - (s.stats_bytes || 0)]),
+            data: i.map((s) => [s.ts * 1e3, Math.max(0, s.file_bytes - (s.stats_bytes || 0) - (s.free_bytes || 0))]),
             markArea: this.window ? { silent: !0, itemStyle: { color: e.primary, opacity: 0.18 }, data: [[{ xAxis: this.window[0] * 1e3 }, { xAxis: this.window[1] * 1e3 }]] } : void 0
           }
         ]
@@ -24623,10 +24623,10 @@ class gc extends Ae {
               ${g.map((p) => L`<option value=${p} ?selected=${this.days === p}>Last ${p} days</option>`)}</select>
             <span class="tip" tabindex="0"><span class="info">?</span><span class="pop"><div>${v}</div>
               <div>Drag across the chart to drill into a period.</div>
-              <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the database, plus unused space.</div>
+              <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the data in the database.</div>
               <div><i style="background:var(--ha-color-border-primary-loud,${ju})"></i><b>Long-term statistics</b><br>Hourly and 5-minute statistics behind history graphs and Energy.</div>
-              <div><i style="background:${jn}"></i><b>Undo data</b><br>Compressed backups saved before clearing, so actions can be undone. Kept beside the database, not inside it.</div></span></span></h3>
-          <div class="key"><span><i style="background:var(--ha-color-primary-20,#488fc2)"></i>Everything else</span><span><i style="background:var(--ha-color-border-primary-loud,${ju})"></i>Long-term statistics</span><span><i style="background:${jn}"></i>Undo data</span></div>
+              <div><i style="background:${jn}"></i><b>Free Space/Undo Data</b><br>Empty space inside the database file left by deleted data (returned to the disk by a repack), plus the compressed backups that let actions be undone, which are kept beside the database.</div></span></span></h3>
+          <div class="key"><span><i style="background:var(--ha-color-primary-20,#488fc2)"></i>Everything else</span><span><i style="background:var(--ha-color-border-primary-loud,${ju})"></i>Long-term statistics</span><span><i style="background:${jn}"></i>Free Space/Undo Data</span></div>
           <db-chart style="--h:250px" brush .rev=${[this.history, this.days, this.window]} .build=${this._historyOpt}
             @range=${(p) => this.dispatchEvent(new CustomEvent("goto-window", { detail: p.detail }))}></db-chart></div>
       </div>`;

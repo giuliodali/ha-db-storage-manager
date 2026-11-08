@@ -40,7 +40,7 @@ export class DbOverview extends LitElement {
     const states = themeColor(this, "--ha-color-primary-20", t.primary);
     const stats = themeColor(this, "--ha-color-border-primary-loud", COLOR_STATS);
     const day = (v) => new Date(v).toLocaleDateString([], { day: "numeric", month: "short" });
-    // Stacked bottom to top: undo backups, long-term statistics, everything else (so the top edge is the file size).
+    // Stacked bottom to top: free space + undo backups, long-term statistics, everything else (the top edge is the file size plus the undo backups kept beside it).
     return {
       grid: { left: 8, right: 16, top: 12, bottom: 8, containLabel: true },
       tooltip: { trigger: "axis", valueFormatter: (v) => fmtBytes(v) },
@@ -48,9 +48,9 @@ export class DbOverview extends LitElement {
       yAxis: { type: "value", min: 0, axisLabel: { color: t.muted, formatter: (v) => fmtBytes(v) }, splitLine: { lineStyle: { color: t.line } } },
       legend: { show: false },
       series: [
-        { name: "Undo data", type: "line", stack: "size", showSymbol: false, itemStyle: { color: COLOR_UNDO }, lineStyle: { width: 1, color: COLOR_UNDO }, areaStyle: { color: COLOR_UNDO, opacity: 0.55 }, data: h.map((r) => [r.ts * 1000, r.undo_bytes || 0]) },
+        { name: "Free Space/Undo Data", type: "line", stack: "size", showSymbol: false, itemStyle: { color: COLOR_UNDO }, lineStyle: { width: 1, color: COLOR_UNDO }, areaStyle: { color: COLOR_UNDO, opacity: 0.55 }, data: h.map((r) => [r.ts * 1000, (r.undo_bytes || 0) + (r.free_bytes || 0)]) },
         { name: "Long-term statistics", type: "line", stack: "size", showSymbol: false, itemStyle: { color: stats }, lineStyle: { width: 1, color: stats }, areaStyle: { color: stats, opacity: 0.7 }, data: h.map((r) => [r.ts * 1000, r.stats_bytes || 0]) },
-        { name: "Everything else", type: "line", stack: "size", showSymbol: h.length < 40, itemStyle: { color: states }, lineStyle: { width: 1, color: states }, areaStyle: { color: states, opacity: 0.45 }, data: h.map((r) => [r.ts * 1000, r.file_bytes - (r.stats_bytes || 0)]),
+        { name: "Everything else", type: "line", stack: "size", showSymbol: h.length < 40, itemStyle: { color: states }, lineStyle: { width: 1, color: states }, areaStyle: { color: states, opacity: 0.45 }, data: h.map((r) => [r.ts * 1000, Math.max(0, r.file_bytes - (r.stats_bytes || 0) - (r.free_bytes || 0))]),
           markArea: this.window ? { silent: true, itemStyle: { color: t.primary, opacity: 0.18 }, data: [[{ xAxis: this.window[0] * 1000 }, { xAxis: this.window[1] * 1000 }]] } : undefined },
       ],
     };
@@ -117,10 +117,10 @@ export class DbOverview extends LitElement {
               ${periods.map((n) => html`<option value=${n} ?selected=${this.days === n}>Last ${n} days</option>`)}</select>
             <span class="tip" tabindex="0"><span class="info">?</span><span class="pop"><div>${subtitle}</div>
               <div>Drag across the chart to drill into a period.</div>
-              <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the database, plus unused space.</div>
+              <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the data in the database.</div>
               <div><i style="background:var(--ha-color-border-primary-loud,${COLOR_STATS})"></i><b>Long-term statistics</b><br>Hourly and 5-minute statistics behind history graphs and Energy.</div>
-              <div><i style="background:${COLOR_UNDO}"></i><b>Undo data</b><br>Compressed backups saved before clearing, so actions can be undone. Kept beside the database, not inside it.</div></span></span></h3>
-          <div class="key"><span><i style="background:var(--ha-color-primary-20,#488fc2)"></i>Everything else</span><span><i style="background:var(--ha-color-border-primary-loud,${COLOR_STATS})"></i>Long-term statistics</span><span><i style="background:${COLOR_UNDO}"></i>Undo data</span></div>
+              <div><i style="background:${COLOR_UNDO}"></i><b>Free Space/Undo Data</b><br>Empty space inside the database file left by deleted data (returned to the disk by a repack), plus the compressed backups that let actions be undone, which are kept beside the database.</div></span></span></h3>
+          <div class="key"><span><i style="background:var(--ha-color-primary-20,#488fc2)"></i>Everything else</span><span><i style="background:var(--ha-color-border-primary-loud,${COLOR_STATS})"></i>Long-term statistics</span><span><i style="background:${COLOR_UNDO}"></i>Free Space/Undo Data</span></div>
           <db-chart style="--h:250px" brush .rev=${[this.history, this.days, this.window]} .build=${this._historyOpt}
             @range=${(e) => this.dispatchEvent(new CustomEvent("goto-window", { detail: e.detail }))}></db-chart></div>
       </div>`;

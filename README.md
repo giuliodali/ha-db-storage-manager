@@ -42,7 +42,7 @@ costing you space, **whether anything uses it**, or let you **take it back** if 
 
 | | |
 |---|---|
-| **Overview** | Live database size, free space, unreferenced data, cleanup candidates, treemap by integration and type, largest entities, size over time with undo data and long-term statistics stacked. |
+| **Overview** | Live database size, free space, unreferenced data, cleanup candidates, treemap by integration and type, largest entities, size over time with free space / undo data and long-term statistics stacked. |
 | **Entities** | Search and faceted filters (Suggestion, Referenced In, Integration, Device, Type, Defined in, Retention, Status, Last update). Size bars split states from statistics. |
 | **Referenced In** | Counts every place an entity is used: automations, scripts, scenes, dashboards (per view), helpers, Energy dashboard, YAML files (including `sql` and `command_line` definitions). |
 | **Actions** | Disable, clear history, disable and clear, change retention. Each shows a preview first: what happens to each entity, how much it frees, and warnings. |
