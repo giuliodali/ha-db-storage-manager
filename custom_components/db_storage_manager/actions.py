@@ -76,6 +76,8 @@ def preview(hass: HomeAssistant, kind: str, entity_ids: list[str], states: bool)
                 notes.append("Already disabled.")
             else:
                 does.append("disable")
+            if reg is not None and eid in retention.rules(hass):
+                does.append("remove its retention rule")
         est = est_stats = est_states = 0
         if kind in ("delete_history", "disable_and_clear"):
             if (it.get("stats_rows") or 0) + (it.get("short_rows") or 0) > 0 or not it:
@@ -296,6 +298,15 @@ async def _restore(hass: HomeAssistant, snapshot_name: str) -> dict[str, Any]:
                                                        "short_term": res.get("short_term", 0), "states": 0}}}
 
 
+async def _drop_rule(hass: HomeAssistant, eid: str, rec: dict[str, Any]) -> None:
+    """A disabled entity records nothing, so its retention rule has no job: remove it (undo puts it back)."""
+    old = retention.rules(hass).get(eid)
+    if old is not None:
+        rec["steps"]["retention"] = {"old": old, "new": None}
+        await retention.async_set_rule(hass, eid, None)
+        rec["notes"].append(f"Removed its {old}-day retention rule.")
+
+
 async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], states: bool,
                      progress: dict[str, Any]) -> int:
     journal = hass.data[DOMAIN]["journal"]
@@ -336,10 +347,12 @@ async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], stat
                     finish_entity(rec, "Not in the entity registry; nothing to disable.")
                 elif reg.disabled_by is not None:
                     rec["steps"]["disabled"] = {"changed": False}
+                    await _drop_rule(hass, eid, rec)
                     finish_entity(rec, "Was already disabled.")
                 else:
                     ent_reg.async_update_entity(eid, disabled_by=er.RegistryEntryDisabler.USER)
                     rec["steps"]["disabled"] = {"changed": True}
+                    await _drop_rule(hass, eid, rec)
                     finish_entity(rec)
             except Exception as err:  # noqa: BLE001
                 finish_entity(rec, f"Disable failed: {err}", ok=False)

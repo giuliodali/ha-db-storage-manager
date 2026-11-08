@@ -12,6 +12,10 @@ Home Assistant keeps every entity's state history for one global number of days 
 
 Select entities → **Change retention** → pick **1d | 3d | 5d | 7d | default (Nd)**. The dialog remembers your choice. **Delete older states now** removes already-older rows immediately; those are backed up first and the whole action can be undone (undo also restores the previous rule). **default** removes the rule and deletes nothing. Rules show as a badge (`3d`) on the row and in the **Retention** filter.
 
+## Housekeeping
+
+A disabled entity records nothing, so disabling it from this panel removes its retention rule (Undo puts it back). The nightly run also drops rules for entities that no longer exist anywhere.
+
 ## How it runs: a normal automation
 
 The nightly job is an ordinary Home Assistant automation, written and kept up to date by the integration:

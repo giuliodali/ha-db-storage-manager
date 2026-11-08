@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.recorder import get_instance
+from homeassistant.helpers import entity_registry as er
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
@@ -92,6 +93,20 @@ async def async_set_rule(hass: HomeAssistant, entity_id: str, days: int | None) 
     _notify()
 
 
+async def async_prune(hass: HomeAssistant) -> list[str]:
+    """Drop rules for entities that no longer exist anywhere (not in the registry, no state), and return them."""
+    reg = er.async_get(hass)
+    st = _state(hass)
+    gone = [e for e in st["rules"] if reg.async_get(e) is None and hass.states.get(e) is None]
+    if gone:
+        for e in gone:
+            st["rules"].pop(e, None)
+        await _save(hass)
+        _notify()
+        _LOGGER.info("Removed %s retention rule(s) for entities that no longer exist: %s", len(gone), ", ".join(gone))
+    return gone
+
+
 async def _save(hass: HomeAssistant) -> None:
     st = _state(hass)
     await st["store"].async_save({"rules": st["rules"], "last_run": st["last_run"]})
@@ -118,6 +133,7 @@ def plan(hass: HomeAssistant) -> list[tuple[int, list[str]]]:
 
 async def async_count(hass: HomeAssistant) -> dict[str, int]:
     """How many states each rule is about to delete. Used as the first step of the automation, so its last step can report it."""
+    await async_prune(hass)
     now = time.time()
     due: dict[str, int] = {}
     for days, ids in plan(hass):
@@ -138,6 +154,7 @@ async def async_record(hass: HomeAssistant) -> dict[str, Any]:
 
 async def async_run(hass: HomeAssistant, *_: Any) -> dict[str, Any]:
     """Apply every rule now, all in one call (the built-in schedule and the plain service use this)."""
+    await async_prune(hass)
     now = time.time()
     purged: dict[str, int] = {}
     for days, ids in plan(hass):

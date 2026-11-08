@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Disabling an entity now removes its retention rule (Undo puts it back), and the nightly run drops rules for entities that no longer exist.
+
 ## 1.0.0
 
 First public release. Everything below was developed and refined with real-world feedback before this release.

@@ -37,7 +37,7 @@ async def test_panel_and_ping(recorder_mock, enable_custom_integrations, hass, h
     assert "db-storage" in hass.data["frontend_panels"]
     client = await hass_ws_client(hass)
     res = await _ws(client, "ping")
-    assert res["success"] and res["result"]["integration_version"] == "1.0.0"
+    assert res["success"] and res["result"]["integration_version"] == "1.0.1"
 
 
 async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -720,3 +720,38 @@ async def test_retention_runs_as_a_maintained_automation(recorder_mock, enable_c
     finally:
         os.remove(cfg)
         os.remove(hass.config.path("configuration.yaml"))
+
+
+async def test_disabling_drops_the_retention_rule_and_undo_restores_it(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    await _setup(hass)
+    registry = er.async_get(hass)
+    registry.async_get_or_create("sensor", "test", "uid-r", suggested_object_id="ruled")
+    hass.states.async_set("sensor.ruled", "1")
+    await retention.async_set_rule(hass, "sensor.ruled", 2)
+    client = await hass_ws_client(hass)
+    pv = (await _ws(client, "preview_action", kind="disable", entity_ids=["sensor.ruled"], states=False))["result"]
+    assert "remove its retention rule" in pv["entities"][0]["does"]
+    await _ws(client, "apply_action", kind="disable", entity_ids=["sensor.ruled"], states=False, confirm=True)
+    await _wait_job(client)
+    assert retention.rules(hass) == {} and registry.async_get("sensor.ruled").disabled_by == er.RegistryEntryDisabler.USER
+    act = (await _ws(client, "actions"))["result"][0]
+    assert act["entities"][0]["steps"]["retention"] == {"old": 2, "new": None}
+    await _ws(client, "undo_action", action_id=act["id"], confirm=True)
+    await _wait_job(client)
+    assert retention.rules(hass) == {"sensor.ruled": 2} and registry.async_get("sensor.ruled").disabled_by is None
+
+
+async def test_rules_for_entities_that_no_longer_exist_are_pruned(recorder_mock, enable_custom_integrations, hass) -> None:
+    await _setup(hass)
+    registry = er.async_get(hass)
+    registry.async_get_or_create("sensor", "test", "uid-k", suggested_object_id="kept")
+    hass.states.async_set("sensor.live", "1")
+    for eid in ("sensor.kept", "sensor.live", "sensor.gone"):
+        await retention.async_set_rule(hass, eid, 1)
+    assert await retention.async_prune(hass) == ["sensor.gone"]
+    assert set(retention.rules(hass)) == {"sensor.kept", "sensor.live"}
+    await retention.async_count(hass)           # the nightly job prunes too
+    registry.async_remove("sensor.kept")
+    hass.states.async_remove("sensor.live")
+    await retention.async_count(hass)
+    assert retention.rules(hass) == {}
