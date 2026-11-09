@@ -9,6 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from .const import SCAN_VERSION
 from .usage import Usage
 
 FORMAT = 1
@@ -17,7 +18,7 @@ FORMAT = 1
 def save(path: Path, cache: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = {
-        "format": FORMAT,
+        "format": FORMAT, "scan_version": SCAN_VERSION,
         "ts": cache["ts"], "scan": cache["scan"], "timings_ms": cache["timings_ms"],
         "items": cache["items"], "usage": asdict(cache["usage"]),
     }
@@ -31,7 +32,7 @@ def load(path: Path) -> dict[str, Any] | None:
     try:
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             doc = json.load(fh)
-        if doc.get("format") != FORMAT:
+        if doc.get("format") != FORMAT or doc.get("scan_version") != SCAN_VERSION:
             return None
         return {
             "ts": doc["ts"], "scan": doc["scan"], "timings_ms": doc["timings_ms"],

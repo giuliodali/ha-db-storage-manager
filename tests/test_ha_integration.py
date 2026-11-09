@@ -792,3 +792,20 @@ async def test_partial_rescan_refreshes_only_changed_and_new_entities(recorder_m
     full = (await _ws(client, "entities", refresh=True, wait=True))["result"]
     assert next(i for i in full["items"] if i["entity_id"] == "sensor.keep")["states_rows"] > keep_rows
     assert full["partial"] is None
+
+
+async def test_saved_scan_from_an_older_scan_version_is_redone(recorder_mock, enable_custom_integrations, hass, hass_ws_client, monkeypatch) -> None:
+    from custom_components.db_storage_manager import inventory_store, websocket as ws_mod
+
+    await _setup(hass)
+    hass.states.async_set("sensor.v", "1")
+    await async_wait_recording_done(hass)
+    client = await hass_ws_client(hass)
+    await _ws(client, "entities", refresh=True, wait=True)           # saves inventory.json.gz
+    hass.data[DOMAIN].pop("inventory")
+    await ws_mod.async_load_inventory(hass)
+    assert hass.data[DOMAIN]["inventory"]["from_disk"] and not hass.data[DOMAIN].get("rescan_needed")
+    hass.data[DOMAIN].pop("inventory")
+    monkeypatch.setattr(inventory_store, "SCAN_VERSION", inventory_store.SCAN_VERSION + 1)   # a release that changes the scan
+    await ws_mod.async_load_inventory(hass)
+    assert "inventory" not in hass.data[DOMAIN] and hass.data[DOMAIN]["rescan_needed"] is True

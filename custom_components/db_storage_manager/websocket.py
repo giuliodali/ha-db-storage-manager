@@ -435,9 +435,12 @@ def _inventory_path(hass: HomeAssistant) -> Path:
 
 async def async_load_inventory(hass: HomeAssistant) -> None:
     """Restore the last scan from disk so the panel opens instantly after a restart."""
-    cache = await hass.async_add_executor_job(inventory_store.load, _inventory_path(hass))
+    path = _inventory_path(hass)
+    cache = await hass.async_add_executor_job(inventory_store.load, path)
     if cache:
         hass.data[DOMAIN].setdefault("inventory", cache)
+    elif await hass.async_add_executor_job(path.exists):
+        hass.data[DOMAIN]["rescan_needed"] = True  # saved by an older version: redo it once Home Assistant has started
 
 
 async def _extra_sample(hass: HomeAssistant) -> None:

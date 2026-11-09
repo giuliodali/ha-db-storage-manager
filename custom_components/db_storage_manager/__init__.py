@@ -20,7 +20,7 @@ from .const import (CONF_RETENTION_ENABLED, CONF_RETENTION_TIME, CONF_SAMPLE_INT
 from .journal import Journal
 from .sampler import SizeSampler
 from . import automation_sync, retention
-from .websocket import async_load_inventory, async_register_commands
+from .websocket import async_load_inventory, async_register_commands, start_scan
 
 PLATFORMS = [Platform.SENSOR]
 
@@ -101,6 +101,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def _first_sample(_hass: HomeAssistant) -> None:
         await _apply_retention(entry)
         await sampler.async_tick()
+        if state.pop("rescan_needed", False):
+            start_scan(hass)
 
     async_at_started(hass, _first_sample)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

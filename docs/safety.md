@@ -27,3 +27,7 @@ Suggestions come from a text scan of your configuration. Look at the Referenced 
 ## Ideas, not features
 
 Removing registry entries for entities whose integration no longer provides them is deliberately not offered.
+
+## Updating
+
+The last scan is saved so the panel opens instantly. If a new version changes what a scan records (for example, how references are found), it discards the saved scan and runs a new one in the background once Home Assistant has started, so you don't need to press Re-Scan after updating. (Maintainers: bump `SCAN_VERSION` in `const.py` when a release changes the scan.)
