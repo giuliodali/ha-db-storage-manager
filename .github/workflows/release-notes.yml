@@ -15,13 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event.repository.default_branch }}   # the changelog on main, even if the tag was cut a commit earlier
       - name: Write the notes from CHANGELOG.md
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          version="${TAG#v}"
+          version="${TAG#[vV]}"
           # A pre-release tag such as v1.0.1-beta.1 uses the notes of 1.0.1.
           for v in "$version" "${version%%-*}"; do
             awk -v v="$v" '

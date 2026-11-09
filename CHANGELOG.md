@@ -1,6 +1,8 @@
 # Changelog
 
-## 1.0.1
+## 1.0.2
+
+Everything since 1.0.0:
 
 - Size bars are readable on light themes.
 - Selecting entities: the bar shows how many ticked entities are no longer in the list, with a button to drop them.
