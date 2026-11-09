@@ -448,11 +448,8 @@ async def _extra_sample(hass: HomeAssistant) -> None:
         pass
 
 
-def start_scan(hass: HomeAssistant, full: bool = True) -> asyncio.Task:
-    """Start a scan unless one is running (single flight) and return its task.
-
-    With ``full`` False only the entities changed by an action (and any new ones) are re-read.
-    """
+def start_scan(hass: HomeAssistant) -> asyncio.Task:
+    """Start a full scan unless one is running (single flight) and return its task."""
     state = hass.data[DOMAIN]
     task = state.get("scan_task")
     if task and not task.done():
@@ -462,7 +459,7 @@ def start_scan(hass: HomeAssistant, full: bool = True) -> asyncio.Task:
 
     async def runner() -> dict[str, Any]:
         try:
-            result = await _do_scan(hass, progress, full)
+            result = await _do_scan(hass, progress)
             await _extra_sample(hass)  # a Re-Scan also adds a point to the size chart
             return result
         except Exception as err:  # noqa: BLE001
@@ -475,12 +472,12 @@ def start_scan(hass: HomeAssistant, full: bool = True) -> asyncio.Task:
     return task
 
 
-async def _inventory(hass: HomeAssistant, refresh: bool, full: bool = True) -> dict[str, Any]:
+async def _inventory(hass: HomeAssistant, refresh: bool) -> dict[str, Any]:
     """Blocking variant (used by tests and ``wait``): returns the cache or runs a scan."""
     cache = hass.data[DOMAIN].get("inventory")
     if cache and not refresh:
         return cache
-    return await start_scan(hass, full=full or cache is None)
+    return await start_scan(hass)
 
 
 @websocket_api.websocket_command(
@@ -490,7 +487,6 @@ async def _inventory(hass: HomeAssistant, refresh: bool, full: bool = True) -> d
         vol.Optional("search", default=""): str,
         vol.Optional("limit", default=500): vol.All(int, vol.Range(min=1, max=5000)),
         vol.Optional("refresh", default=False): bool,
-        vol.Optional("full", default=False): bool,  # with refresh: re-read everything instead of only what changed
         vol.Optional("wait", default=False): bool,
         vol.Optional("expand", default=[]): [str],
         vol.Optional("exclude_domains", default=[]): [str],
@@ -503,11 +499,11 @@ async def _inventory(hass: HomeAssistant, refresh: bool, full: bool = True) -> d
 async def ws_entities(hass, connection, msg) -> None:
     state = hass.data[DOMAIN]
     if msg["wait"]:
-        inv = await _inventory(hass, msg["refresh"], msg["full"])
+        inv = await _inventory(hass, msg["refresh"])
     else:
         inv = state.get("inventory")
         if msg["refresh"] or inv is None:
-            start_scan(hass, full=msg["full"] or inv is None)  # returns at once; the panel polls scan_status
+            start_scan(hass)  # returns at once; the panel polls scan_status
         if inv is None:
             connection.send_result(msg["id"], {"no_data": True, "scanning": True})
             return
@@ -612,7 +608,18 @@ def _patch_inventory(hass: HomeAssistant, ids: list[str], kind: str | None, stat
             it["size_stale"] = True
 
 
-def _start_job(hass: HomeAssistant, label: str, work: Callable[[dict[str, Any]], Any], resync: bool = False,
+async def _refresh_affected(hass: HomeAssistant) -> None:
+    """Re-read only the entities an action changed (plus anything new), inside the action's own progress card."""
+    task = hass.data[DOMAIN].get("scan_task")
+    if task and not task.done():
+        return  # a full scan is already running and will pick them up
+    try:
+        await _do_scan(hass, _new_progress(), full=False)
+    except Exception:  # noqa: BLE001 - the entities keep their ⟳ until the next Re-Scan
+        pass
+
+
+def _start_job(hass: HomeAssistant, label: str, work: Callable[[dict[str, Any]], Any],
                affected: tuple[list[str], str | None, bool, bool] | None = None) -> bool:
     """Run one action or undo at a time in the background; poll it with action_status."""
     state = hass.data[DOMAIN]
@@ -627,16 +634,17 @@ def _start_job(hass: HomeAssistant, label: str, work: Callable[[dict[str, Any]],
         try:
             job["result"] = await work(job)
             job["done"] = job["total"]
+            if affected:
+                _patch_inventory(hass, *affected)  # visible at once, then re-read just these entities below
+                if affected[3]:
+                    job["phase"] = "Refreshing sizes"
+                    await _refresh_affected(hass)
         except Exception as err:  # noqa: BLE001
             job["error"] = f"{type(err).__name__}: {err}"
         finally:
             job["running"] = False
             job["phase"] = "Finished"
             await _extra_sample(hass)  # shows the backup space the action just used
-            if affected:
-                _patch_inventory(hass, *affected)
-            if not job["error"] and resync:
-                start_scan(hass, full=False)  # only the entities this changed, plus anything new
 
     hass.async_create_background_task(runner(), "db_storage_action")
     return True
@@ -667,7 +675,7 @@ async def ws_preview_action(hass, connection, msg) -> None:
 @websocket_api.websocket_command(
     {vol.Required("type"): "db_storage/apply_action", vol.Required("kind"): _KIND,
      vol.Required("entity_ids"): _IDS, vol.Required("confirm"): bool, vol.Optional("states", default=True): bool,
-     vol.Optional("resync", default=False): bool,
+     vol.Optional("resync", default=False): bool,  # accepted for older panels; sizes are always refreshed now
      vol.Optional("keep_days"): vol.All(int, vol.Range(min=1, max=retention.MAX_DAYS)), vol.Optional("apply_now", default=True): bool}
 )
 @websocket_api.require_admin
@@ -685,7 +693,7 @@ async def ws_apply_action(hass, connection, msg) -> None:
     else:
         work = lambda job: actions.run_action(hass, kind, ids, states, job)  # noqa: E731
     stale = kind not in ("disable",) and not (kind in actions.RETENTION_KINDS and not (kind == "reduce_retention" and msg["apply_now"]))
-    started = _start_job(hass, actions.KINDS[kind], work, resync=msg["resync"], affected=(ids, kind, states, stale))
+    started = _start_job(hass, actions.KINDS[kind], work, affected=(ids, kind, states, stale))
     if not started:
         connection.send_error(msg["id"], "busy", "Another action is still running")
         return
@@ -708,7 +716,7 @@ async def ws_undo_action(hass, connection, msg) -> None:
         return
     aid = msg["action_id"]
     undone = [e["entity_id"] for e in action.get("entities", []) if e.get("entity_id")]
-    if not _start_job(hass, "Undo", lambda job: actions.run_undo(hass, aid, job), resync=msg["resync"],
+    if not _start_job(hass, "Undo", lambda job: actions.run_undo(hass, aid, job),
                       affected=(undone, None, False, True)):
         connection.send_error(msg["id"], "busy", "Another action is still running")
         return

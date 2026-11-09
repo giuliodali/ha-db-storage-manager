@@ -133,10 +133,10 @@ class DbStoragePanel extends LitElement {
   async _askAction(kind) {
     const ids = [...this.selected];
     try {
-      const days = prefs.get("days", 1), applyNow = prefs.get("applyNow", true), states = prefs.get("states", true), resync = prefs.get("resync", false);
+      const days = prefs.get("days", 1), applyNow = prefs.get("applyNow", true), states = prefs.get("states", true);
       const retention = kind === "reduce_retention";
       const pv = await this._ws("preview_action", { kind: retention && days === "default" ? "reset_retention" : kind, entity_ids: ids, states, ...(retention && days !== "default" ? { keep_days: days, apply_now: applyNow } : {}) });
-      this.modal = { kind, ids, pv, states, text: "", resync, days, applyNow };
+      this.modal = { kind, ids, pv, states, text: "", days, applyNow };
     } catch (e) { this.error = e.message || JSON.stringify(e); }
   }
   // Change-retention dialog: refresh the preview after the days or the "delete now" choice changes. Choices stick.
@@ -153,25 +153,22 @@ class DbStoragePanel extends LitElement {
     prefs.set("states", on);
     this.modal = { ...this.modal, states: on, pv: await this._ws("preview_action", { kind: this.modal.kind, entity_ids: this.modal.ids, states: on }) };
   }
-  _setResync(on) { prefs.set("resync", on); this.modal = { ...this.modal, resync: on }; }
   async _runAction() {
-    const { kind: asked, ids, states, resync, days, applyNow } = this.modal;
+    const { kind: asked, ids, states, days, applyNow } = this.modal;
     const kind = asked === "reduce_retention" && days === "default" ? "reset_retention" : asked;
     this.modal = null;
-    this._wantResync = resync;
     const ret = kind === "reduce_retention" ? { keep_days: days, apply_now: applyNow } : kind === "reset_retention" ? { apply_now: false } : {};
-    try { await this._ws("apply_action", { kind, entity_ids: ids, confirm: true, states, resync: !!resync, ...ret }); } catch (e) { this.error = e.message || JSON.stringify(e); return; }
+    try { await this._ws("apply_action", { kind, entity_ids: ids, confirm: true, states, ...ret }); } catch (e) { this.error = e.message || JSON.stringify(e); return; }
     this.selected = new Set();
     this._pollJob();
   }
   _askUndo(a) {
-    this.modal = { undo: a, resync: prefs.get("resync", false) };
+    this.modal = { undo: a };
   }
   async _runUndo() {
-    const { undo: a, resync } = this.modal;
+    const { undo: a } = this.modal;
     this.modal = null;
-    this._wantResync = resync;
-    try { await this._ws("undo_action", { action_id: a.id, confirm: true, resync: !!resync }); } catch (e) { this.error = e.message || JSON.stringify(e); return; }
+    try { await this._ws("undo_action", { action_id: a.id, confirm: true }); } catch (e) { this.error = e.message || JSON.stringify(e); return; }
     this._pollJob();
   }
   async _pollJob() {
@@ -185,7 +182,7 @@ class DbStoragePanel extends LitElement {
       }
       await this._loadActions();
       if (this.job.error) this.error = "Action failed: " + this.job.error;
-      this._loadEntities(false);  // with "Re-Scan now" the backend has started a scan; this shows its progress
+      this._loadEntities(false);
     } catch (e) { this.error = e.message || JSON.stringify(e); }
     this._jobPolling = false;
   }
@@ -197,7 +194,7 @@ class DbStoragePanel extends LitElement {
       <div style="height:6px;border-radius:3px;background:var(--divider-color);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.max(5, pct)}%;background:var(--primary-color);transition:width .4s"></div></div></div>`;
     const res = j.result;
     return html`<div class="rcard"><h3>${j.error ? "Something went wrong" : j.label === "Undo" ? "Undo finished" : "Done"}</h3>
-      <div class="sub">${j.error || (j.label === "Undo" ? `Status: ${res?.status}.` : `Recorded in History, where you can undo it. ${this._wantResync ? "Sizes are refreshing." : "Changed entities show ⟳ until you Re-Scan."}`)}</div>
+      <div class="sub">${j.error || (j.label === "Undo" ? `Status: ${res?.status}.` : `Recorded in History, where you can undo it. Sizes of the changed entities are refreshed.`)}</div>
       <div style="margin-top:8px"><button class="rescan" @click=${() => { this.tab = "history"; this._loadActions(); this.job = null; }}>View in History</button>
         <button class="rescan" @click=${() => (this.job = null)}>Dismiss</button></div></div>`;
   }
@@ -210,7 +207,6 @@ class DbStoragePanel extends LitElement {
         <h3>Undo this action?</h3>
         <div>${a.summary}. This turns disabled entities back on, puts retention rules back as they were, and restores what was cleared (statistics and state history) from the saved backup. The backup file is deleted afterwards.</div>
         ${a.entities.some((e) => e.steps?.states?.purged) ? html`<ul><li>Cleared state history is restored from the same backup.</li></ul>` : ""}
-        <label class="chk" title="Otherwise sizes stay as they are until you press Re-Scan"><input type="checkbox" .checked=${m.resync} @change=${(e) => this._setResync(e.target.checked)}> Re-Scan now</label>
         <div class="row"><button @click=${() => (this.modal = null)}>Cancel</button><button class="go" @click=${() => this._runUndo()}>Undo</button></div></div></div>`;
     }
     const pv = m.pv, n = pv.entities.length;
@@ -235,7 +231,6 @@ class DbStoragePanel extends LitElement {
       <ul class="pl">${shown.map((e) => html`<li><b>${e.name}</b>${e.does.length ? html` <span class="muted">${e.does.join(", ")}</span>` : ""}${e.notes.map((t) => html`<div class="muted">${t}</div>`)}</li>`)}
         ${n > shown.length ? html`<li class="muted">and ${n - shown.length} more</li>` : ""}</ul>
       ${retention ? "" : html`<div class="muted">${pv.undo}</div>`}
-      <label class="chk" title="Otherwise sizes stay as they are until you press Re-Scan"><input type="checkbox" .checked=${m.resync} @change=${(e) => this._setResync(e.target.checked)}> Re-Scan now</label>
       ${n > 25 ? html`<div class="muted" style="margin-top:8px">Type <b>${n}</b> to confirm: <input class="conf" .value=${m.text} @input=${(e) => (this.modal = { ...this.modal, text: e.target.value })}></div>` : ""}
       <div class="row"><button @click=${() => (this.modal = null)}>Cancel</button>
         <button class="go ${clears ? "danger" : ""}" ?disabled=${(n > 25 && m.text.trim() !== String(n)) || (reduce && !reset && pv.warnings.includes("no_effect"))} @click=${() => this._runAction()}>${pv.label}</button></div></div></div>`;
@@ -246,9 +241,9 @@ class DbStoragePanel extends LitElement {
   async _loadAll() { await Promise.all([this._loadEntities(false), this._loadHistory(), this._loadLive(), this._loadRet()]); }
   async _loadLive() { try { this.live = await this._ws("db_size"); } catch (e) { /* recorder busy: the snapshot is shown instead */ } }
   async _loadHistory() { try { this.history = await this._ws("size_history", { days: 3650 }); } catch (e) { this.error = e.message; } }
-  async _loadEntities(refresh, full = false) {
+  async _loadEntities(refresh) {
     try {
-      const res = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh, full, limit: 5000, ...(this.window ? { window: this.window } : {}) });
+      const res = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh, limit: 5000, ...(this.window ? { window: this.window } : {}) });
       this.error = null;
       if (res.no_data) { this.data = null; this.all = null; } else {
         this.data = res;
@@ -320,14 +315,13 @@ class DbStoragePanel extends LitElement {
         ${this.all || this.data ? html`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
           <span class="split">
             <button class="rescan main ${this._needsResync() ? "need" : ""}" ?disabled=${!!this.progress?.running} aria-label="Re-Scan"
-              title="Re-Scan: refreshes the entities changed by an action (shown with ⟳) and anything new since the last scan, then re-checks where entities are used. Quick. Use Full Re-Scan from the menu to re-read everything."
+              title="Re-Scan: re-reads the database and your configuration from scratch (table and entity sizes, last update times, new entities, and where each entity is used). Takes several seconds; the page keeps working meanwhile. After an action only the entities it changed are refreshed, automatically."
               @click=${() => this._loadEntities(true)}>
               <svg viewBox="0 0 24 24" width="18" height="18" class=${this.progress?.running ? "spin" : ""}><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg></button>
             <button class="rescan arrow" aria-label="More actions" title="More actions" @click=${(e) => { e.stopPropagation(); this.menuOpen = !this.menuOpen; }}>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>
             ${this.menuOpen ? html`<div class="menu-pop" @click=${(e) => e.stopPropagation()}>
-              <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh entities changed by an action and anything new.</span></button>
-              <button @click=${() => { this.menuOpen = false; this._loadEntities(true, true); }}><b>Full Re-Scan</b><span>Re-read every entity from scratch.</span></button>
+              <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
               <div><button ?disabled=${!this.ret?.rules || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!this.ret?.rules ? "No retention rules yet." : this.ret?.automation ? "Runs the DB Storage automation in Home Assistant now." : "Deletes states older than each rule now."}</span></button>
                 ${this.ret?.automation ? html`<a @click=${() => { this.menuOpen = false; this._go(this.ret.automation.link); }}>Open the automation ↗</a>` : ""}</div>
               <button @click=${() => { this.menuOpen = false; this._openReclaim(); }}><b>Reclaim free space…</b><span>Repack the database so space freed by deletions goes back to the disk.</span></button></div>` : ""}</span></span>` : ""}</h2>

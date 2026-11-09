@@ -3,7 +3,7 @@
 ## 1.0.3
 
 - After an action the grid updates at once: status and retention are live, cleared sizes drop to zero, and changed sizes show ⟳ until Re-Scan.
-- Re-Scan only re-reads the entities an action changed and anything new; Full Re-Scan (menu) re-reads everything.
+- After an action, just the entities it changed are re-read inside the action's own progress card, so no separate scan appears. Re-Scan stays a full scan that also picks up new entities.
 - The nightly retention automation no longer counts as a reference.
 
 ## 1.0.2
