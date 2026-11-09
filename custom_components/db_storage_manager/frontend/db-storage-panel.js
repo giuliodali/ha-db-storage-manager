@@ -289,7 +289,7 @@ Ui.elementStyles = [], Ui.shadowRootOptions = { mode: "open" }, Ui[sa("elementPr
  */
 const la = globalThis, Qf = (r) => r, os = la.trustedTypes, Jf = os ? os.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, $y = "$lit$", mr = `lit$${Math.random().toFixed(9).slice(2)}$`, Oy = "?" + mr, r1 = `<${Oy}>`, pi = document, Sa = () => pi.createComment(""), Ta = (r) => r === null || typeof r != "object" && typeof r != "function", Tc = Array.isArray, i1 = (r) => Tc(r) || typeof (r == null ? void 0 : r[Symbol.iterator]) == "function", xl = `[ 	
 \f\r]`, Mn = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, td = /-->/g, ed = />/g, Pr = RegExp(`>|${xl}(?:([^\\s"'>=/]+)(${xl}*=${xl}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), rd = /'/g, id = /"/g, Ny = /^(?:script|style|textarea|title)$/i, n1 = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), L = n1(1), sn = Symbol.for("lit-noChange"), X = Symbol.for("lit-nothing"), nd = /* @__PURE__ */ new WeakMap(), ii = pi.createTreeWalker(pi, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), rd = /'/g, id = /"/g, Ny = /^(?:script|style|textarea|title)$/i, n1 = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), L = n1(1), sn = Symbol.for("lit-noChange"), Y = Symbol.for("lit-nothing"), nd = /* @__PURE__ */ new WeakMap(), ii = pi.createTreeWalker(pi, 129);
 function By(r, t) {
   if (!Tc(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return Jf !== void 0 ? Jf.createHTML(t) : t;
@@ -384,7 +384,7 @@ class Wa {
     return ((t = this._$AM) == null ? void 0 : t._$AU) ?? this._$Cv;
   }
   constructor(t, e, i, n) {
-    this.type = 2, this._$AH = X, this._$AN = void 0, this._$AA = t, this._$AB = e, this._$AM = i, this.options = n, this._$Cv = (n == null ? void 0 : n.isConnected) ?? !0;
+    this.type = 2, this._$AH = Y, this._$AN = void 0, this._$AA = t, this._$AB = e, this._$AM = i, this.options = n, this._$Cv = (n == null ? void 0 : n.isConnected) ?? !0;
   }
   get parentNode() {
     let t = this._$AA.parentNode;
@@ -398,7 +398,7 @@ class Wa {
     return this._$AB;
   }
   _$AI(t, e = this) {
-    t = ln(this, t, e), Ta(t) ? t === X || t == null || t === "" ? (this._$AH !== X && this._$AR(), this._$AH = X) : t !== this._$AH && t !== sn && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : i1(t) ? this.k(t) : this._(t);
+    t = ln(this, t, e), Ta(t) ? t === Y || t == null || t === "" ? (this._$AH !== Y && this._$AR(), this._$AH = Y) : t !== this._$AH && t !== sn && this._(t) : t._$litType$ !== void 0 ? this.$(t) : t.nodeType !== void 0 ? this.T(t) : i1(t) ? this.k(t) : this._(t);
   }
   O(t) {
     return this._$AA.parentNode.insertBefore(t, this._$AB);
@@ -407,7 +407,7 @@ class Wa {
     this._$AH !== t && (this._$AR(), this._$AH = this.O(t));
   }
   _(t) {
-    this._$AH !== X && Ta(this._$AH) ? this._$AA.nextSibling.data = t : this.T(pi.createTextNode(t)), this._$AH = t;
+    this._$AH !== Y && Ta(this._$AH) ? this._$AA.nextSibling.data = t : this.T(pi.createTextNode(t)), this._$AH = t;
   }
   $(t) {
     var a;
@@ -449,7 +449,7 @@ class Hs {
     return this._$AM._$AU;
   }
   constructor(t, e, i, n, a) {
-    this.type = 1, this._$AH = X, this._$AN = void 0, this.element = t, this.name = e, this._$AM = n, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = X;
+    this.type = 1, this._$AH = Y, this._$AN = void 0, this.element = t, this.name = e, this._$AM = n, this.options = a, i.length > 2 || i[0] !== "" || i[1] !== "" ? (this._$AH = Array(i.length - 1).fill(new String()), this.strings = i) : this._$AH = Y;
   }
   _$AI(t, e = this, i, n) {
     const a = this.strings;
@@ -458,12 +458,12 @@ class Hs {
     else {
       const s = t;
       let l, u;
-      for (t = a[0], l = 0; l < a.length - 1; l++) u = ln(this, s[i + l], e, l), u === sn && (u = this._$AH[l]), o || (o = !Ta(u) || u !== this._$AH[l]), u === X ? t = X : t !== X && (t += (u ?? "") + a[l + 1]), this._$AH[l] = u;
+      for (t = a[0], l = 0; l < a.length - 1; l++) u = ln(this, s[i + l], e, l), u === sn && (u = this._$AH[l]), o || (o = !Ta(u) || u !== this._$AH[l]), u === Y ? t = Y : t !== Y && (t += (u ?? "") + a[l + 1]), this._$AH[l] = u;
     }
     o && !n && this.j(t);
   }
   j(t) {
-    t === X ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
+    t === Y ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
   }
 }
 class s1 extends Hs {
@@ -471,7 +471,7 @@ class s1 extends Hs {
     super(...arguments), this.type = 3;
   }
   j(t) {
-    this.element[this.name] = t === X ? void 0 : t;
+    this.element[this.name] = t === Y ? void 0 : t;
   }
 }
 class l1 extends Hs {
@@ -479,7 +479,7 @@ class l1 extends Hs {
     super(...arguments), this.type = 4;
   }
   j(t) {
-    this.element.toggleAttribute(this.name, !!t && t !== X);
+    this.element.toggleAttribute(this.name, !!t && t !== Y);
   }
 }
 class u1 extends Hs {
@@ -487,8 +487,8 @@ class u1 extends Hs {
     super(t, e, i, n, a), this.type = 5;
   }
   _$AI(t, e = this) {
-    if ((t = ln(this, t, e, 0) ?? X) === sn) return;
-    const i = this._$AH, n = t === X && i !== X || t.capture !== i.capture || t.once !== i.once || t.passive !== i.passive, a = t !== X && (i === X || n);
+    if ((t = ln(this, t, e, 0) ?? Y) === sn) return;
+    const i = this._$AH, n = t === Y && i !== Y || t.capture !== i.capture || t.once !== i.once || t.passive !== i.passive, a = t !== Y && (i === Y || n);
     n && this.element.removeEventListener(this.name, this, i), a && this.element.addEventListener(this.name, this, t), this._$AH = t;
   }
   handleEvent(t) {
@@ -5291,12 +5291,12 @@ var bi = function() {
             break;
           }
           case vt.A:
-            var Z = i[x++], J = i[x++], it = i[x++], ft = i[x++], gt = i[x++], _t = i[x++], Jt = i[x++], Ye = !i[x++], ct = it > ft ? it : ft, Y = Ze(it - ft) > 1e-3, nt = gt + _t, F = !1;
+            var Z = i[x++], J = i[x++], it = i[x++], ft = i[x++], gt = i[x++], _t = i[x++], Jt = i[x++], Ye = !i[x++], ct = it > ft ? it : ft, X = Ze(it - ft) > 1e-3, nt = gt + _t, F = !1;
             if (d) {
               var C = v[y++];
               p + C > m && (nt = gt + _t * (m - p) / C, F = !0), p += C;
             }
-            if (Y && t.ellipse ? t.ellipse(Z, J, it, ft, Jt, gt, nt, Ye) : t.arc(Z, J, ct, gt, nt, Ye), F)
+            if (X && t.ellipse ? t.ellipse(Z, J, it, ft, Jt, gt, nt, Ye) : t.arc(Z, J, ct, gt, nt, Ye), F)
               break t;
             M && (s = Gr(gt) * it + Z, l = Wr(gt) * ft + J), u = Gr(nt) * it + Z, h = Wr(nt) * ft + J;
             break;
@@ -6697,15 +6697,15 @@ function XS(r, t) {
         if (!z)
           r.moveTo(h + E, c + R);
         else if (A > Se) {
-          var Y = Oe(y, A), nt = Oe(m, A), F = vo(I, P, E, R, i, Y, f), G = vo(C, k, U, O, i, nt, f);
-          r.moveTo(h + F.cx + F.x0, c + F.cy + F.y0), A < S && Y === nt ? r.arc(h + F.cx, c + F.cy, A, Ot(F.y0, F.x0), Ot(G.y0, G.x0), !f) : (Y > 0 && r.arc(h + F.cx, c + F.cy, Y, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, i, Ot(F.cy + F.y1, F.cx + F.x1), Ot(G.cy + G.y1, G.cx + G.x1), !f), nt > 0 && r.arc(h + G.cx, c + G.cy, nt, Ot(G.y1, G.x1), Ot(G.y0, G.x0), !f));
+          var X = Oe(y, A), nt = Oe(m, A), F = vo(I, P, E, R, i, X, f), G = vo(C, k, U, O, i, nt, f);
+          r.moveTo(h + F.cx + F.x0, c + F.cy + F.y0), A < S && X === nt ? r.arc(h + F.cx, c + F.cy, A, Ot(F.y0, F.x0), Ot(G.y0, G.x0), !f) : (X > 0 && r.arc(h + F.cx, c + F.cy, X, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, i, Ot(F.cy + F.y1, F.cx + F.x1), Ot(G.cy + G.y1, G.cx + G.x1), !f), nt > 0 && r.arc(h + G.cx, c + G.cy, nt, Ot(G.y1, G.x1), Ot(G.y0, G.x0), !f));
         } else
           r.moveTo(h + E, c + R), r.arc(h, c, i, l, u, !f);
         if (!(n > Se) || !z)
           r.lineTo(h + U, c + O);
         else if (D > Se) {
-          var Y = Oe(g, D), nt = Oe(p, D), F = vo(U, O, C, k, n, -nt, f), G = vo(E, R, I, P, n, -Y, f);
-          r.lineTo(h + F.cx + F.x0, c + F.cy + F.y0), D < M && Y === nt ? r.arc(h + F.cx, c + F.cy, D, Ot(F.y0, F.x0), Ot(G.y0, G.x0), !f) : (nt > 0 && r.arc(h + F.cx, c + F.cy, nt, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, n, Ot(F.cy + F.y1, F.cx + F.x1), Ot(G.cy + G.y1, G.cx + G.x1), f), Y > 0 && r.arc(h + G.cx, c + G.cy, Y, Ot(G.y1, G.x1), Ot(G.y0, G.x0), !f));
+          var X = Oe(g, D), nt = Oe(p, D), F = vo(U, O, C, k, n, -nt, f), G = vo(E, R, I, P, n, -X, f);
+          r.lineTo(h + F.cx + F.x0, c + F.cy + F.y0), D < M && X === nt ? r.arc(h + F.cx, c + F.cy, D, Ot(F.y0, F.x0), Ot(G.y0, G.x0), !f) : (nt > 0 && r.arc(h + F.cx, c + F.cy, nt, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, n, Ot(F.cy + F.y1, F.cx + F.x1), Ot(G.cy + G.y1, G.cx + G.x1), f), X > 0 && r.arc(h + G.cx, c + G.cy, X, Ot(G.y1, G.x1), Ot(G.y0, G.x0), !f));
         } else
           r.lineTo(h + U, c + O), r.arc(h, c, n, u, l, f);
       }
@@ -12294,8 +12294,8 @@ function Fh(r, t) {
         }
         I += y[P], ++E, ++P, P === y.length && (P = 0);
       }
-      function ct(Y, nt, F, G, Mt) {
-        var yt = n ? 1 : e, Dt = vn(Mt, Y * yt, nt * yt, F * yt, G * yt, o.color, o.symbolKeepAspect);
+      function ct(X, nt, F, G, Mt) {
+        var yt = n ? 1 : e, Dt = vn(Mt, X * yt, nt * yt, F * yt, G * yt, o.color, o.symbolKeepAspect);
         if (n) {
           var Vt = i.painter.renderOneToVNode(Dt);
           Vt && x.children.push(Vt);
@@ -19687,18 +19687,18 @@ function Yk(r, t, e, i, n, a, o, s, l, u) {
     z && O.attr("cursor", z), Th(C, U, E);
   }
   return C;
-  function Z(ct, Y, nt) {
-    var F = lt(Y);
-    if (F.dataIndex = o.dataIndex, F.seriesIndex = r.seriesIndex, Y.setShape({
+  function Z(ct, X, nt) {
+    var F = lt(X);
+    if (F.dataIndex = o.dataIndex, F.seriesIndex = r.seriesIndex, X.setShape({
       x: 0,
       y: 0,
       width: d,
       height: v,
       r: D
     }), p)
-      it(Y);
+      it(X);
     else {
-      Y.invisible = !1;
+      X.invisible = !1;
       var G = o.getVisual("style"), Mt = G.stroke, yt = Ig(x);
       yt.fill = Mt;
       var Dt = ti(S);
@@ -19710,7 +19710,7 @@ function Yk(r, t, e, i, n, a, o, s, l, u) {
         var ki = d - 2 * g;
         ft(
           // PENDING: convert ZRColor to ColorString for text.
-          Y,
+          X,
           Mt,
           G.opacity,
           {
@@ -19721,40 +19721,40 @@ function Yk(r, t, e, i, n, a, o, s, l, u) {
           }
         );
       } else
-        Y.removeTextContent();
-      Y.setStyle(yt), Y.ensureState("emphasis").style = Dt, Y.ensureState("blur").style = Vt, Y.ensureState("select").style = Xe, bh(Y);
+        X.removeTextContent();
+      X.setStyle(yt), X.ensureState("emphasis").style = Dt, X.ensureState("blur").style = Vt, X.ensureState("select").style = Xe, bh(X);
     }
-    ct.add(Y);
+    ct.add(X);
   }
-  function J(ct, Y) {
-    var nt = lt(Y);
+  function J(ct, X) {
+    var nt = lt(X);
     nt.dataIndex = o.dataIndex, nt.seriesIndex = r.seriesIndex;
     var F = Math.max(d - 2 * g, 0), G = Math.max(v - 2 * g, 0);
-    if (Y.culling = !0, Y.setShape({
+    if (X.culling = !0, X.setShape({
       x: g,
       y: g,
       width: F,
       height: G,
       r: D
     }), p)
-      it(Y);
+      it(X);
     else {
-      Y.invisible = !1;
+      X.invisible = !1;
       var Mt = o.getVisual("style"), yt = Mt.fill, Dt = Ig(x);
       Dt.fill = yt, Dt.decal = Mt.decal;
       var Vt = ti(S), Xe = ti(M), ki = ti(A);
-      ft(Y, yt, Mt.opacity, null), Y.setStyle(Dt), Y.ensureState("emphasis").style = Vt, Y.ensureState("blur").style = Xe, Y.ensureState("select").style = ki, bh(Y);
+      ft(X, yt, Mt.opacity, null), X.setStyle(Dt), X.ensureState("emphasis").style = Vt, X.ensureState("blur").style = Xe, X.ensureState("select").style = ki, bh(X);
     }
-    ct.add(Y);
+    ct.add(X);
   }
   function it(ct) {
     !ct.invisible && a.push(ct);
   }
-  function ft(ct, Y, nt, F) {
+  function ft(ct, X, nt, F) {
     var G = f.getModel(F ? kg : Dg), Mt = ie(f.get("name"), null), yt = G.getShallow("show");
     xn(ct, wn(f, F ? kg : Dg), {
       defaultText: yt ? Mt : null,
-      inheritColor: Y,
+      inheritColor: X,
       defaultOpacity: nt,
       labelFetcher: r,
       labelDataIndex: o.dataIndex
@@ -19775,23 +19775,23 @@ function Yk(r, t, e, i, n, a, o, s, l, u) {
       gt(ki ? ki.style : null, F, h);
     }
   }
-  function gt(ct, Y, nt) {
+  function gt(ct, X, nt) {
     var F = ct ? ct.text : null;
-    if (!Y && nt.isLeafRoot && F != null) {
+    if (!X && nt.isLeafRoot && F != null) {
       var G = r.get("drillDownIcon", !0);
       ct.text = G ? G + " " + F : F;
     }
   }
-  function _t(ct, Y, nt, F) {
+  function _t(ct, X, nt, F) {
     var G = m != null && e[ct][m], Mt = n[ct];
-    return G ? (e[ct][m] = null, Jt(Mt, G)) : p || (G = new Y(), G instanceof _n && (G.z2 = Xk(nt, F)), Ye(Mt, G)), t[ct][y] = G;
+    return G ? (e[ct][m] = null, Jt(Mt, G)) : p || (G = new X(), G instanceof _n && (G.z2 = Xk(nt, F)), Ye(Mt, G)), t[ct][y] = G;
   }
-  function Jt(ct, Y) {
+  function Jt(ct, X) {
     var nt = ct[y] = {};
-    Y instanceof Jh ? (nt.oldX = Y.x, nt.oldY = Y.y) : nt.oldShape = $({}, Y.shape);
+    X instanceof Jh ? (nt.oldX = X.x, nt.oldY = X.y) : nt.oldShape = $({}, X.shape);
   }
-  function Ye(ct, Y) {
-    var nt = ct[y] = {}, F = o.parentNode, G = Y instanceof St;
+  function Ye(ct, X) {
+    var nt = ct[y] = {}, F = o.parentNode, G = X instanceof St;
     if (F && (!i || i.direction === "drillDown")) {
       var Mt = 0, yt = 0, Dt = n.background[F.getRawIndex()];
       !i && Dt && Dt.oldShape && (Mt = Dt.oldShape.width, yt = Dt.oldShape.height), G ? (nt.oldX = 0, nt.oldY = yt) : nt.oldShape = {
@@ -24709,78 +24709,78 @@ class yc extends Ae {
   _facet(t, e) {
     const i = Math.max(...e.map((n) => n.bytes), 1);
     return L`<div class="facet"><b>${Wb[t] || t}</b>
-      ${t === "status" ? L` <span class="help" title=${TP}>?</span>` : X}
-      ${t === "suggestion" ? L` <span class="help" title=${AP}>?</span>` : X}
+      ${t === "status" ? L` <span class="help" title=${TP}>?</span>` : Y}
+      ${t === "suggestion" ? L` <span class="help" title=${AP}>?</span>` : Y}
       ${e.map((n) => {
       const a = (this.filters[t] || []).includes(n.value);
       return n.other ? L`<div class="fr more" title="Show all of them" @click=${() => this._emit("expand", { facet: t, on: !0 })}><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i><span></span><span class="lbl">${n.value} ▾</span><span class="val">${Q(n.bytes)}<small>${n.count}</small></span></div>` : L`<label class="fr ${n.count === 0 && !a ? "zero" : ""}"><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i>
           ${n.other ? L`<span></span>` : L`<input type="checkbox" .checked=${a} @change=${(o) => this._toggleFilter(t, n.value, o.target.checked)}>`}
           <span class="lbl" title=${n.value}>${n.value}</span><span class="val">${Q(n.bytes)}<small>${n.count}</small></span></label>`;
     })}
-      ${(this.expand || []).includes(t) && e.length > 8 ? L`<div class="fr more" @click=${() => this._emit("expand", { facet: t, on: !1 })}><span></span><span class="lbl">Show fewer ▴</span><span></span></div>` : X}
-      ${t === "used_in" ? L`<div class="muted">An entity can appear under several kinds.</div>` : X}</div>`;
+      ${(this.expand || []).includes(t) && e.length > 8 ? L`<div class="fr more" @click=${() => this._emit("expand", { facet: t, on: !1 })}><span></span><span class="lbl">Show fewer ▴</span><span></span></div>` : Y}
+      ${t === "used_in" ? L`<div class="muted">An entity can appear under several kinds.</div>` : Y}</div>`;
   }
   _link(t, e, i) {
     return L`<a href=${t} @click=${(n) => {
       n.preventDefault(), this._emit("navigate", t);
-    }}>${i ? L`<ha-icon class="tabicon" .icon=${i}></ha-icon>` : X}${e}</a>`;
+    }}>${i ? L`<ha-icon class="tabicon" .icon=${i}></ha-icon>` : Y}${e}</a>`;
   }
   // Dashboards: "Main > <tab link> card gauge", so the tab itself is the link. Others link the item name.
   _locText(t) {
     const e = t.kind === "Dashboard" && t.link ? /^(view "[^"]*")(?:, )?(.*)$/.exec(t.where) : null;
-    return e ? L`${t.name} <span class="muted">›</span> ${this._link(t.link, e[1].slice(6, -1), t.icon)}${e[2] ? L` <span class="muted">${e[2]}</span>` : X}` : L`${t.link ? this._link(t.link, t.name) : t.name} <span class="muted">${t.where}</span>`;
+    return e ? L`${t.name} <span class="muted">›</span> ${this._link(t.link, e[1].slice(6, -1), t.icon)}${e[2] ? L` <span class="muted">${e[2]}</span>` : Y}` : L`${t.link ? this._link(t.link, t.name) : t.name} <span class="muted">${t.where}</span>`;
   }
   _usageDetail() {
     var n, a, o, s, l;
     const t = this.usage;
-    if (!t) return X;
-    const e = (n = t.dynamic_possible) != null && n.length ? L`<div class="warn">These templates loop over every entity of this type, so they may use it without naming it: ${t.dynamic_possible.join(", ")}.</div>` : X, i = t.entity_ids ? L`<b>${t.entity_ids.length} selected entit${t.entity_ids.length === 1 ? "y" : "ies"}</b> appear in these places (a number shows how many of them are in a place):` : L`<span class="ico" style="vertical-align:middle">${Fs(this.hass, t.entity_id)}</span> <b>${((s = (o = (a = this.data) == null ? void 0 : a.items) == null ? void 0 : o.find((u) => u.entity_id === t.entity_id)) == null ? void 0 : s.name) || t.entity_id}</b> is referenced in:`;
+    if (!t) return Y;
+    const e = (n = t.dynamic_possible) != null && n.length ? L`<div class="warn">These templates loop over every entity of this type, so they may use it without naming it: ${t.dynamic_possible.join(", ")}.</div>` : Y, i = t.entity_ids ? L`<b>${t.entity_ids.length} selected entit${t.entity_ids.length === 1 ? "y" : "ies"}</b> appear in these places (a number shows how many of them are in a place):` : L`<span class="ico" style="vertical-align:middle">${Fs(this.hass, t.entity_id)}</span> <b>${((s = (o = (a = this.data) == null ? void 0 : a.items) == null ? void 0 : o.find((u) => u.entity_id === t.entity_id)) == null ? void 0 : s.name) || t.entity_id}</b> is referenced in:`;
     return L`<div class="detail">${i}
       <ul>${t.locations.length ? t.locations.map((u) => L`<li><span class="kind">${u.kind}</span>
         ${this._locText(u)}${u.count > 1 ? L` <span class="cnt" title=${u.entities.join(`
-`)}>×${u.count}</span>` : X}</li>`) : L`<li class="muted">No literal reference found in automations, scripts, scenes, dashboards, helpers, the Energy dashboard or YAML files.</li>`}</ul>
+`)}>×${u.count}</span>` : Y}</li>`) : L`<li class="muted">No literal reference found in automations, scripts, scenes, dashboards, helpers, the Energy dashboard or YAML files.</li>`}</ul>
       ${e}<details><summary>What this scan can miss</summary><ul>${(((l = this.data) == null ? void 0 : l.caveats) || []).map((u) => L`<li>${u}</li>`)}</ul></details>
       <button @click=${() => this._emit("usage", null)}>Close</button></div>`;
   }
   render() {
     const t = this.data;
     if (!t) return L`<div class="muted">Waiting for the first scan to finish.</div>`;
-    const e = this._rows(), i = e.slice(0, this.shown), n = !!t.window, a = (h) => n ? h.win_bytes : h.total_bytes, o = Math.max(...i.map(a), 1), s = i.length > 0 && i.every((h) => this.selected.has(h.entity_id)), l = (t.items || []).filter((h) => this.selected.has(h.entity_id)).reduce((h, c) => h + a(c), 0), u = Object.entries(this.filters).flatMap(([h, c]) => c.map((f) => [h, f]));
+    const e = this._rows(), i = e.slice(0, this.shown), n = !!t.window, a = (f) => n ? f.win_bytes : f.total_bytes, o = Math.max(...i.map(a), 1), s = i.length > 0 && i.every((f) => this.selected.has(f.entity_id)), l = (t.items || []).filter((f) => this.selected.has(f.entity_id)).reduce((f, d) => f + a(d), 0), u = new Set((t.items || []).map((f) => f.entity_id)), h = [...this.selected].filter((f) => !u.has(f)).length, c = Object.entries(this.filters).flatMap(([f, d]) => d.map((v) => [f, v]));
     return L`
       <div class="bar">
-        <input type="search" placeholder="Search name or entity id" .value=${this.search} @input=${(h) => this._onSearch(h.target.value)} @change=${(h) => this._onSearch(h.target.value, !0)}>
-        <select @change=${(h) => this._emit("sort", h.target.value)} title="Sort">${Object.entries(LP).map(([h, c]) => L`<option value=${h} ?selected=${this.sort === h}>Sort: ${c}</option>`)}</select>
-        <label class="hideauto" title="Automation entities are hidden by default. Untick to include them."><input type="checkbox" .checked=${this.hideAuto} @change=${(h) => this._emit("hideauto", h.target.checked)}> Hide automations</label>
+        <input type="search" placeholder="Search name or entity id" .value=${this.search} @input=${(f) => this._onSearch(f.target.value)} @change=${(f) => this._onSearch(f.target.value, !0)}>
+        <select @change=${(f) => this._emit("sort", f.target.value)} title="Sort">${Object.entries(LP).map(([f, d]) => L`<option value=${f} ?selected=${this.sort === f}>Sort: ${d}</option>`)}</select>
+        <label class="hideauto" title="Automation entities are hidden by default. Untick to include them."><input type="checkbox" .checked=${this.hideAuto} @change=${(f) => this._emit("hideauto", f.target.checked)}> Hide automations</label>
         <button class="filtertoggle" @click=${() => {
       this._facetsOpen = !this._facetsOpen, this.requestUpdate();
-    }}>Filters${u.length ? ` (${u.length})` : ""}</button>
+    }}>Filters${c.length ? ` (${c.length})` : ""}</button>
       </div>
-      ${this.selected.size ? L`<div class="selbar"><b>${this.selected.size} selected</b>
+      ${this.selected.size ? L`<div class="selbar"><b>${this.selected.size} selected</b>${h ? L` <span class="muted" title="These were ticked earlier and are not in the list now (filters, search or period changed). Actions still include them.">(${h} not in the current list)</span> <button title="Drop the selected entities that are not in the current list" @click=${() => this._emit("selected", new Set([...this.selected].filter((f) => u.has(f))))}>Keep only listed</button>` : Y}
         <button class="x" title="Clear selection" aria-label="Clear selection" @click=${() => this._emit("selected", /* @__PURE__ */ new Set())}>✕</button>
         <span class="muted">≈ ${Q(l)} of ${n ? "data written in this period" : "entity data"}</span>
-        ${this.selected.size < t.items.length ? L`<button @click=${() => this._emit("selected", new Set(t.items.map((h) => h.entity_id)))}>Select all ${t.items.length.toLocaleString()} matching</button>` : X}
+        ${this.selected.size < t.items.length ? L`<button @click=${() => this._emit("selected", new Set(t.items.map((f) => f.entity_id)))}>Select all ${t.items.length.toLocaleString()} matching</button>` : Y}
         <span style="flex:1"></span>
         <button title="Turns these entities off in Home Assistant so they stop recording. Nothing is deleted and it can be undone from the History tab. Entities defined in your YAML files stay in those files; remove them there to get rid of them for good." @click=${() => this._emit("action", "disable")}>Disable</button>
         <button title="Deletes their long-term statistics, and optionally their recorded state history. Everything deleted is first saved in one compressed backup, so the whole action can be undone from the History tab." @click=${() => this._emit("action", "delete_history")}>Clear history</button>
         <button title="Disables them first so nothing is recorded again, then clears their history. Everything deleted is first saved in one compressed backup, and undoing from the History tab restores it and turns them back on." @click=${() => this._emit("action", "disable_and_clear")}>Disable + clear</button>
-        <button title="Choose how many days of detailed states to keep (1, 3, 5, 7 or Home Assistant's default). Long-term statistics (graphs, Energy) are kept." @click=${() => this._emit("action", "reduce_retention")}>Change retention</button></div>` : X}
-      ${n ? L`<div class="banner"><span>≈ <b>${Q((t.items || []).reduce((h, c) => h + (c.win_bytes || 0), 0))}</b> of <b>${(t.items || []).length.toLocaleString()}</b> entities changed between <b>${Iy(t.window.from)}</b> and <b>${Iy(t.window.to)}</b>.</span>
+        <button title="Choose how many days of detailed states to keep (1, 3, 5, 7 or Home Assistant's default). Long-term statistics (graphs, Energy) are kept." @click=${() => this._emit("action", "reduce_retention")}>Change retention</button></div>` : Y}
+      ${n ? L`<div class="banner"><span>≈ <b>${Q((t.items || []).reduce((f, d) => f + (d.win_bytes || 0), 0))}</b> of <b>${(t.items || []).length.toLocaleString()}</b> entities changed between <b>${Iy(t.window.from)}</b> and <b>${Iy(t.window.to)}</b>.</span>
         <span class="info" title=${`Entities that wrote data in this period, with the estimated size of what they wrote.${this.growth != null ? `
 The database file changed by ${this.growth >= 0 ? "+" : "-"}${Q(Math.abs(this.growth))} across it.` : ""}
 State history is only kept for ${t.window.keep_days} days, so older periods show long-term statistics only.`}>i</span>
-        <span style="flex:1"></span><button class="x" title="Clear the period filter" aria-label="Clear the period filter" @click=${() => this._emit("clearwindow")}>✕</button></div>` : X}
+        <span style="flex:1"></span><button class="x" title="Clear the period filter" aria-label="Clear the period filter" @click=${() => this._emit("clearwindow")}>✕</button></div>` : Y}
       <div class="layout">
-        <div class="facets ${this._facetsOpen ? "" : "closed"}">${Object.entries(t.facets).map(([h, c]) => this._facet(h, c))}</div>
+        <div class="facets ${this._facetsOpen ? "" : "closed"}">${Object.entries(t.facets).map(([f, d]) => this._facet(f, d))}</div>
         <div>
           ${this._usageDetail()}
           <div class="tablewrap">
-            <div class="head"><input type="checkbox" .checked=${s} @change=${(h) => this._selectAll(i, h.target.checked)} title="Select all shown">
+            <div class="head"><input type="checkbox" .checked=${s} @change=${(f) => this._selectAll(i, f.target.checked)} title="Select all shown">
               <span>Entity</span><span class="c-int">Integration</span><span class="c-dev">Device</span><span class="c-age">Last update</span><span class="c-status">Suggestion</span><span style="text-align:right">${n ? "In period" : "Size"}<span class="tip" tabindex="0"><span class="info" style="font-style:normal">?</span><span class="pop"><div><b>${n ? "Estimated size of what each entity wrote in the period" : "Estimated size of all its stored data"}</b></div>
               <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i>States and attributes</div><div><i style="background:var(--ha-color-border-primary-loud,#8353d1)"></i>Long-term statistics (hourly and 5-minute)</div>
               <div class="muted">The bar splits each entity's size between the two. Hover a size for the exact split.</div></span></span></span></div>
-            ${i.map((h) => this._row(h, o, a))}
+            ${i.map((f) => this._row(f, o, a))}
           </div>
-          ${e.length > this.shown ? L`<button style="margin-top:8px" @click=${() => this._emit("more")}>Show ${Math.min(100, e.length - this.shown)} more of ${e.length - this.shown} remaining</button>` : X}
+          ${e.length > this.shown ? L`<button style="margin-top:8px" @click=${() => this._emit("more")}>Show ${Math.min(100, e.length - this.shown)} more of ${e.length - this.shown} remaining</button>` : Y}
         </div>
       </div>
 `;
@@ -24802,7 +24802,7 @@ State history is only kept for ${t.window.keep_days} days, so older periods show
 ${o}`} style="overflow:hidden;text-overflow:ellipsis" @click=${(s) => {
       s.preventDefault(), this._moreInfo(t.entity_id);
     }}>${t.name || t.entity_id}</a>
-        ${t.retention_days ? L`<span class="ret" title=${`Retention rule: state history is kept for ${t.retention_days} days (Home Assistant's default is longer). Rows older than that are deleted every night.`}>${t.retention_days}d</span>` : X}
+        ${t.retention_days ? L`<span class="ret" title=${`Retention rule: state history is kept for ${t.retention_days} days (Home Assistant's default is longer). Rows older than that are deleted every night.`}>${t.retention_days}d</span>` : Y}
         <button class="inspect" title="Inspect the raw data stored for this entity (states, attributes, statistics)" aria-label="Inspect stored data" @click=${() => this._emit("inspect", t)}><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1m1 2v3h16V5H4m0 5v4h5v-4H4m7 0v4h9v-4h-9m-7 6v3h5v-3H4m7 0v3h9v-3h-9z"/></svg></button><button class="chip ${n ? "none" : "used"}" title=${n ? "No literal reference found in config" : `${t.used_count} reference${t.used_count === 1 ? "" : "s"}: ${t.used_in.join(", ")}`} @click=${() => this._emit("usage", t.entity_id)}>${n ? "0" : t.used_count} 🔗${a}</button></span>
       <span class="c-int muted">${t.integration}</span><span class="c-dev muted">${t.device}</span><span class="c-age muted">${t.age}</span><span class="c-status"><span class="sugg ${IP[t.suggestion] || ""}" title=${`${t.suggestion} (${(t.confidence || "").toLowerCase()} confidence)
 ${(t.reasons || []).join(`
@@ -24846,7 +24846,7 @@ Lt(yc, "properties", {
     .row>span,.row>a{overflow:hidden;text-overflow:ellipsis;min-width:0} .eid{font-weight:600;text-decoration:none;color:var(--primary-text-color)} .eid:hover{color:var(--primary-color)}
     .size{position:relative;text-align:right;font-variant-numeric:tabular-nums;font-weight:600} .size i{position:absolute;right:0;top:-2px;bottom:-2px;background:var(--primary-color);opacity:.2;border-radius:4px}
     .size span{position:relative}
-    .size i.bar2{display:flex;background:none;opacity:1;overflow:hidden} .seg{display:block;height:100%;min-width:0} .seg.st{background:var(--ha-color-primary-20,#488fc2)} .seg.hs{background:var(--ha-color-border-primary-loud,#8353d1)}
+    .size i.bar2{display:flex;background:none;opacity:1;overflow:hidden} .seg{display:block;height:100%;min-width:0} .seg.st{background:color-mix(in srgb,var(--ha-color-primary-20,#488fc2) 55%,transparent)} .seg.hs{background:color-mix(in srgb,var(--ha-color-border-primary-loud,#8353d1) 50%,transparent)}
     .tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:4px} .tip .pop{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:15;width:250px;text-align:left;white-space:normal;font-weight:400;font-size:12px;line-height:1.45;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px}
     .tip:hover .pop,.tip:focus .pop{display:block} .pop i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px} .pop div{margin:3px 0}
     .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--secondary-text-color);color:var(--secondary-text-color);font-size:11px;font-style:italic;font-family:serif;cursor:help;flex:0 0 auto}
@@ -24969,13 +24969,13 @@ class _c extends Ae {
     }
   }
   _dlg() {
-    if (!this.dlg) return X;
+    if (!this.dlg) return Y;
     const t = this._chosen(), e = t.reduce((a, o) => a + (o.backup_bytes || 0), 0), i = t.reduce((a, o) => a + (o.backup_files || 0), 0), n = t.filter((a) => this._undoable(a));
     return L`<div class="modal" @click=${() => this.dlg = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
       <h3>Delete ${t.length} history record${t.length === 1 ? "" : "s"}?</h3>
       <div>This removes the records and ${i} backup file${i === 1 ? "" : "s"}, recovering <b>${Q(e)}</b> of disk space.</div>
-      ${n.length ? L`<div class="warnbox"><b>${n.length}</b> of them can still be undone. Once deleted, their statistics can no longer be restored and disabled entities will not be turned back on.</div>` : X}
-      ${this.err ? L`<div class="err">${this.err}</div>` : X}
+      ${n.length ? L`<div class="warnbox"><b>${n.length}</b> of them can still be undone. Once deleted, their statistics can no longer be restored and disabled entities will not be turned back on.</div>` : Y}
+      ${this.err ? L`<div class="err">${this.err}</div>` : Y}
       <div class="btns"><button @click=${() => this.dlg = null}>Cancel</button><button class="danger" @click=${() => this._delete()}>Delete</button></div></div></div>`;
   }
   _detail(t) {
@@ -24996,11 +24996,11 @@ class _c extends Ae {
       return ((y = (p = g.steps) == null ? void 0 : p.statistics) == null ? void 0 : y.snapshot) || ((_ = (m = g.steps) == null ? void 0 : m.states) == null ? void 0 : _.backup);
     }), f = (v = t.backup_names) == null ? void 0 : v[0];
     return L`<div class="detail">
-      ${t.undone_ts ? L`<div class="muted" style="margin-bottom:4px">Undone ${this._when(t.undone_ts)}</div>` : X}
-      ${t.error ? L`<div class="muted" style="margin-bottom:4px">${t.error}</div>` : X}
-      ${c ? L`<div class="gsum">Backup: <b>${t.backup_files ? Q(t.backup_bytes) : "no file on disk"}</b> ${f ? L`<span title=${f}>(${f})</span>` : X} <span class="muted">compressed, one file for the whole action</span></div>` : X}
-      ${o.length ? L`<div class="gsum">${e.length > 1 ? "Same for all:" : "Result:"} ${o.join(" · ")} <span class="info" title=${h}>i</span></div>` : X}
-      <table><tr><th>Entity</th>${a.map(([, g, , p]) => L`<th title=${p}>${g}</th>`)}<th class="r" title="Estimated database space freed: long-term statistics plus any state history cleared. Not the size of the backup.">Est. freed</th>${c ? L`<th class="r" title="Rows of this entity saved in the action's backup file">Backed up</th>` : X}${u ? L`<th>Notes</th>` : X}</tr>
+      ${t.undone_ts ? L`<div class="muted" style="margin-bottom:4px">Undone ${this._when(t.undone_ts)}</div>` : Y}
+      ${t.error ? L`<div class="muted" style="margin-bottom:4px">${t.error}</div>` : Y}
+      ${c ? L`<div class="gsum">Backup: <b>${t.backup_files ? Q(t.backup_bytes) : "no file on disk"}</b> ${f ? L`<span title=${f}>(${f})</span>` : Y} <span class="muted">compressed, one file for the whole action</span></div>` : Y}
+      ${o.length ? L`<div class="gsum">${e.length > 1 ? "Same for all:" : "Result:"} ${o.join(" · ")} <span class="info" title=${h}>i</span></div>` : Y}
+      <table><tr><th>Entity</th>${a.map(([, g, , p]) => L`<th title=${p}>${g}</th>`)}<th class="r" title="Estimated database space freed: long-term statistics plus any state history cleared. Not the size of the backup.">Est. freed</th>${c ? L`<th class="r" title="Rows of this entity saved in the action's backup file">Backed up</th>` : Y}${u ? L`<th>Notes</th>` : Y}</tr>
         ${e.map((g) => {
       var w, x;
       const p = (w = g.steps) == null ? void 0 : w.statistics, y = g.est_stats_bytes != null ? `Long-term statistics ${Q(g.est_stats_bytes)}${g.est_states_bytes ? ` + state history ${Q(g.est_states_bytes)}` : ""}` : "", m = (x = g.steps) == null ? void 0 : x.states, _ = ((p == null ? void 0 : p.statistics) || 0) + ((p == null ? void 0 : p.short_term) || 0) + ((m == null ? void 0 : m.rows) || 0), b = p != null && p.snapshot || m != null && m.backup ? ((p == null ? void 0 : p.exists) ?? (m == null ? void 0 : m.exists)) === !1 ? p != null && p.snapshot_removed || m != null && m.backup_removed ? "removed" : "missing" : `${si(_)} rows` : "";
@@ -25009,8 +25009,8 @@ class _c extends Ae {
             <td class="r" title=${y}>${g.est_bytes ? Q(g.est_bytes) : "–"}</td>
             ${c ? L`<td class="r" title=${p != null && p.snapshot || m != null && m.backup ? `${si(p == null ? void 0 : p.statistics)} long-term, ${si(p == null ? void 0 : p.short_term)} 5-minute statistics rows and ${si(m == null ? void 0 : m.rows)} state rows saved in ${(p == null ? void 0 : p.snapshot) || (m == null ? void 0 : m.backup)}${((p == null ? void 0 : p.exists) ?? (m == null ? void 0 : m.exists)) === !1 ? p != null && p.snapshot_removed || m != null && m.backup_removed ? `
 Removed after the undo restored it` : `
-The file is no longer on disk` : ""}` : "Nothing needed backing up"}>${b || "–"}</td>` : X}
-            ${u ? L`<td title=${Qu(g)}>${Qu(g) || "–"}</td>` : X}</tr>`;
+The file is no longer on disk` : ""}` : "Nothing needed backing up"}>${b || "–"}</td>` : Y}
+            ${u ? L`<td title=${Qu(g)}>${Qu(g) || "–"}</td>` : Y}</tr>`;
     })}</table></div>`;
   }
   render() {
@@ -25022,24 +25022,24 @@ The file is no longer on disk` : ""}` : "Nothing needed backing up"}>${b || "–
       <div class="card"><b>Undo data</b>
         <span title=${e ? `Backup files: ${e.path}
 History records: ${e.journal_path}` : ""}>${e ? L`<b>${Q(e.bytes + e.journal_bytes)}</b> in use: ${e.files} backup file${e.files === 1 ? "" : "s"} (${Q(e.bytes)}) and the record database (${Q(e.journal_bytes)})` : "Checking…"}</span>
-        ${e ? L`<span class="muted">Stored in ${e.path.replace(/\/snapshots$/, "")}</span>` : X}
-        ${e != null && e.unlinked_files ? L`<span class="muted" title="Backup files in the folder that no history record points to, for example from records deleted by hand. They are safe to delete from the folder.">${e.unlinked_files} file${e.unlinked_files === 1 ? "" : "s"} not linked to any record (${Q(e.unlinked_bytes)})</span>` : X}
+        ${e ? L`<span class="muted">Stored in ${e.path.replace(/\/snapshots$/, "")}</span>` : Y}
+        ${e != null && e.unlinked_files ? L`<span class="muted" title="Backup files in the folder that no history record points to, for example from records deleted by hand. They are safe to delete from the folder.">${e.unlinked_files} file${e.unlinked_files === 1 ? "" : "s"} not linked to any record (${Q(e.unlinked_bytes)})</span>` : Y}
         <span class="sp"></span><span class="info" title=${RP}>i</span></div>
       ${(o = this.ret) != null && o.rules ? L`<div class="card"><b>Retention rules</b><span>${this.ret.rules} entit${this.ret.rules === 1 ? "y" : "ies"} keep less than Home Assistant's ${this.ret.default_days} days of state history.
           ${this.ret.last_run ? `Last run ${this._when(this.ret.last_run.ts)}: ${this.ret.last_run.rows.toLocaleString()} rows deleted.` : "Has not run yet."}
           ${this.ret.run_at ? `Runs nightly at ${this.ret.run_at}${this.ret.automation ? " by an automation" : ""}.` : "Nightly run is off (see the integration options)."}</span>
         ${this.ret.automation ? L`<a href=${this.ret.automation.link} @click=${(s) => {
       s.preventDefault(), this.dispatchEvent(new CustomEvent("navigate", { detail: this.ret.automation.link }));
-    }}>Open the automation ↗</a>` : X}
-        <span class="sp"></span><span class="info" title="The nightly job is a normal Home Assistant automation, kept up to date by this integration (category DB Storage). Change its time or turn it off in the integration options. Use Run retention now in the menu beside Re-Scan to run it immediately. Rows it deletes are not backed up.">i</span></div>` : X}
+    }}>Open the automation ↗</a>` : Y}
+        <span class="sp"></span><span class="info" title="The nightly job is a normal Home Assistant automation, kept up to date by this integration (category DB Storage). Change its time or turn it off in the integration options. Use Run retention now in the menu beside Re-Scan to run it immediately. Rows it deletes are not backed up.">i</span></div>` : Y}
       ${this.freedMsg ? L`<div class="card" style="border-color:var(--success-color,green)">${this.freedMsg} <span class="sp"></span><button @click=${() => {
       this.freedMsg = null, this.requestUpdate();
-    }}>Dismiss</button></div>` : X}
+    }}>Dismiss</button></div>` : Y}
       ${t.length ? L`
       ${i.length ? L`<div class="selbar"><b>${i.length} selected</b><span class="muted">${Q(n)} of backup files would be recovered</span><span style="flex:1"></span>
         <button @click=${() => this.sel = /* @__PURE__ */ new Set()}>Clear</button><button class="danger" @click=${() => {
       this.err = null, this.dlg = !0;
-    }}>Delete selected…</button></div>` : X}
+    }}>Delete selected…</button></div>` : Y}
       <div class="tablewrap"><div class="row head"><input type="checkbox" .checked=${a} @change=${(s) => this.sel = s.target.checked ? new Set(t.map((l) => l.id)) : /* @__PURE__ */ new Set()} title="Select all"><span>When</span><span class="c2">Action</span><span class="c3 r" title="Estimated database space freed, not the size of the backup">Est. freed</span><span class="c4 r" title="Compressed backup file for this action">Backup</span><span class="c5">Status</span><span></span></div>
       ${t.map((s) => L`
         <div class="row item ${this.sel.has(s.id) ? "sel" : ""}" @click=${() => this.open = this.open === s.id ? null : s.id}>
@@ -25050,8 +25050,8 @@ History records: ${e.journal_path}` : ""}>${e ? L`<b>${Q(e.bytes + e.journal_byt
           <span class="c5"><span class="chip ${s.status}">${EP[s.status] || s.status}</span></span>
           <span>${this._undoable(s) ? L`<button ?disabled=${this.busy} @click=${(l) => {
       l.stopPropagation(), this.dispatchEvent(new CustomEvent("undo", { detail: s }));
-    }}>Undo</button>` : X}</span></div>
-        ${this.open === s.id ? this._detail(s) : X}`)}</div>` : L`<div class="tablewrap"><div class="empty">No actions yet. Select entities on the Entities tab and choose an action; every change is recorded here so it can be undone.</div></div>`}
+    }}>Undo</button>` : Y}</span></div>
+        ${this.open === s.id ? this._detail(s) : Y}`)}</div>` : L`<div class="tablewrap"><div class="empty">No actions yet. Select entities on the Entities tab and choose an action; every change is recorded here so it can be undone.</div></div>`}
       ${this._dlg()}`;
   }
 }
@@ -25319,8 +25319,8 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
     const e = t.before && t.now ? t.before.file_bytes - t.now.file_bytes : 0, i = t.before && (t.before.free_bytes ?? 0) < 1048576;
     return t.phase === "confirm" ? L`<div class="modal" @click=${() => this.reclaim = null}><div class="dlg" @click=${(n) => n.stopPropagation()}>
       <h3>Reclaim free space</h3>
-      <div>${t.before ? L`The database file is <b>${Q(t.before.file_bytes)}</b> and about <b>${Q(t.before.free_bytes)}</b> of it is empty space left behind by deleted data.` : "Checking the file…"}
-        ${i ? "That is too little to be worth a repack." : "Reclaiming rewrites the file so that space goes back to the disk."}</div>
+      <div>${t.before ? L`The database file is <b>${Q(t.before.file_bytes)}</b> and at least <b>${Q(t.before.free_bytes)}</b> of it is empty space left behind by deleted data.` : "Checking the file…"}
+        ${i ? "That is too little to be worth a repack." : "Reclaiming rewrites the file so that space goes back to the disk. You usually get back a little more than that, because the rest of the file is packed tighter and the recorder clears anything past its keep-days limit first."}</div>
       <ul><li>It can take several minutes on a small device, and recorder writes queue up meanwhile (nothing is lost).</li>
         <li>It needs free disk space roughly equal to the database size while it runs.</li>
         <li>Only do this when little else is going on; Home Assistant keeps running.</li></ul>

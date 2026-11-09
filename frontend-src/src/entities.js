@@ -33,7 +33,7 @@ export class DbEntities extends LitElement {
     .row>span,.row>a{overflow:hidden;text-overflow:ellipsis;min-width:0} .eid{font-weight:600;text-decoration:none;color:var(--primary-text-color)} .eid:hover{color:var(--primary-color)}
     .size{position:relative;text-align:right;font-variant-numeric:tabular-nums;font-weight:600} .size i{position:absolute;right:0;top:-2px;bottom:-2px;background:var(--primary-color);opacity:.2;border-radius:4px}
     .size span{position:relative}
-    .size i.bar2{display:flex;background:none;opacity:1;overflow:hidden} .seg{display:block;height:100%;min-width:0} .seg.st{background:var(--ha-color-primary-20,#488fc2)} .seg.hs{background:var(--ha-color-border-primary-loud,#8353d1)}
+    .size i.bar2{display:flex;background:none;opacity:1;overflow:hidden} .seg{display:block;height:100%;min-width:0} .seg.st{background:color-mix(in srgb,var(--ha-color-primary-20,#488fc2) 55%,transparent)} .seg.hs{background:color-mix(in srgb,var(--ha-color-border-primary-loud,#8353d1) 50%,transparent)}
     .tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:4px} .tip .pop{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:15;width:250px;text-align:left;white-space:normal;font-weight:400;font-size:12px;line-height:1.45;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px}
     .tip:hover .pop,.tip:focus .pop{display:block} .pop i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px} .pop div{margin:3px 0}
     .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--secondary-text-color);color:var(--secondary-text-color);font-size:11px;font-style:italic;font-family:serif;cursor:help;flex:0 0 auto}
@@ -137,6 +137,8 @@ export class DbEntities extends LitElement {
     const maxB = Math.max(...vis.map(sz), 1);
     const allOn = vis.length > 0 && vis.every((r) => this.selected.has(r.entity_id));
     const selBytes = (d.items || []).filter((i) => this.selected.has(i.entity_id)).reduce((s, i) => s + sz(i), 0);
+    const inList = new Set((d.items || []).map((i) => i.entity_id));
+    const hidden = [...this.selected].filter((id) => !inList.has(id)).length;  // ticked earlier, no longer matched by the filters or search
     const active = Object.entries(this.filters).flatMap(([f, vs]) => vs.map((v) => [f, v]));
     return html`
       <div class="bar">
@@ -145,7 +147,7 @@ export class DbEntities extends LitElement {
         <label class="hideauto" title="Automation entities are hidden by default. Untick to include them."><input type="checkbox" .checked=${this.hideAuto} @change=${(e) => this._emit("hideauto", e.target.checked)}> Hide automations</label>
         <button class="filtertoggle" @click=${() => { this._facetsOpen = !this._facetsOpen; this.requestUpdate(); }}>Filters${active.length ? ` (${active.length})` : ""}</button>
       </div>
-      ${this.selected.size ? html`<div class="selbar"><b>${this.selected.size} selected</b>
+      ${this.selected.size ? html`<div class="selbar"><b>${this.selected.size} selected</b>${hidden ? html` <span class="muted" title="These were ticked earlier and are not in the list now (filters, search or period changed). Actions still include them.">(${hidden} not in the current list)</span> <button title="Drop the selected entities that are not in the current list" @click=${() => this._emit("selected", new Set([...this.selected].filter((id) => inList.has(id))))}>Keep only listed</button>` : nothing}
         <button class="x" title="Clear selection" aria-label="Clear selection" @click=${() => this._emit("selected", new Set())}>✕</button>
         <span class="muted">≈ ${fmtBytes(selBytes)} of ${win ? "data written in this period" : "entity data"}</span>
         ${this.selected.size < d.items.length ? html`<button @click=${() => this._emit("selected", new Set(d.items.map((i) => i.entity_id)))}>Select all ${d.items.length.toLocaleString()} matching</button>` : nothing}

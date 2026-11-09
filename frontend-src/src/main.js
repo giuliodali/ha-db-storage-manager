@@ -103,8 +103,8 @@ class DbStoragePanel extends LitElement {
     const nothing = r.before && (r.before.free_bytes ?? 0) < 1048576;
     if (r.phase === "confirm") return html`<div class="modal" @click=${() => (this.reclaim = null)}><div class="dlg" @click=${(e) => e.stopPropagation()}>
       <h3>Reclaim free space</h3>
-      <div>${r.before ? html`The database file is <b>${fmtBytes(r.before.file_bytes)}</b> and about <b>${fmtBytes(r.before.free_bytes)}</b> of it is empty space left behind by deleted data.` : "Checking the file…"}
-        ${nothing ? "That is too little to be worth a repack." : "Reclaiming rewrites the file so that space goes back to the disk."}</div>
+      <div>${r.before ? html`The database file is <b>${fmtBytes(r.before.file_bytes)}</b> and at least <b>${fmtBytes(r.before.free_bytes)}</b> of it is empty space left behind by deleted data.` : "Checking the file…"}
+        ${nothing ? "That is too little to be worth a repack." : "Reclaiming rewrites the file so that space goes back to the disk. You usually get back a little more than that, because the rest of the file is packed tighter and the recorder clears anything past its keep-days limit first."}</div>
       <ul><li>It can take several minutes on a small device, and recorder writes queue up meanwhile (nothing is lost).</li>
         <li>It needs free disk space roughly equal to the database size while it runs.</li>
         <li>Only do this when little else is going on; Home Assistant keeps running.</li></ul>
