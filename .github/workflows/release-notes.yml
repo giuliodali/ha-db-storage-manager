@@ -22,10 +22,14 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           version="${TAG#v}"
-          awk -v v="$version" '
-            /^## / { if (found) exit; if ($2 == v) { found = 1; next } }
-            found { print }
-          ' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
+          # A pre-release tag such as v1.0.1-beta.1 uses the notes of 1.0.1.
+          for v in "$version" "${version%%-*}"; do
+            awk -v v="$v" '
+              /^## / { if (found) exit; if ($2 == v) { found = 1; next } }
+              found { print }
+            ' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
+            [ -s notes.md ] && break
+          done
           if [ ! -s notes.md ]; then
             echo "No '## $version' section in CHANGELOG.md, leaving the release notes as they are."
             exit 0
