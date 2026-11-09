@@ -25303,7 +25303,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       await new Promise((a) => setTimeout(a, 4e3));
       try {
         const a = await this._ws("db_size");
-        if (this.reclaim = { ...this.reclaim, now: a }, (a.free_bytes ?? 0) <= e) break;
+        if (this.reclaim = { ...this.reclaim, now: a }, this.live = a, (a.free_bytes ?? 0) <= e) break;
       } catch {
       }
     }
@@ -25411,7 +25411,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       try {
         for (; this.job = await this._ws("action_status"), !!this.job.running; )
           await new Promise((t) => setTimeout(t, 700));
-        await this._loadActions(), this.job.error && (this.error = "Action failed: " + this.job.error), this._loadEntities(!1);
+        await this._loadActions(), this.job.error && (this.error = "Action failed: " + this.job.error), this._loadEntities(!1), this._loadLive();
       } catch (t) {
         this.error = t.message || JSON.stringify(t);
       }

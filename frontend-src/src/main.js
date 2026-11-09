@@ -88,6 +88,7 @@ class DbStoragePanel extends LitElement {
       try {
         const now = await this._ws("db_size");
         this.reclaim = { ...this.reclaim, now };
+        this.live = now;  // the Database size and Free KPIs follow the same reading
         if ((now.free_bytes ?? 0) <= target) break;
       } catch (e) { /* busy */ }
     }
@@ -183,6 +184,7 @@ class DbStoragePanel extends LitElement {
       await this._loadActions();
       if (this.job.error) this.error = "Action failed: " + this.job.error;
       this._loadEntities(false);
+      this._loadLive();  // the file size and free space changed too
     } catch (e) { this.error = e.message || JSON.stringify(e); }
     this._jobPolling = false;
   }
