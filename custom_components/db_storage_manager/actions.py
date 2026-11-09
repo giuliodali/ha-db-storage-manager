@@ -327,7 +327,7 @@ async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], stat
     summary = f"{KINDS[kind]}: {len(entity_ids)} entit{'y' if len(entity_ids) == 1 else 'ies'}"
     action_id = await hass.async_add_executor_job(
         journal.add_action, time.time(), kind, summary, list(records.values()), est)
-    progress.update(action_id=action_id, total=len(entity_ids) * (2 if kind != "disable" else 1), done=0)
+    progress.update(action_id=action_id, total=len(entity_ids), done=0)
 
     def finish_entity(rec: dict[str, Any], note: str | None = None, ok: bool | None = None) -> None:
         if note:
@@ -359,7 +359,7 @@ async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], stat
 
     # 2. Save one backup file for the whole batch, then delete long-term statistics (and state history).
     if kind in ("delete_history", "disable_and_clear"):
-        progress["phase"] = "Saving backup"
+        progress.update(phase="Saving backup", total=len(records), done=0)  # each phase counts its own entities
         ok_ids = [e for e, r in records.items() if r["ok"]]
         for eid, rec in records.items():
             if not rec["ok"]:
