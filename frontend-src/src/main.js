@@ -205,8 +205,7 @@ class DbStoragePanel extends LitElement {
       const a = m.undo;
       return html`<div class="modal" @click=${() => (this.modal = null)}><div class="dlg" @click=${(e) => e.stopPropagation()}>
         <h3>Undo this action?</h3>
-        <div>${a.summary}. This turns disabled entities back on, puts retention rules back as they were, and restores what was cleared (statistics and state history) from the saved backup. The backup file is deleted afterwards.</div>
-        ${a.entities.some((e) => e.steps?.states?.purged) ? html`<ul><li>Cleared state history is restored from the same backup.</li></ul>` : ""}
+        <div>${a.summary}. Re-enables entities, restores rules, statistics and state history from the backup, then deletes the backup.</div>
         <div class="row"><button @click=${() => (this.modal = null)}>Cancel</button><button class="go" @click=${() => this._runUndo()}>Undo</button></div></div></div>`;
     }
     const pv = m.pv, n = pv.entities.length;
@@ -221,16 +220,15 @@ class DbStoragePanel extends LitElement {
         ${reset ? html`<div>Back to Home Assistant's default. Nothing is deleted.</div>`
           : html`<label class="chk" title="Saved in a backup first, so it can be undone. If unticked, the nightly automation deletes them without a backup."><input type="checkbox" .checked=${m.applyNow} @change=${(e) => this._retChange({ applyNow: e.target.checked })}>
           Delete older states now${pv.est_bytes ? ` (${pv.entities.reduce((s, e) => s + (e.rows || 0), 0).toLocaleString()} states, ${fmtBytes(pv.est_bytes)})` : ""}</label>`}`
-        : clears ? html`<div>Frees about <b>${fmtBytes(pv.est_bytes)}</b> of database space${m.states ? "" : html` (state history not included)`}. A compressed backup of everything cleared is saved first.</div>` : html`<div>Nothing is deleted. These entities stop recording new data.</div>`}
+        : clears ? html`<div>Frees about <b>${fmtBytes(pv.est_bytes)}</b>. Backed up first; undo from History.</div>` : html`<div>Stops recording. Nothing is deleted.</div>`}
       ${clears ? html`<label class="chk"><input type="checkbox" .checked=${m.states} @change=${(e) => this._setStates(e.target.checked)}>
-        Also clear recorded state history${pv.est_states_bytes ? ` (${fmtBytes(pv.est_states_bytes)})` : ""}. It is saved in the backup too, so it can be restored.</label>` : ""}
-      ${pv.warnings.includes("no_stats") ? html`<div class="warnbox">${pv.entities.filter((e) => e.no_stats).length} of these have no long-term statistics, so deleted states are gone for good.</div>` : ""}
-      ${pv.warnings.includes("no_effect") ? html`<div class="warnbox">Home Assistant already keeps this few days, so the rule changes nothing.</div>` : ""}
-      ${pv.warnings.includes("referenced") ? html`<div class="warnbox">Some of these are used in your automations, dashboards or helpers. They will keep working only if the entity stays enabled.</div>` : ""}
-      ${pv.warnings.includes("active") ? html`<div class="warnbox">Some are still active and will start recording again within minutes. Use "Disable + clear" to stop that.</div>` : ""}
-      <ul class="pl">${shown.map((e) => html`<li><b>${e.name}</b>${e.does.length ? html` <span class="muted">${e.does.join(", ")}</span>` : ""}${e.notes.map((t) => html`<div class="muted">${t}</div>`)}</li>`)}
+        Also clear state history${pv.est_states_bytes ? ` (${fmtBytes(pv.est_states_bytes)})` : ""}</label>` : ""}
+      ${pv.warnings.includes("no_stats") ? html`<div class="warnbox">${pv.entities.filter((e) => e.no_stats).length} have no long-term statistics, so their history is gone once cleared (Undo restores it).</div>` : ""}
+      ${pv.warnings.includes("no_effect") ? html`<div class="warnbox">Home Assistant already keeps this few days: no change.</div>` : ""}
+      ${pv.warnings.includes("referenced") ? html`<div class="warnbox">Some are used in automations, dashboards or helpers and work only while enabled.</div>` : ""}
+      ${pv.warnings.includes("active") ? html`<div class="warnbox">Some are still active and will record again within minutes. Use "Disable + clear".</div>` : ""}
+      <ul class="pl">${shown.map((e) => html`<li><b>${e.name}</b>${e.notes.map((t) => html`<div class="muted">${t}</div>`)}</li>`)}
         ${n > shown.length ? html`<li class="muted">and ${n - shown.length} more</li>` : ""}</ul>
-      ${retention ? "" : html`<div class="muted">${pv.undo}</div>`}
       ${n > 25 ? html`<div class="muted" style="margin-top:8px">Type <b>${n}</b> to confirm: <input class="conf" .value=${m.text} @input=${(e) => (this.modal = { ...this.modal, text: e.target.value })}></div>` : ""}
       <div class="row"><button @click=${() => (this.modal = null)}>Cancel</button>
         <button class="go ${clears ? "danger" : ""}" ?disabled=${(n > 25 && m.text.trim() !== String(n)) || (reduce && !reset && pv.warnings.includes("no_effect"))} @click=${() => this._runAction()}>${pv.label}</button></div></div></div>`;
