@@ -24807,7 +24807,7 @@ ${o}`} style="overflow:hidden;text-overflow:ellipsis" @click=${(s) => {
       <span class="c-int muted">${t.integration}</span><span class="c-dev muted">${t.device}</span><span class="c-age muted">${t.age}</span><span class="c-status"><span class="sugg ${IP[t.suggestion] || ""}" title=${`${t.suggestion} (${(t.confidence || "").toLowerCase()} confidence)
 ${(t.reasons || []).join(`
 `)}`}>${t.suggestion}</span></span>
-      <span class="size" title=${this._splitTip(t, i(t))}><i class="bar2" style="width:${Math.max(2, i(t) / e * 100)}%"><b class="seg st" style="flex:${this._split(t)}"></b><b class="seg hs" style="flex:${1 - this._split(t)}"></b></i><span>${Q(i(t))}</span></span></div>`;
+      ${t.size_stale ? L`<span class="size stale" title="Out of date: this entity was changed by an action. Re-Scan refreshes it."><span>⟳</span></span>` : L`<span class="size" title=${this._splitTip(t, i(t))}><i class="bar2" style="width:${Math.max(2, i(t) / e * 100)}%"><b class="seg st" style="flex:${this._split(t)}"></b><b class="seg hs" style="flex:${1 - this._split(t)}"></b></i><span>${Q(i(t))}</span></span>`}</div>`;
   }
 }
 Lt(yc, "properties", {
@@ -24845,7 +24845,7 @@ Lt(yc, "properties", {
     .row{border-bottom:1px solid var(--divider-color);position:relative} .row:hover{background:color-mix(in srgb,var(--primary-text-color) 5%,transparent)} .row.sel:hover{background:color-mix(in srgb,var(--primary-color) 15%,transparent)} .row.sel{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
     .row>span,.row>a{overflow:hidden;text-overflow:ellipsis;min-width:0} .eid{font-weight:600;text-decoration:none;color:var(--primary-text-color)} .eid:hover{color:var(--primary-color)}
     .size{position:relative;text-align:right;font-variant-numeric:tabular-nums;font-weight:600} .size i{position:absolute;right:0;top:-2px;bottom:-2px;background:var(--primary-color);opacity:.2;border-radius:4px}
-    .size span{position:relative}
+    .size span{position:relative} .size.stale{color:var(--secondary-text-color);font-weight:400;cursor:help} .size.stale span{font-size:16px}
     .size i.bar2{display:flex;background:none;opacity:1;overflow:hidden} .seg{display:block;height:100%;min-width:0} .seg.st{background:color-mix(in srgb,var(--ha-color-primary-20,#488fc2) 55%,transparent)} .seg.hs{background:color-mix(in srgb,var(--ha-color-border-primary-loud,#8353d1) 50%,transparent)}
     .tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:4px} .tip .pop{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:15;width:250px;text-align:left;white-space:normal;font-weight:400;font-size:12px;line-height:1.45;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px}
     .tip:hover .pop,.tip:focus .pop{display:block} .pop i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px} .pop div{margin:3px 0}
@@ -25270,13 +25270,14 @@ class xc extends Ae {
   // True after an action or undo until the next scan: the sizes on screen no longer match the database.
   _needsResync() {
     var t, e;
-    return !!(this.resync || (t = this.data) != null && t.stale || (e = this.all) != null && e.stale);
+    return !!this.resync || (((t = this.all) == null ? void 0 : t.stale_count) || ((e = this.data) == null ? void 0 : e.stale_count) || 0) > 0;
   }
   _scanTip() {
+    var i, n;
     const t = this.data || this.all;
     if (!t) return "";
     const e = new Date(this._scanTs * 1e3).toLocaleString();
-    return this._needsResync() ? `Re-Scan needed: something was changed (disabled, cleared or restored) since the last scan at ${e}, so the sizes and suggestions shown are out of date. Press Re-Scan to refresh them.` : `Last scanned ${e}${t.from_disk ? " (saved from before the last restart)" : ""}
+    return this.resync && !((i = this.all) != null && i.stale_count || (n = this.data) != null && n.stale_count) ? `Retention deleted old states since the last scan at ${e}, so sizes are out of date. Press Re-Scan to refresh them.` : this._needsResync() ? `${(this.all || this.data).stale_count} entit${(this.all || this.data).stale_count === 1 ? "y was" : "ies were"} changed by an action since the last scan at ${e}, so their sizes show ⟳. Re-Scan refreshes just those and anything new.` : `Last scanned ${e}${t.from_disk ? " (saved from before the last restart)" : ""}
 ${t.match_count.toLocaleString()} entities match the current filters · ${Q(t.match_bytes)} estimated
 The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
   }
@@ -25413,7 +25414,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       try {
         for (; this.job = await this._ws("action_status"), !!this.job.running; )
           await new Promise((t) => setTimeout(t, 700));
-        await this._loadActions(), this.job.error && (this.error = "Action failed: " + this.job.error), this.job.error || (this.resync = !this._wantResync), this._loadEntities(!1);
+        await this._loadActions(), this.job.error && (this.error = "Action failed: " + this.job.error), this._loadEntities(!1);
       } catch (t) {
         this.error = t.message || JSON.stringify(t);
       }
@@ -25428,7 +25429,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       <div style="height:6px;border-radius:3px;background:var(--divider-color);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.max(5, e)}%;background:var(--primary-color);transition:width .4s"></div></div></div>`;
     const i = t.result;
     return L`<div class="rcard"><h3>${t.error ? "Something went wrong" : t.label === "Undo" ? "Undo finished" : "Done"}</h3>
-      <div class="sub">${t.error || (t.label === "Undo" ? `Status: ${i == null ? void 0 : i.status}.` : `Recorded in History, where you can undo it. ${this._wantResync ? "Sizes are refreshing." : "Sizes on screen are out of date until you Re-Scan."}`)}</div>
+      <div class="sub">${t.error || (t.label === "Undo" ? `Status: ${i == null ? void 0 : i.status}.` : `Recorded in History, where you can undo it. ${this._wantResync ? "Sizes are refreshing." : "Changed entities show ⟳ until you Re-Scan."}`)}</div>
       <div style="margin-top:8px"><button class="rescan" @click=${() => {
       this.tab = "history", this._loadActions(), this.job = null;
     }}>View in History</button>
@@ -25490,12 +25491,12 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       this.error = t.message;
     }
   }
-  async _loadEntities(t) {
+  async _loadEntities(t, e = !1) {
     try {
-      const e = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh: t, limit: 5e3, ...this.window ? { window: this.window } : {} });
-      this.error = null, e.no_data ? (this.data = null, this.all = null) : (this.data = e, this._scanTs = Date.now() / 1e3 - e.scan_age_s, !Object.values(this.filters).some((i) => i.length) && !this.search && !this.window && !this._exclude().length ? this.all = e : this.all = await this._ws("entities", { filters: {}, search: "", refresh: !1, limit: 5e3 })), (e.no_data || e.scanning || t) && this._poll(), await this.updateComplete, requestAnimationFrame(() => this.chipsIn = !0);
-    } catch (e) {
-      this.error = e.message || JSON.stringify(e);
+      const i = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh: t, full: e, limit: 5e3, ...this.window ? { window: this.window } : {} });
+      this.error = null, i.no_data ? (this.data = null, this.all = null) : (this.data = i, this._scanTs = Date.now() / 1e3 - i.scan_age_s, !Object.values(this.filters).some((n) => n.length) && !this.search && !this.window && !this._exclude().length ? this.all = i : this.all = await this._ws("entities", { filters: {}, search: "", refresh: !1, limit: 5e3 })), (i.no_data || i.scanning || t) && this._poll(), await this.updateComplete, requestAnimationFrame(() => this.chipsIn = !0);
+    } catch (i) {
+      this.error = i.message || JSON.stringify(i);
     }
   }
   // Polls scan progress until the background scan finishes, then reloads the results.
@@ -25573,7 +25574,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
         ${this.all || this.data ? L`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
           <span class="split">
             <button class="rescan main ${this._needsResync() ? "need" : ""}" ?disabled=${!!((e = this.progress) != null && e.running)} aria-label="Re-Scan"
-              title="Re-Scan: re-reads the database and your configuration from scratch (table and entity sizes, last update times, and where each entity is used). Takes several seconds; the page keeps working meanwhile. Filtering the grid is instant and does not need it."
+              title="Re-Scan: refreshes the entities changed by an action (shown with ⟳) and anything new since the last scan, then re-checks where entities are used. Quick. Use Full Re-Scan from the menu to re-read everything."
               @click=${() => this._loadEntities(!0)}>
               <svg viewBox="0 0 24 24" width="18" height="18" class=${(i = this.progress) != null && i.running ? "spin" : ""}><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg></button>
             <button class="rescan arrow" aria-label="More actions" title="More actions" @click=${(c) => {
@@ -25583,7 +25584,10 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
             ${this.menuOpen ? L`<div class="menu-pop" @click=${(c) => c.stopPropagation()}>
               <button @click=${() => {
       this.menuOpen = !1, this._loadEntities(!0);
-    }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
+    }}><b>Re-Scan</b><span>Refresh entities changed by an action and anything new.</span></button>
+              <button @click=${() => {
+      this.menuOpen = !1, this._loadEntities(!0, !0);
+    }}><b>Full Re-Scan</b><span>Re-read every entity from scratch.</span></button>
               <div><button ?disabled=${!((n = this.ret) != null && n.rules) || this.retBusy || ((a = this.job) == null ? void 0 : a.running)} @click=${() => this._runRetention()}><b>Run retention now</b><span>${(o = this.ret) != null && o.rules ? (s = this.ret) != null && s.automation ? "Runs the DB Storage automation in Home Assistant now." : "Deletes states older than each rule now." : "No retention rules yet."}</span></button>
                 ${(l = this.ret) != null && l.automation ? L`<a @click=${() => {
       this.menuOpen = !1, this._go(this.ret.automation.link);

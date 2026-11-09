@@ -56,23 +56,20 @@ def _scale(weights: dict[str, float], total_bytes: float) -> dict[str, float]:
     return {k: v / total * total_bytes for k, v in weights.items()}
 
 
-def entity_estimates(session, table_bytes: dict[str, int], progress=None) -> dict[str, Any]:
-    """Return {"entities": {id: metrics}, "timings_ms": {...}}.
+def query_entities(session, progress=None, only: set[str] | None = None) -> dict[str, dict[str, Any]]:
+    """Read the raw per-entity weights and row counts, for every entity or only the ``only`` ids.
 
-    ``table_bytes`` maps table name to true bytes (from queries.table_sizes).
+    The weights are what the sizes are scaled from, and they are kept with each entity so a later
+    partial scan can rescale everything without re-reading the entities it leaves alone.
     """
-    timings: dict[str, float] = {}
     ents: dict[str, dict[str, Any]] = {}
+    keep = (lambda eid: True) if only is None else (lambda eid: eid in only)
 
     def entry(eid: str) -> dict[str, Any]:
         return ents.setdefault(
             eid,
-            {
-                "entity_id": eid,
-                "states_rows": 0, "states_bytes": 0.0, "attrs_bytes": 0.0,
-                "stats_rows": 0, "short_rows": 0, "stats_bytes": 0.0,
-                "last_ts": None,
-            },
+            {"entity_id": eid, "states_rows": 0, "states_w": 0.0, "attrs_w": 0.0,
+             "stats_rows": 0, "short_rows": 0, "last_ts": None},
         )
 
     def bump_ts(e: dict[str, Any], ts: float | None) -> None:
@@ -80,41 +77,77 @@ def entity_estimates(session, table_bytes: dict[str, int], progress=None) -> dic
             e["last_ts"] = ts
 
     progress and progress("states")
-    t = time.monotonic()
-    state_w: dict[str, float] = {}
     for r in session.execute(_STATES_SQL, {"ovh": ROW_OVERHEAD}):
-        e = entry(r.entity_id)
-        e["states_rows"] = r.n_rows
-        state_w[r.entity_id] = float(r.weight or 0)
-        bump_ts(e, r.last_ts)
-    states_total = (table_bytes.get("states") or 0) + (table_bytes.get("states_meta") or 0)
-    for eid, b in _scale(state_w, states_total).items():
-        ents[eid]["states_bytes"] = b
-    timings["states_ms"] = round((time.monotonic() - t) * 1000, 1)
-
-    progress and progress("attributes")
-    t = time.monotonic()
-    attr_w = {r.entity_id: float(r.weight or 0) for r in session.execute(_ATTRS_SQL)}
-    for eid, b in _scale(attr_w, table_bytes.get("state_attributes") or 0).items():
-        entry(eid)["attrs_bytes"] = b
-    timings["attributes_ms"] = round((time.monotonic() - t) * 1000, 1)
-
-    progress and progress("statistics")
-    t = time.monotonic()
-    for table, key in (("statistics", "stats_rows"), ("statistics_short_term", "short_rows")):
-        rows = {r.sid: r for r in session.execute(_STATS_SQL[table])}
-        counts = {sid: float(r.n_rows) for sid, r in rows.items()}
-        scaled = _scale(counts, table_bytes.get(table) or 0)
-        for sid, r in rows.items():
-            e = entry(sid)
-            e[key] = r.n_rows
-            e["stats_bytes"] += scaled[sid]
+        if keep(r.entity_id):
+            e = entry(r.entity_id)
+            e["states_rows"], e["states_w"] = r.n_rows, float(r.weight or 0)
             bump_ts(e, r.last_ts)
-    timings["statistics_ms"] = round((time.monotonic() - t) * 1000, 1)
+    progress and progress("attributes")
+    for r in session.execute(_ATTRS_SQL):
+        if keep(r.entity_id):
+            entry(r.entity_id)["attrs_w"] = float(r.weight or 0)
+    progress and progress("statistics")
+    for table, key in (("statistics", "stats_rows"), ("statistics_short_term", "short_rows")):
+        for r in session.execute(_STATS_SQL[table]):
+            if keep(r.sid):
+                e = entry(r.sid)
+                e[key] = r.n_rows
+                bump_ts(e, r.last_ts)
+    return ents
 
+
+def scale_entities(ents: dict[str, dict[str, Any]], table_bytes: dict[str, int]) -> None:
+    """Fill in states_bytes, attrs_bytes, stats_bytes and total_bytes so each table's shares add up to its true size."""
+    states_total = (table_bytes.get("states") or 0) + (table_bytes.get("states_meta") or 0)
+    for key, out, total in (("states_w", "states_bytes", states_total), ("attrs_w", "attrs_bytes", table_bytes.get("state_attributes") or 0)):
+        for eid, b in _scale({k: e[key] for k, e in ents.items()}, total).items():
+            ents[eid][out] = b
+    for e in ents.values():
+        e["stats_bytes"] = 0.0
+    for table, key in (("statistics", "stats_rows"), ("statistics_short_term", "short_rows")):
+        for eid, b in _scale({k: float(e[key]) for k, e in ents.items() if e[key]}, table_bytes.get(table) or 0).items():
+            ents[eid]["stats_bytes"] += b
     for e in ents.values():
         e["total_bytes"] = e["states_bytes"] + e["attrs_bytes"] + e["stats_bytes"]
-    return {"entities": ents, "timings_ms": timings}
+
+
+def entity_estimates(session, table_bytes: dict[str, int], progress=None) -> dict[str, Any]:
+    """Return {"entities": {id: metrics}, "timings_ms": {...}}.
+
+    ``table_bytes`` maps table name to true bytes (from queries.table_sizes).
+    """
+    t = time.monotonic()
+    ents = query_entities(session, progress)
+    scale_entities(ents, table_bytes)
+    return {"entities": ents, "timings_ms": {"entities_ms": round((time.monotonic() - t) * 1000, 1)}}
+
+
+def known_ids(session) -> set[str]:
+    """Every entity or statistic id that has data in the database (two tiny queries on the meta tables)."""
+    ids = {r[0] for r in session.execute(text("SELECT entity_id FROM states_meta WHERE entity_id IS NOT NULL"))}
+    ids |= {r[0] for r in session.execute(text("SELECT statistic_id FROM statistics_meta"))}
+    return ids
+
+
+def partial_estimates(session, table_bytes: dict[str, int], previous: dict[str, dict[str, Any]], targets: set[str],
+                      progress=None) -> dict[str, Any] | None:
+    """Refresh only ``targets`` (plus any id the database has that ``previous`` lacks), keeping the rest.
+
+    Returns None when the previous scan did not keep its weights (it came from an older version), so
+    the caller does a full scan instead. The unchanged entities are rescaled from their stored
+    weights, so the totals still add up to the true table sizes.
+    """
+    t = time.monotonic()
+    if any("states_w" not in e for e in previous.values()):
+        return None
+    new = known_ids(session) - set(previous)
+    redo = set(targets) | new
+    fresh = query_entities(session, progress, redo)
+    ents = {eid: dict(e) for eid, e in previous.items() if eid not in redo}
+    ents.update(fresh)
+    scale_entities(ents, table_bytes)
+    return {"entities": ents, "refreshed": len(redo), "new": len(new),
+            "timings_ms": {"entities_ms": round((time.monotonic() - t) * 1000, 1)}}
 
 
 _WIN_STATES_SQL = """

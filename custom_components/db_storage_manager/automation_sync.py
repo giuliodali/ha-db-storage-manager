@@ -20,10 +20,10 @@ from homeassistant.helpers import category_registry as cr, entity_registry as er
 from homeassistant.util.yaml import dump, load_yaml
 
 from . import retention
-from .const import DOMAIN
+from .const import DOMAIN, RETENTION_AUTOMATION_ID
 
 _LOGGER = logging.getLogger(__name__)
-AUTOMATION_ID = "db_storage_retention"
+AUTOMATION_ID = RETENTION_AUTOMATION_ID
 CATEGORY_NAME = "DB Storage"
 ALIAS = "DB Storage: nightly retention"
 DESCRIPTION = (

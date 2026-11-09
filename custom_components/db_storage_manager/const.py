@@ -4,7 +4,8 @@ DOMAIN = "db_storage_manager"
 PANEL_URL_PATH = "db-storage"
 STATIC_URL = "/db_storage_manager_static"
 SNAPSHOT_DIR = "db_storage_manager/snapshots"
-VERSION = "1.0.2"
+VERSION = "1.0.3"
+RETENTION_AUTOMATION_ID = "db_storage_retention"  # id of the automation this integration maintains
 
 CONF_SAMPLE_INTERVAL = "sample_interval"
 DEFAULT_SAMPLE_INTERVAL = "daily"

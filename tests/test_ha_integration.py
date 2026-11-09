@@ -37,7 +37,7 @@ async def test_panel_and_ping(recorder_mock, enable_custom_integrations, hass, h
     assert "db-storage" in hass.data["frontend_panels"]
     client = await hass_ws_client(hass)
     res = await _ws(client, "ping")
-    assert res["success"] and res["result"]["integration_version"] == "1.0.2"
+    assert res["success"] and res["result"]["integration_version"] == "1.0.3"
 
 
 async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -127,7 +127,7 @@ async def test_entities_inventory_and_facets(recorder_mock, enable_custom_integr
     await async_wait_recording_done(hass)
 
     client = await hass_ws_client(hass)
-    res = await _ws(client, "entities", refresh=True, wait=True)
+    res = await _ws(client, "entities", refresh=True, wait=True, full=True)
     assert res["success"], res
     by = {i["entity_id"]: i for i in res["result"]["items"]}
     assert by["sensor.alpha"]["status"] == "Active" and by["sensor.alpha"]["integration"] == "demo"
@@ -179,7 +179,7 @@ async def test_usage_from_helper_and_yaml(recorder_mock, enable_custom_integrati
     await async_wait_recording_done(hass)
 
     client = await hass_ws_client(hass)
-    inv = await _ws(client, "entities", refresh=True, wait=True)
+    inv = await _ws(client, "entities", refresh=True, wait=True, full=True)
     by = {i["entity_id"]: i for i in inv["result"]["items"]}
     assert by["sensor.alpha"]["used_in"] == ["Helper"] and by["sensor.alpha"]["used_count"] == 1
     assert by["sensor.unused"]["used_in"] == ["Not referenced"]
@@ -198,13 +198,15 @@ async def test_usage_from_helper_and_yaml(recorder_mock, enable_custom_integrati
     (tmp_path / "automations.yaml").write_text(
         "- id: '1'\n  alias: Alpha watcher\n  triggers:\n  - trigger: state\n    entity_id: sensor.alpha\n  actions: []\n"
         "- id: '2'\n  alias: Everything\n  actions:\n  - variables:\n      x: \"{{ states.sensor | list }}\"\n"
+        "- id: db_storage_retention\n  alias: 'DB Storage: nightly retention'\n  actions:\n"
+        "  - action: recorder.purge_entities\n    target:\n      entity_id: sensor.alpha\n"
     )
     (tmp_path / "secrets.yaml").write_text("password: sensor.alpha\n")
     u = Usage()
     await hass.async_add_executor_job(scan_yaml_dir, str(tmp_path), Matcher({"sensor.alpha", "sensor.unused"}, {}), u)
     locs = u.locations["sensor.alpha"]
     assert [(l["kind"], l["name"], l["link"]) for l in locs] == [("Automation", "Alpha watcher", "/config/automation/edit/1")]
-    assert u.domain_wide["sensor"] == ["Everything"]
+    assert u.domain_wide["sensor"] == ["Everything"]  # and our own nightly automation is not a reference
 
 
 async def test_background_scan_progress_and_persistence(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -303,7 +305,7 @@ async def test_suggestions_and_period_window(recorder_mock, enable_custom_integr
     hass.states.async_remove("sensor.ghosty")
     client = await hass_ws_client(hass)
 
-    res = await _ws(client, "entities", refresh=True, wait=True)
+    res = await _ws(client, "entities", refresh=True, wait=True, full=True)
     items = {i["entity_id"]: i for i in res["result"]["items"]}
     assert items["sensor.ghosty"]["status"] == "Orphaned"
     assert items["sensor.ghosty"]["suggestion"] == "Remove history"
@@ -340,7 +342,7 @@ async def test_reclaim_db_size_names_and_dashboard_icons(recorder_mock, enable_c
     assert size["success"] and size["result"]["file_bytes"] > 0
     hist_before = hass.data[DOMAIN]["journal"].size_history(0)
 
-    res = await _ws(client, "entities", refresh=True, wait=True)
+    res = await _ws(client, "entities", refresh=True, wait=True, full=True)
     after_scan = hass.data[DOMAIN]["journal"].size_history(0)
     assert len(after_scan) == len(hist_before) + 1 and "undo_bytes" in after_scan[-1]   # a scan adds a chart point
     assert after_scan[-1]["stats_bytes"] is not None and after_scan[-1]["stats_bytes"] > 0   # split of long-term statistics
@@ -411,6 +413,7 @@ async def test_clear_history_action_journal_and_undo(recorder_mock, enable_custo
         StatisticData(start=start + timedelta(hours=i), mean=float(i), min=0.0, max=10.0) for i in range(24)])
     await async_wait_recording_done(hass)
     client = await hass_ws_client(hass)
+    await _ws(client, "entities", refresh=True, wait=True, full=True)
 
     pv = await _ws(client, "preview_action", kind="delete_history", entity_ids=["test:foo"], states=False)
     assert pv["success"] and pv["result"]["entities"][0]["does"] == ["clear long-term statistics"]
@@ -448,8 +451,9 @@ async def test_clear_history_action_journal_and_undo(recorder_mock, enable_custo
     # The restored data is back in the database, so the backup file is gone.
     assert (await _ws(client, "backup_usage"))["result"]["files"] == 0
     assert any("Backup file removed" in n for n in act2["entities"][0]["undo_notes"])
-    # Without a resync request the inventory is only flagged as stale, not rescanned.
-    assert hass.data[DOMAIN]["inventory"].get("stale") is True
+    # Without a resync request the touched entity is patched at once and marked stale, not rescanned.
+    item = next(i for i in hass.data[DOMAIN]["inventory"]["items"] if i["entity_id"] == "test:foo")
+    assert item["size_stale"] is True and item["stats_bytes"] == 0 and item["total_bytes"] == item["states_bytes"] + item["attrs_bytes"]
 
 
 async def test_delete_history_records_removes_backups(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -488,7 +492,7 @@ async def test_disable_and_clear_states_then_undo(recorder_mock, enable_custom_i
         hass.states.async_set("sensor.noisy", str(i), {"i": i, "unit": "x"})
     await async_wait_recording_done(hass)
     client = await hass_ws_client(hass)
-    await _ws(client, "entities", refresh=True, wait=True)       # builds the inventory the preview uses
+    await _ws(client, "entities", refresh=True, wait=True, full=True)       # builds the inventory the preview uses
 
     def state_rows() -> int:
         with session_scope(hass=hass, read_only=True) as s:
@@ -584,7 +588,7 @@ async def test_batch_backup_is_one_file_for_all_entities(recorder_mock, enable_c
             hass.states.async_set(f"sensor.{n}", str(i), {"k": n})
     await async_wait_recording_done(hass)
     client = await hass_ws_client(hass)
-    await _ws(client, "entities", refresh=True, wait=True)
+    await _ws(client, "entities", refresh=True, wait=True, full=True)
     await _ws(client, "apply_action", kind="delete_history", entity_ids=["sensor.one", "sensor.two"], confirm=True, states=True)
     st = await _wait_job(client)
     assert st["error"] is None
@@ -637,7 +641,7 @@ def _count(hass):
 async def test_reduce_retention_deletes_old_rows_with_backup_and_undo(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
     await _retention_fixture(hass)
     client = await hass_ws_client(hass)
-    await _ws(client, "entities", refresh=True, wait=True)
+    await _ws(client, "entities", refresh=True, wait=True, full=True)
     pv = (await _ws(client, "preview_action", kind="reduce_retention", entity_ids=["sensor.old"], keep_days=1))["result"]
     assert pv["entities"][0]["rows"] == 5 and pv["default_days"] >= 1
     assert "no_stats" in pv["warnings"] and pv["entities"][0]["no_stats"]      # a text-like sensor: no statistics to fall back on
@@ -755,3 +759,33 @@ async def test_rules_for_entities_that_no_longer_exist_are_pruned(recorder_mock,
     hass.states.async_remove("sensor.live")
     await retention.async_count(hass)
     assert retention.rules(hass) == {}
+
+
+async def test_partial_rescan_refreshes_only_changed_and_new_entities(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    await _setup(hass)
+    hass.states.async_set("sensor.keep", "1")
+    hass.states.async_set("sensor.touched", "1")
+    await async_wait_recording_done(hass)
+    client = await hass_ws_client(hass)
+    first = (await _ws(client, "entities", refresh=True, wait=True, full=True))["result"]
+    assert all("states_w" in i for i in hass.data[DOMAIN]["inventory"]["items"]) and first["stale_count"] == 0
+    keep_rows = next(i for i in first["items"] if i["entity_id"] == "sensor.keep")["states_rows"]
+    # More data arrives for both, and a brand new entity appears.
+    for n in range(2, 6):
+        hass.states.async_set("sensor.keep", str(n))
+        hass.states.async_set("sensor.touched", str(n))
+    hass.states.async_set("sensor.fresh", "1")
+    await async_wait_recording_done(hass)
+    inv = hass.data[DOMAIN]["inventory"]
+    next(i for i in inv["items"] if i["entity_id"] == "sensor.touched")["size_stale"] = True
+    res = (await _ws(client, "entities", refresh=True, wait=True))["result"]
+    by = {i["entity_id"]: i for i in res["items"]}
+    assert by["sensor.touched"]["states_rows"] > 1 and not by["sensor.touched"].get("size_stale")
+    assert "sensor.fresh" in by                                    # new since the last scan
+    assert by["sensor.keep"]["states_rows"] == keep_rows           # left alone
+    assert res["partial"]["new"] >= 1 and res["partial"]["refreshed"] >= 2
+    tables = sum(t["bytes"] or 0 for t in res["tables"] if t["table"] in ("states", "states_meta"))
+    assert abs(sum(i["states_bytes"] for i in res["items"]) - tables) <= len(res["items"])  # still adds up
+    full = (await _ws(client, "entities", refresh=True, wait=True, full=True))["result"]
+    assert next(i for i in full["items"] if i["entity_id"] == "sensor.keep")["states_rows"] > keep_rows
+    assert full["partial"] is None

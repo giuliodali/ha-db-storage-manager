@@ -61,12 +61,13 @@ class DbStoragePanel extends LitElement {
     return `Last scanned ${fmtAge(age)}`;
   }
   // True after an action or undo until the next scan: the sizes on screen no longer match the database.
-  _needsResync() { return !!(this.resync || this.data?.stale || this.all?.stale); }
+  _needsResync() { return !!this.resync || (this.all?.stale_count || this.data?.stale_count || 0) > 0; }
   _scanTip() {
     const d = this.data || this.all;
     if (!d) return "";
     const when = new Date(this._scanTs * 1000).toLocaleString();
-    if (this._needsResync()) return `Re-Scan needed: something was changed (disabled, cleared or restored) since the last scan at ${when}, so the sizes and suggestions shown are out of date. Press Re-Scan to refresh them.`;
+    if (this.resync && !(this.all?.stale_count || this.data?.stale_count)) return `Retention deleted old states since the last scan at ${when}, so sizes are out of date. Press Re-Scan to refresh them.`;
+    if (this._needsResync()) return `${(this.all || this.data).stale_count} entit${(this.all || this.data).stale_count === 1 ? "y was" : "ies were"} changed by an action since the last scan at ${when}, so their sizes show ⟳. Re-Scan refreshes just those and anything new.`;
     return `Last scanned ${when}${d.from_disk ? " (saved from before the last restart)" : ""}\n` +
       `${d.match_count.toLocaleString()} entities match the current filters · ${fmtBytes(d.match_bytes)} estimated\n` +
       `The scan took ${(d.timings_ms.total_ms / 1000).toFixed(1)} s`;
@@ -184,7 +185,6 @@ class DbStoragePanel extends LitElement {
       }
       await this._loadActions();
       if (this.job.error) this.error = "Action failed: " + this.job.error;
-      if (!this.job.error) this.resync = !this._wantResync;  // without a re-scan the sizes on screen are now out of date
       this._loadEntities(false);  // with "Re-Scan now" the backend has started a scan; this shows its progress
     } catch (e) { this.error = e.message || JSON.stringify(e); }
     this._jobPolling = false;
@@ -197,7 +197,7 @@ class DbStoragePanel extends LitElement {
       <div style="height:6px;border-radius:3px;background:var(--divider-color);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.max(5, pct)}%;background:var(--primary-color);transition:width .4s"></div></div></div>`;
     const res = j.result;
     return html`<div class="rcard"><h3>${j.error ? "Something went wrong" : j.label === "Undo" ? "Undo finished" : "Done"}</h3>
-      <div class="sub">${j.error || (j.label === "Undo" ? `Status: ${res?.status}.` : `Recorded in History, where you can undo it. ${this._wantResync ? "Sizes are refreshing." : "Sizes on screen are out of date until you Re-Scan."}`)}</div>
+      <div class="sub">${j.error || (j.label === "Undo" ? `Status: ${res?.status}.` : `Recorded in History, where you can undo it. ${this._wantResync ? "Sizes are refreshing." : "Changed entities show ⟳ until you Re-Scan."}`)}</div>
       <div style="margin-top:8px"><button class="rescan" @click=${() => { this.tab = "history"; this._loadActions(); this.job = null; }}>View in History</button>
         <button class="rescan" @click=${() => (this.job = null)}>Dismiss</button></div></div>`;
   }
@@ -246,9 +246,9 @@ class DbStoragePanel extends LitElement {
   async _loadAll() { await Promise.all([this._loadEntities(false), this._loadHistory(), this._loadLive(), this._loadRet()]); }
   async _loadLive() { try { this.live = await this._ws("db_size"); } catch (e) { /* recorder busy: the snapshot is shown instead */ } }
   async _loadHistory() { try { this.history = await this._ws("size_history", { days: 3650 }); } catch (e) { this.error = e.message; } }
-  async _loadEntities(refresh) {
+  async _loadEntities(refresh, full = false) {
     try {
-      const res = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh, limit: 5000, ...(this.window ? { window: this.window } : {}) });
+      const res = await this._ws("entities", { filters: this.filters, search: this.search, expand: this.expand, exclude_domains: this._exclude(), refresh, full, limit: 5000, ...(this.window ? { window: this.window } : {}) });
       this.error = null;
       if (res.no_data) { this.data = null; this.all = null; } else {
         this.data = res;
@@ -320,13 +320,14 @@ class DbStoragePanel extends LitElement {
         ${this.all || this.data ? html`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
           <span class="split">
             <button class="rescan main ${this._needsResync() ? "need" : ""}" ?disabled=${!!this.progress?.running} aria-label="Re-Scan"
-              title="Re-Scan: re-reads the database and your configuration from scratch (table and entity sizes, last update times, and where each entity is used). Takes several seconds; the page keeps working meanwhile. Filtering the grid is instant and does not need it."
+              title="Re-Scan: refreshes the entities changed by an action (shown with ⟳) and anything new since the last scan, then re-checks where entities are used. Quick. Use Full Re-Scan from the menu to re-read everything."
               @click=${() => this._loadEntities(true)}>
               <svg viewBox="0 0 24 24" width="18" height="18" class=${this.progress?.running ? "spin" : ""}><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg></button>
             <button class="rescan arrow" aria-label="More actions" title="More actions" @click=${(e) => { e.stopPropagation(); this.menuOpen = !this.menuOpen; }}>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>
             ${this.menuOpen ? html`<div class="menu-pop" @click=${(e) => e.stopPropagation()}>
-              <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
+              <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh entities changed by an action and anything new.</span></button>
+              <button @click=${() => { this.menuOpen = false; this._loadEntities(true, true); }}><b>Full Re-Scan</b><span>Re-read every entity from scratch.</span></button>
               <div><button ?disabled=${!this.ret?.rules || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!this.ret?.rules ? "No retention rules yet." : this.ret?.automation ? "Runs the DB Storage automation in Home Assistant now." : "Deletes states older than each rule now."}</span></button>
                 ${this.ret?.automation ? html`<a @click=${() => { this.menuOpen = false; this._go(this.ret.automation.link); }}>Open the automation ↗</a>` : ""}</div>
               <button @click=${() => { this.menuOpen = false; this._openReclaim(); }}><b>Reclaim free space…</b><span>Repack the database so space freed by deletions goes back to the disk.</span></button></div>` : ""}</span></span>` : ""}</h2>

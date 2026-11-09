@@ -16,11 +16,11 @@
 
 ## First scan
 
-Press **Re-Scan** (top right). It runs in the background with a progress card and takes a few seconds on a few hundred MB. The result is saved, so the panel opens instantly after a restart.
+The first time, the panel scans the whole database: it runs in the background with a progress card and takes a few seconds on a few hundred MB. The result is saved, so the panel opens instantly after a restart.
 
-After you clear or change something the header shows a green **Re-Scan needed**: sizes on screen are out of date until you scan. Tick **Re-Scan now** in a confirmation dialog to scan straight away.
+When an action finishes, the grid updates at once: disabled entities show as Disabled, the retention shown is the new one, and cleared sizes drop to zero. A size that may have changed (cleared, retention applied, undone) shows **⟳** until you press **Re-Scan** (top right). Re-Scan is quick: it re-reads only the entities an action changed plus anything new since the last scan. Tick **Re-Scan now** in a confirmation dialog to do it straight away. **Full Re-Scan** in the menu re-reads everything.
 
-The arrow beside Re-Scan opens a menu: **Re-Scan**, **Run retention now**, **Reclaim free space**.
+The arrow beside Re-Scan opens a menu: **Re-Scan**, **Full Re-Scan**, **Run retention now**, **Reclaim free space**.
 
 ## The three tabs
 
