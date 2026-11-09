@@ -22,7 +22,7 @@ from homeassistant.helpers import entity_registry as er
 from . import retention
 from .const import DOMAIN
 from .queries import states_older_than
-from .recorder_ops import _read, _snapshot_dir, clear_statistics, make_batch_backup
+from .recorder_ops import _read, _snapshot_dir, clear_statistics, make_batch_backup, wait_purged
 from .backup import BATCH_SUFFIX
 from .snapshot import read_snapshot
 from .tasks import RestoreBatchTask, RestoreStatisticsTask
@@ -270,7 +270,7 @@ async def run_retention_action(hass: HomeAssistant, kind: str, entity_ids: list[
             for i in range(0, len(todo), CHUNK):
                 await hass.services.async_call("recorder", "purge_entities",
                                                {"entity_id": todo[i:i + CHUNK], "keep_days": days}, blocking=True)
-            await get_instance(hass).async_block_till_done()
+            await wait_purged(hass, todo, days, on_wait=lambda n: progress.update(phase=f"Deleting older state history ({n:,} rows left)"))
             counts = (backup or {}).get("counts", {})
             for eid in todo:
                 records[eid]["steps"]["states"] = {"backup": (backup or {}).get("file"), "rows": counts.get(eid, {}).get("states", by[eid]["rows"]),
@@ -405,11 +405,11 @@ async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], stat
                 if ids:
                     await hass.services.async_call("recorder", "purge_entities",
                                                    {"entity_id": ids, "keep_days": 0}, blocking=True)
-                    await get_instance(hass).async_block_till_done()
+                    left = await wait_purged(hass, ids, 0, on_wait=lambda n: progress.update(phase=f"Clearing state history ({n:,} rows left)"))
                     for eid in ids:
                         rows = counts.get(eid, {}).get("states", 0)
                         records[eid]["steps"]["states"] = {"backup": file if rows else None, "rows": rows, "purged": True}
-                        records[eid]["notes"].append("State history cleared.")
+                        records[eid]["notes"].append("State history cleared." if not left else f"State history is still being cleared ({left:,} rows were left when this stopped waiting).")
             except Exception as err:  # noqa: BLE001
                 for eid in ids:
                     records[eid]["notes"].append(f"Clearing state history failed: {err}")

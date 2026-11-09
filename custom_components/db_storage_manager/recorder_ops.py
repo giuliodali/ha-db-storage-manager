@@ -11,6 +11,7 @@ from typing import Any, Callable
 from homeassistant.components.recorder import get_instance
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.recorder import session_scope
+from sqlalchemy import bindparam, text
 
 from .const import SNAPSHOT_DIR
 from .backup import BATCH_SUFFIX, export_batch
@@ -82,3 +83,40 @@ async def make_batch_backup(hass: HomeAssistant, action_id: int, statistic_ids: 
         path.unlink(missing_ok=True)
         return None
     return {"file": name, "bytes": out["bytes"], "counts": out["counts"]}
+
+
+_LEFT_SQL = text(
+    "SELECT COUNT(*) FROM states s JOIN states_meta sm ON sm.metadata_id = s.metadata_id "
+    "WHERE sm.entity_id IN :ids AND s.last_updated_ts < :before"
+).bindparams(bindparam("ids", expanding=True))
+
+
+def _rows_left(session: Any, entity_ids: list[str], before: float) -> int:
+    total = 0
+    for i in range(0, len(entity_ids), 400):
+        total += int(session.execute(_LEFT_SQL, {"ids": entity_ids[i:i + 400], "before": before}).scalar() or 0)
+    return total
+
+
+async def wait_purged(hass: HomeAssistant, entity_ids: list[str], keep_days: float = 0,
+                      timeout: float = 1800, on_wait: Callable[[int], None] | None = None) -> int:
+    """Wait until the recorder has really deleted the states a purge_entities call asked for.
+
+    A purge of an entity with many rows re-queues itself, behind the point async_block_till_done()
+    waits for, so that call can return while rows are still being deleted. This polls the rows
+    left (older than the keep-days limit) until none remain. Returns how many were still there
+    when it gave up (0 when finished).
+    """
+    if not entity_ids:
+        return 0
+    instance = get_instance(hass)
+    before = time.time() - keep_days * 86400
+    deadline = time.monotonic() + timeout
+    while True:
+        await instance.async_block_till_done()
+        left = await _read(hass, lambda s: _rows_left(s, entity_ids, before))
+        if left == 0 or time.monotonic() > deadline:
+            return left
+        if on_wait:
+            on_wait(left)
+        await asyncio.sleep(1.5)

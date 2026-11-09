@@ -5,6 +5,7 @@
 - After an action the grid updates at once: status and retention are live, cleared sizes drop to zero, and changed sizes show ⟳ until Re-Scan.
 - After an action, just the entities it changed are re-read inside the action's own progress card, so no separate scan appears. Re-Scan stays a full scan that also picks up new entities.
 - The nightly retention automation no longer counts as a reference.
+- Clearing or trimming state history now waits until the recorder has deleted every row. Large entities were left partly cleared (still showing a size) because the recorder re-queues big purges behind the point Home Assistant waits for.
 - A release that changes what a scan records now redoes the saved scan automatically on start, so no manual Re-Scan is needed after updating.
 
 ## 1.0.2

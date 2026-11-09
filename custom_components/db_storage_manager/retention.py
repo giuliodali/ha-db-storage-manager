@@ -24,7 +24,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
 from .queries import states_older_than
-from .recorder_ops import _read
+from .recorder_ops import _read, wait_purged
 
 _LOGGER = logging.getLogger(__name__)
 STORE_KEY = f"{DOMAIN}.retention"
@@ -167,6 +167,7 @@ async def async_run(hass: HomeAssistant, *_: Any) -> dict[str, Any]:
                 continue
             await hass.services.async_call("recorder", "purge_entities", {"entity_id": todo, "keep_days": days}, blocking=True)
             purged.update({e: counts[e] for e in todo})
+            await wait_purged(hass, todo, days)
     await get_instance(hass).async_block_till_done()
     await hass.services.async_call("recorder", "purge", {"repack": True}, blocking=False)  # return the space, as the automation does
     return await _finish(hass, purged, now)

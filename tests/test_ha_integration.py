@@ -809,3 +809,32 @@ async def test_saved_scan_from_an_older_scan_version_is_redone(recorder_mock, en
     monkeypatch.setattr(inventory_store, "SCAN_VERSION", inventory_store.SCAN_VERSION + 1)   # a release that changes the scan
     await ws_mod.async_load_inventory(hass)
     assert "inventory" not in hass.data[DOMAIN] and hass.data[DOMAIN]["rescan_needed"] is True
+
+
+async def test_clearing_a_large_entity_waits_until_every_row_is_gone(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    """purge_entities re-queues itself past 998 rows; the action must wait for the last batch, not the first."""
+    from homeassistant.components.recorder import get_instance
+    from sqlalchemy import text as sql
+
+    await _setup(hass)
+    registry = er.async_get(hass)
+    registry.async_get_or_create("sensor", "test", "uid-big", suggested_object_id="big")
+    for n in range(2600):
+        hass.states.async_set("sensor.big", str(n))
+    await async_wait_recording_done(hass)
+    client = await hass_ws_client(hass)
+    await _ws(client, "entities", refresh=True, wait=True)
+    await _ws(client, "apply_action", kind="disable_and_clear", entity_ids=["sensor.big"], states=True, confirm=True)
+    st = await _wait_job(client)
+    assert st["error"] is None
+
+    def left(session):
+        return session.execute(sql("SELECT COUNT(*) FROM states s JOIN states_meta m ON m.metadata_id = s.metadata_id WHERE m.entity_id = 'sensor.big'")).scalar()
+
+    from homeassistant.helpers.recorder import session_scope
+    def run():
+        with session_scope(hass=hass, read_only=True) as s:
+            return left(s)
+    assert await get_instance(hass).async_add_executor_job(run) == 0
+    # Nothing is left of it, so the refreshed inventory no longer lists it.
+    assert "sensor.big" not in {i["entity_id"] for i in hass.data[DOMAIN]["inventory"]["items"]}
