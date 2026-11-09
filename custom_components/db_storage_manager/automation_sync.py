@@ -11,13 +11,16 @@ integration is not loaded) the integration falls back to scheduling the job itse
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import shutil
+import tempfile
 from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import category_registry as cr, entity_registry as er
-from homeassistant.util.yaml import dump, load_yaml
+from homeassistant.util.yaml import dump, load_yaml, parse_yaml
 
 from . import retention
 from .const import DOMAIN, RETENTION_AUTOMATION_ID
@@ -79,10 +82,23 @@ def _edit_file(path: str, enabled: bool, item: dict[str, Any]) -> bool:
         return False
     else:
         items[idx] = item
-    tmp = f"{path}.dbs_tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        fh.write(dump(items))
-    os.replace(tmp, path)
+    text = dump(items)
+    if not isinstance(parse_yaml(text), list):  # never write something Home Assistant could not read back
+        raise ValueError("refusing to write an automations.yaml that does not parse")
+    if os.path.exists(path):
+        shutil.copy2(path, f"{path}.dbs_backup")  # the file as it was before our last change
+    # A private temp file next to the target, so no two writers can ever share one, then an atomic swap.
+    fd, tmp = tempfile.mkstemp(prefix="automations.", suffix=".dbs_tmp", dir=os.path.dirname(path) or ".")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
     return True
 
 
@@ -102,7 +118,16 @@ def _ensure_category(hass: HomeAssistant, eid: str) -> None:
 
 
 async def async_sync(hass: HomeAssistant, enabled: bool, hhmm: str) -> str:
-    """Make the automation match the options. Returns "automation", "off" or "unavailable"."""
+    """Make the automation match the options. Returns "automation", "off" or "unavailable".
+
+    One rewrite at a time: a bulk action changes many rules in a row, and each change asks for a rewrite.
+    """
+    lock = hass.data.setdefault(DOMAIN, {}).setdefault("automation_lock", asyncio.Lock())
+    async with lock:
+        return await _sync(hass, enabled, hhmm)
+
+
+async def _sync(hass: HomeAssistant, enabled: bool, hhmm: str) -> str:
     path = hass.config.path("automations.yaml")
     if not hass.services.has_service("automation", "reload"):
         return "unavailable"

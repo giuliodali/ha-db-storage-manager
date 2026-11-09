@@ -21,3 +21,5 @@
 **How do I get rid of the undo backups?** History tab → tick records → **Delete selected**. That also removes their files and shows the space recovered.
 
 **How do I report a problem?** Open an issue with your Home Assistant and integration versions and the log lines from `custom_components.db_storage_manager`.
+
+**automations.yaml has garbage after the DB Storage automation (version 1.0.4 and earlier).** Overlapping rewrites could corrupt it. Open the file, delete everything from `- id: db_storage_retention` to the end of that automation block, and remove any stray lines after it (leftover fragments such as `etention` or a repeated `data:` / `mode: record`). Check Settings → Developer tools → YAML → Check configuration, then restart. The integration recreates its automation. From 1.0.5 a copy of the previous file is kept as `automations.yaml.dbs_backup` before each change.

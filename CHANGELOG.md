@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5
+
+- Fixed automations.yaml being corrupted after a bulk action. Rewrites of the retention automation could overlap and share one temporary file. They now go through one at a time, wait for a bulk action to settle, use a private temp file, check the result parses first, and keep a copy of the previous file as `automations.yaml.dbs_backup`.
+
 ## 1.0.4
 
 - After an action, just the entities it changed are re-read inside the action's own progress card, so no separate scan appears. Re-Scan stays a full scan that also picks up new entities.

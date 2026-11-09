@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
@@ -11,8 +12,9 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers.event import async_track_time_change, async_track_time_interval
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 
 from .const import (CONF_RETENTION_ENABLED, CONF_RETENTION_TIME, CONF_SAMPLE_INTERVAL, DEFAULT_RETENTION_TIME, DEFAULT_SAMPLE_INTERVAL,
@@ -80,10 +82,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # The automation lists one purge step per retention setting, so rewrite it when the rules change.
     rules_seen = [dict(retention.rules(hass))]
 
+    @callback
+    def _apply_later(_now: Any) -> None:
+        state.pop("apply_debounce", None)
+        hass.async_create_task(_apply_retention(entry))
+
     def _rules_changed() -> None:
         if retention.rules(hass) != rules_seen[0]:
             rules_seen[0] = dict(retention.rules(hass))
-            hass.async_create_task(_apply_retention(entry))
+            # A bulk action changes many rules in a row: wait for it to settle and write the file once.
+            if (cancel := state.pop("apply_debounce", None)):
+                cancel()
+            state["apply_debounce"] = async_call_later(hass, 3, _apply_later)
+
+    entry.async_on_unload(lambda: (state.pop("apply_debounce", None) or (lambda: None))())
 
     entry.async_on_unload(retention.add_listener(_rules_changed))
 

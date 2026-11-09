@@ -10,7 +10,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from custom_components.db_storage_manager import retention
 from homeassistant.setup import async_setup_component
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 from pytest_homeassistant_custom_component.components.recorder.common import async_wait_recording_done
 from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
 
@@ -37,7 +37,7 @@ async def test_panel_and_ping(recorder_mock, enable_custom_integrations, hass, h
     assert "db-storage" in hass.data["frontend_panels"]
     client = await hass_ws_client(hass)
     res = await _ws(client, "ping")
-    assert res["success"] and res["result"]["integration_version"] == "1.0.4"
+    assert res["success"] and res["result"]["integration_version"] == "1.0.5"
 
 
 async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -700,7 +700,8 @@ async def test_retention_runs_as_a_maintained_automation(recorder_mock, enable_c
     try:
         await _retention_fixture(hass)
         await retention.async_set_rule(hass, "sensor.old", 1)
-        await hass.async_block_till_done()                                       # the rule change rewrote the automation itself
+        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=5))   # the rewrite waits a moment for more rule changes
+        await hass.async_block_till_done()
         assert "keep_days: 1" in open(cfg).read()
         assert await automation_sync.async_sync(hass, True, "05:10:00") == "automation"
         text = open(cfg).read()
@@ -848,3 +849,32 @@ async def test_db_size_reports_what_a_repack_would_also_delete(recorder_mock, en
     res = (await _ws(client, "db_size", expired=True))["result"]
     assert res["keep_days"] >= 1 and res["expired_rows"] == 0 and "free_bytes" in res
     assert "expired_rows" not in (await _ws(client, "db_size"))["result"]
+
+
+async def test_many_simultaneous_rewrites_never_corrupt_automations_yaml(recorder_mock, enable_custom_integrations, hass) -> None:
+    """A bulk action changes many rules at once; every rewrite must go through one at a time."""
+    import asyncio
+    import glob
+    import os
+
+    from homeassistant.util.yaml import load_yaml
+    from custom_components.db_storage_manager import automation_sync
+
+    cfg = hass.config.path("automations.yaml")
+    with open(hass.config.path("configuration.yaml"), "w") as fh:
+        fh.write("automation: !include automations.yaml\n")
+    with open(cfg, "w") as fh:
+        fh.write("- id: mine\n  alias: Mine\n  triggers: []\n  actions: []\n")
+    assert await async_setup_component(hass, "automation", {"automation": {"id": "mine", "alias": "Mine", "triggers": [], "actions": []}})
+    try:
+        await _retention_fixture(hass)
+        for n in range(8):
+            await retention.async_set_rule(hass, "sensor.old", 1 + n % 3)
+            await asyncio.gather(*[automation_sync.async_sync(hass, True, "05:10:00") for _ in range(6)])
+        items = load_yaml(cfg)
+        assert isinstance(items, list) and [i["id"] for i in items].count("db_storage_retention") == 1 and items[0]["id"] == "mine"
+        assert not glob.glob(os.path.join(os.path.dirname(cfg), "*.dbs_tmp"))
+        assert os.path.exists(cfg + ".dbs_backup")
+    finally:
+        await automation_sync.async_sync(hass, False, "05:10:00")
+        os.remove(cfg)
