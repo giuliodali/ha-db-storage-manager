@@ -838,3 +838,13 @@ async def test_clearing_a_large_entity_waits_until_every_row_is_gone(recorder_mo
     assert await get_instance(hass).async_add_executor_job(run) == 0
     # Nothing is left of it, so the refreshed inventory no longer lists it.
     assert "sensor.big" not in {i["entity_id"] for i in hass.data[DOMAIN]["inventory"]["items"]}
+
+
+async def test_db_size_reports_what_a_repack_would_also_delete(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    await _setup(hass)
+    hass.states.async_set("sensor.recent", "1")
+    await async_wait_recording_done(hass)
+    client = await hass_ws_client(hass)
+    res = (await _ws(client, "db_size", expired=True))["result"]
+    assert res["keep_days"] >= 1 and res["expired_rows"] == 0 and "free_bytes" in res
+    assert "expired_rows" not in (await _ws(client, "db_size"))["result"]

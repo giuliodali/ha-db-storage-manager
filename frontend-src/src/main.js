@@ -74,7 +74,7 @@ class DbStoragePanel extends LitElement {
   }
   async _openReclaim() {
     this.reclaim = { phase: "confirm", before: null };
-    try { this.reclaim = { phase: "confirm", before: await this._ws("db_size") }; } catch (e) { this.error = e.message; this.reclaim = null; }
+    try { this.reclaim = { phase: "confirm", before: await this._ws("db_size", { expired: true }) }; } catch (e) { this.error = e.message; this.reclaim = null; }
   }
   async _startReclaim() {
     const before = this.reclaim.before;
@@ -102,17 +102,17 @@ class DbStoragePanel extends LitElement {
     const r = this.reclaim;
     if (!r) return "";
     const freed = r.before && r.now ? r.before.file_bytes - r.now.file_bytes : 0;
-    const nothing = r.before && (r.before.free_bytes ?? 0) < 1048576;
+    const nothing = r.before && (r.before.free_bytes ?? 0) < 1048576 && !r.before.expired_rows;
     if (r.phase === "confirm") return html`<div class="modal" @click=${() => (this.reclaim = null)}><div class="dlg" @click=${(e) => e.stopPropagation()}>
       <h3>Reclaim free space</h3>
-      <div>${r.before ? html`The database file is <b>${fmtBytes(r.before.file_bytes)}</b> and at least <b>${fmtBytes(r.before.free_bytes)}</b> of it is empty space left behind by deleted data.` : "Checking the file…"}
-        ${nothing ? "That is too little to be worth a repack." : "Reclaiming rewrites the file so that space goes back to the disk. You usually get back a little more than that, because the rest of the file is packed tighter and the recorder clears anything past its keep-days limit first."}</div>
+      <div>${r.before ? html`The database file is <b>${fmtBytes(r.before.file_bytes)}</b> with <b>${fmtBytes(r.before.free_bytes)}</b> of empty space.${r.before.expired_rows ? html` The repack also deletes states older than the recorder's ${r.before.keep_days}-day limit: ${r.before.expired_rows.toLocaleString()} rows${r.before.expired_bytes ? `, about ${fmtBytes(r.before.expired_bytes)}` : ""}.` : ""}` : "Checking the file…"}
+        ${nothing && !r.before?.expired_rows ? "Too little to be worth a repack." : ""}</div>
       <ul><li>It can take several minutes on a small device, and recorder writes queue up meanwhile (nothing is lost).</li>
         <li>It needs free disk space roughly equal to the database size while it runs.</li>
         <li>Only do this when little else is going on; Home Assistant keeps running.</li></ul>
       <div class="row"><button @click=${() => (this.reclaim = null)}>Cancel</button><button class="go" ?disabled=${!r.before || nothing} @click=${() => this._startReclaim()}>Reclaim</button></div></div></div>`;
     return html`<div class="rcard"><h3>${r.phase === "running" ? "Reclaiming free space…" : freed > 0 ? `Reclaimed ${fmtBytes(freed)}` : "Finished: nothing was left to reclaim"}</h3>
-      <div class="sub">Database size ${fmtBytes(r.before.file_bytes)} → ${fmtBytes(r.now.file_bytes)} · empty space ${fmtBytes(r.before.free_bytes)} → ${fmtBytes(r.now.free_bytes)}${r.phase === "running" ? ` · ${Math.round((Date.now() - r.started) / 1000)} s. This page keeps working; the numbers update when the repack finishes.` : ""}</div>
+      <div class="sub">${r.phase === "running" ? `Database size ${fmtBytes(r.before.file_bytes)} · empty space ${fmtBytes(r.now.free_bytes)} · ${Math.round((Date.now() - r.started) / 1000)} s. The size changes only when the repack finishes; this page keeps working.` : `Database size ${fmtBytes(r.before.file_bytes)} → ${fmtBytes(r.now.file_bytes)} · empty space ${fmtBytes(r.before.free_bytes)} → ${fmtBytes(r.now.free_bytes)}`}</div>
       ${r.phase === "done" ? html`<button style="margin-top:8px" class="rescan" @click=${() => (this.reclaim = null)}>Dismiss</button>` : ""}</div>`;
   }
 

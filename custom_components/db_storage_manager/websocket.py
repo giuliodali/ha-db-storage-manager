@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import voluptuous as vol
+from sqlalchemy import text
 
 from homeassistant.components import websocket_api
 from homeassistant.components.recorder import get_instance
@@ -818,7 +819,8 @@ async def ws_entity_rows(hass, connection, msg) -> None:
 
 
 @websocket_api.websocket_command(
-    {vol.Required("type"): "db_storage/db_size", vol.Optional("checkpoint", default=False): bool}
+    {vol.Required("type"): "db_storage/db_size", vol.Optional("checkpoint", default=False): bool,
+     vol.Optional("expired", default=False): bool}
 )
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -844,7 +846,19 @@ async def ws_db_size(hass, connection, msg) -> None:
         except Exception:  # noqa: BLE001 - best effort, the size is still reported
             checkpoint = None
     sample = await hass.data[DOMAIN]["sampler"].async_sample(record=False)
-    connection.send_result(msg["id"], {**(sample or {}), "checkpoint": checkpoint})
+    extra: dict[str, Any] = {}
+    if msg["expired"]:
+        # What the repack's purge will also delete: states older than the recorder's keep-days limit.
+        keep_days = get_instance(hass).keep_days
+        cutoff = time.time() - keep_days * 86400
+        counts = await _read(hass, lambda s: s.execute(text(
+            "SELECT COUNT(*), SUM(CASE WHEN last_updated_ts < :cut THEN 1 ELSE 0 END) FROM states"), {"cut": cutoff}).one())
+        total, old = int(counts[0] or 0), int(counts[1] or 0)
+        inv = hass.data[DOMAIN].get("inventory")
+        tb = {t["table"]: t["bytes"] or 0 for t in inv["scan"]["tables"]} if inv else {}
+        per_row = ((tb.get("states", 0) + tb.get("state_attributes", 0)) / total) if total and tb else None
+        extra = {"keep_days": keep_days, "expired_rows": old, "expired_bytes": round(old * per_row) if per_row else None}
+    connection.send_result(msg["id"], {**(sample or {}), "checkpoint": checkpoint, **extra})
 
 
 @websocket_api.websocket_command(
