@@ -2,6 +2,11 @@
 
 ## 1.0.1
 
+- Size bars are readable on light themes.
+- Selecting entities: the bar shows how many ticked entities are no longer in the list, with a button to drop them.
+- The progress bar counts entities per phase (it showed twice the number of entities).
+- Reclaim explains why it can free more than the empty space it reports.
+- The size chart counts free space with the undo data.
 - Disabling an entity now removes its retention rule (Undo puts it back), and the nightly run drops rules for entities that no longer exist.
 
 ## 1.0.0
