@@ -37,7 +37,7 @@ async def test_panel_and_ping(recorder_mock, enable_custom_integrations, hass, h
     assert "db-storage" in hass.data["frontend_panels"]
     client = await hass_ws_client(hass)
     res = await _ws(client, "ping")
-    assert res["success"] and res["result"]["integration_version"] == "1.0.3"
+    assert res["success"] and res["result"]["integration_version"] == "1.0.4"
 
 
 async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
