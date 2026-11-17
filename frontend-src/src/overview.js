@@ -107,8 +107,8 @@ export class DbOverview extends LitElement {
     const periods = [7, 30, 90, 365].filter((n) => n <= spanDays);
     return html`
       <div class="kpis">
-        <div class="kpi" title=${sizeTip}><span>Database size</span><b>${fmtBytes(cur?.file_bytes ?? d.total_bytes)}</b></div>
-        <div class="kpi" title="Empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk."><span>Free inside database</span><b>${fmtBytes(cur?.free_bytes ?? null)}</b></div>
+        <div class="kpi" title=${sizeTip + (cur?.free_bytes != null ? "\nFree: empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk." : "")}>
+          <span>Database size</span><b>${fmtBytes(cur?.file_bytes ?? d.total_bytes)}</b>${cur?.free_bytes != null ? html`<span>~ ${fmtBytes(cur.free_bytes)} Free</span>` : ""}</div>
         <div class="kpi click" title="Entities with no literal reference in your config. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Not referenced"] } }))}>
           <span>Not referenced in config</span><b>${fmtBytes(notRefBytes)}</b><span>${notRef.length} entities</span></div>

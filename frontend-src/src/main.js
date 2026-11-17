@@ -88,7 +88,7 @@ class DbStoragePanel extends LitElement {
       try {
         const now = await this._ws("db_size");
         this.reclaim = { ...this.reclaim, now };
-        this.live = now;  // the Database size and Free KPIs follow the same reading
+        this.live = now;  // the Database size KPI and its free-space line follow the same reading
         if ((now.free_bytes ?? 0) <= target) break;
       } catch (e) { /* busy */ }
     }
