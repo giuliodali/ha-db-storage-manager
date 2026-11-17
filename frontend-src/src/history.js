@@ -42,7 +42,7 @@ const WHY = {
 
 export class DbHistory extends LitElement {
   static properties = {
-    actions: { attribute: false }, ret: { attribute: false }, busy: { type: Boolean }, ws: { attribute: false },
+    actions: { attribute: false }, busy: { type: Boolean }, ws: { attribute: false },
     open: { state: true }, sel: { state: true }, usage: { state: true }, dlg: { state: true }, err: { state: true },
   };
   static styles = css`
@@ -169,10 +169,6 @@ export class DbHistory extends LitElement {
         ${u ? html`<span class="muted">Stored in ${u.path.replace(/\/snapshots$/, "")}</span>` : nothing}
         ${u?.unlinked_files ? html`<span class="muted" title="Backup files in the folder that no history record points to, for example from records deleted by hand. They are safe to delete from the folder.">${u.unlinked_files} file${u.unlinked_files === 1 ? "" : "s"} not linked to any record (${fmtBytes(u.unlinked_bytes)})</span>` : nothing}
         <span class="sp"></span><span class="info" title=${HELP_TOP}>i</span></div>
-      ${this.ret?.rules ? html`<div class="card"><b>Retention rules</b><span>${this.ret.rules} entit${this.ret.rules === 1 ? "y" : "ies"} keep less than Home Assistant's ${this.ret.default_days} days of state history.
-          ${this.ret.last_run ? `Last run ${this._when(this.ret.last_run.ts)}: ${this.ret.last_run.rows.toLocaleString()} rows deleted.` : "Has not run yet."}
-          ${this.ret.run_at ? `Runs nightly at ${this.ret.run_at}.` : "Nightly run is off (see the integration options)."}</span>
-        <span class="sp"></span><span class="info" title="The integration runs the nightly job itself. Change its time or turn it off in the integration options; to run it from your own automation instead, turn it off and call the db_storage_manager.run_retention action. Use Run retention now in the menu beside Re-Scan to run it immediately. Rows it deletes are not backed up.">i</span></div>` : nothing}
       ${this.freedMsg ? html`<div class="card" style="border-color:var(--success-color,green)">${this.freedMsg} <span class="sp"></span><button @click=${() => { this.freedMsg = null; this.requestUpdate(); }}>Dismiss</button></div>` : nothing}
       ${!list.length ? html`<div class="tablewrap"><div class="empty">No actions yet. Select entities on the Entities tab and choose an action; every change is recorded here so it can be undone.</div></div>` : html`
       ${chosen.length ? html`<div class="selbar"><b>${chosen.length} selected</b><span class="muted">${fmtBytes(chosenBytes)} of backup files would be recovered</span><span style="flex:1"></span>

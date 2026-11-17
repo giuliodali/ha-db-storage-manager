@@ -332,17 +332,17 @@ class DbStoragePanel extends LitElement {
       ${this._modalUi()}
       ${this.inspect ? html`<db-inspect .hass=${this.hass} .ws=${(t, x) => this._ws(t, x)} .entityId=${this.inspect.entity_id} .name=${this.inspect.name} @close=${() => (this.inspect = null)} @click=${() => (this.inspect = null)}></db-inspect>` : ""}
       ${this.progress ? html`<db-progress .status=${this.progress} .first=${!this.data}></db-progress>` : ""}
-      ${this.tab === "overview" ? html`<db-overview .live=${this.live} .hass=${this.hass} .data=${this.all} .history=${this.history} .days=${this.days} .window=${this.window}
+      ${this.tab === "overview" ? html`<db-overview .live=${this.live} .ret=${this.ret} .hass=${this.hass} .data=${this.all} .history=${this.history} .days=${this.days} .window=${this.window}
           @days=${(e) => { this.days = e.detail; }}
-          @goto-entity=${(e) => { this.search = e.detail; this.filters = {}; this.window = null; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
-          @goto-window=${(e) => { this.window = e.detail; this.search = ""; this.filters = {}; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
-          @goto-filter=${(e) => { this.search = ""; this.window = null; this.filters = e.detail; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}></db-overview>` : ""}
+          @goto-entity=${(e) => { this.hideAuto = false; this.search = e.detail; this.filters = {}; this.window = null; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
+          @goto-window=${(e) => { this.hideAuto = false; this.window = e.detail; this.search = ""; this.filters = {}; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
+          @goto-filter=${(e) => { this.hideAuto = false; this.search = ""; this.window = null; this.filters = e.detail; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}></db-overview>` : ""}
       ${this.tab === "entities" ? html`<db-entities .hass=${this.hass} .data=${this.data} .filters=${this.filters} .search=${this.search} .sort=${this.sort} .expand=${this.expand} .hideAuto=${this.hideAuto && !(this.filters.domain || []).includes("automation")}
           .selected=${this.selected} .shown=${this.shown} .usage=${this.usage} .growth=${this._growth()} .busy=${!!this.progress?.running}
           @clearwindow=${() => { this.window = null; this.shown = 100; this._loadEntities(false); }} @filters=${(e) => this._filters(e.detail)} @hideauto=${(e) => { this.hideAuto = e.detail; this.shown = 100; this._loadEntities(false); }} @expand=${(e) => { const s = new Set(this.expand); e.detail.on ? s.add(e.detail.facet) : s.delete(e.detail.facet); this.expand = [...s]; this._loadEntities(false); }} @search=${(e) => { this.search = e.detail; this.shown = 100; this._loadEntities(false); }}
           @sort=${(e) => (this.sort = e.detail)} @selected=${(e) => { this.selected = e.detail; if (this.usage) this._loadUsage(); }} @more=${() => (this.shown += 100)}
           @action=${(e) => this._askAction(e.detail)} @inspect=${(e) => (this.inspect = e.detail)} @refresh=${() => this._loadEntities(true)} @usage=${(e) => this._loadUsage(e.detail)} @navigate=${(e) => this._go(e.detail)}></db-entities>` : ""}
-      ${this.tab === "history" ? html`<db-history .actions=${this.actionsList} .ret=${this.ret} @navigate=${(e) => this._go(e.detail)} .ws=${(t, x) => this._ws(t, x)} .busy=${!!this.job?.running} @changed=${() => this._loadActions()} @undo=${(e) => this._askUndo(e.detail)}></db-history>` : ""}
+      ${this.tab === "history" ? html`<db-history .actions=${this.actionsList} @navigate=${(e) => this._go(e.detail)} .ws=${(t, x) => this._ws(t, x)} .busy=${!!this.job?.running} @changed=${() => this._loadActions()} @undo=${(e) => this._askUndo(e.detail)}></db-history>` : ""}
     </div>`;
   }
 }

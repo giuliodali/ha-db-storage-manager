@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- New **Reduced retention** KPI on the Overview: how many entities keep less state history than the default, and when retention last ran. Hover for the details, click to list those entities. It replaces the Retention rules card on the History tab.
+- Clicking an Overview KPI, chart or list now shows the same entities it counted. Drill-downs used to keep automations hidden, so the Entities grid could show fewer entities and less data than the KPI.
+
 ## 1.0.6
 
 - The nightly retention job is scheduled by the integration itself. It no longer writes an automation to `automations.yaml` or touches the automation's registry entry. If you used 1.0.5 or earlier, Settings → Repairs asks you to delete the old **DB Storage: nightly retention** automation. To run retention from your own automation, turn the nightly run off and call `db_storage_manager.run_retention`.
