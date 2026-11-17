@@ -24608,8 +24608,9 @@ class gc extends Ae {
 `), p = this.history || [], y = p.length > 1 ? (p.at(-1).ts - p[0].ts) / 86400 : 0, m = p.length ? new Date(p[0].ts * 1e3).toLocaleDateString([], { dateStyle: "medium" }) : null, _ = Math.floor(y), b = p.length ? _ < 1 ? `Under 1 day of data since first collection on ${m}` : `${_} day${_ === 1 ? "" : "s"} of data since first collection on ${m}` : "No data collected yet.", w = [7, 30, 90, 365].filter((x) => x <= y);
     return P`
       <div class="kpis">
-        <div class="kpi" title=${a}><span>Database size</span><b>${K((n == null ? void 0 : n.file_bytes) ?? e.total_bytes)}</b></div>
-        <div class="kpi" title="Empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk."><span>Free inside database</span><b>${K((n == null ? void 0 : n.free_bytes) ?? null)}</b></div>
+        <div class="kpi" title=${a + ((n == null ? void 0 : n.free_bytes) != null ? `
+Free: empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk.` : "")}>
+          <span>Database size</span><b>${K((n == null ? void 0 : n.file_bytes) ?? e.total_bytes)}</b>${(n == null ? void 0 : n.free_bytes) != null ? P`<span>~ ${K(n.free_bytes)} Free</span>` : ""}</div>
         <div class="kpi click" title="Entities with no literal reference in your config. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Not referenced"] } }))}>
           <span>Not referenced in config</span><b>${K(s)}</b><span>${o.length} entities</span></div>
