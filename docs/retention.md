@@ -16,29 +16,21 @@ Select entities → **Change retention** → pick **1d | 3d | 5d | 7d | default 
 
 A disabled entity records nothing, so disabling it from this panel removes its retention rule (Undo puts it back). The nightly run also drops rules for entities that no longer exist anywhere.
 
-## How it runs: a normal automation
+## How it runs
 
-The nightly job is an ordinary Home Assistant automation, written and kept up to date by the integration:
+The integration schedules the nightly job itself, at the time set in the integration options (default 04:35, after Home Assistant's own purge). For each retention setting it calls the standard `recorder.purge_entities` with that rule's entities and `keep_days`, then `recorder.purge` with `repack: true` to return the freed space.
 
-> **DB Storage: nightly retention** (Settings → Automations, category **DB Storage**)
+Change the time or turn it off in the integration options (see [Options](options-and-services.md)). To run it from your own automation instead (for example to get an automation trace, or add conditions), turn the nightly run off and call the `db_storage_manager.run_retention` action.
 
-| Step | What it is |
-|---|---|
-| Count the states about to be deleted | `db_storage_manager.run_retention` with `mode: count` |
-| *Keep 1 day of states for N entities* | a standard `recorder.purge_entities` with that rule's entities and `keep_days` (one step per retention setting) |
-| Repack the database to return the freed space | `recorder.purge` with `repack: true` |
-| Record the run | `db_storage_manager.run_retention` with `mode: record` (History tab, sensors, event) |
+**Run retention now** is in the menu beside Re-Scan.
 
-Change a rule and the steps are rewritten. It's described as maintained by this integration, so **edits you make to it are overwritten**; change the time or turn it off in the integration options instead (see [Options](options-and-services.md)). Turning it off, or removing the integration, removes the automation. Your other automations are untouched. If the automation can't be created (no `automations.yaml`, an unusual layout), the integration schedules the job itself.
-
-**Run retention now** is in the menu beside Re-Scan. It triggers the automation (so the run shows in its trace), and the menu links to it.
+> Versions up to 1.0.5 kept the nightly job as an automation, **DB Storage: nightly retention**, in `automations.yaml`. It is no longer maintained; Settings → Repairs asks you to delete it if it is still there.
 
 Rows deleted by the nightly run are not backed up: it is a rolling window by design.
 
 ## Seeing and tracking it
 
-- **Automation trace** for each run.
-- **History tab**: the Retention rules card (rules, last run, rows deleted, link to the automation) and an entry whenever rows were deleted.
+- **History tab**: the Retention rules card (rules, last run, rows deleted, next run) and an entry whenever rows were deleted.
 - **Sensors:** `Retention rules` and `Retention last run`.
 - **Event** `db_storage_manager_retention_run` after every run, for notifications.
 - The Home Assistant log (`custom_components.db_storage_manager.retention`).

@@ -22,7 +22,7 @@ from homeassistant.helpers.recorder import session_scope
 
 from .const import DOMAIN, SNAPSHOT_DIR, VERSION
 from . import inventory_store
-from . import actions, automation_sync, retention
+from . import actions, retention
 from .candidates import classify
 from .estimates import apply_window, entity_estimates, window_activity, partial_estimates
 from .usage import CAVEATS, Matcher, merge_locations
@@ -169,7 +169,7 @@ async def ws_restore_statistics(hass, connection, msg) -> None:
         connection.send_error(msg["id"], "invalid", "Bad snapshot name")
         return
     path = _snapshot_dir(hass) / name
-    if not path.is_file():
+    if not await hass.async_add_executor_job(path.is_file):
         connection.send_error(msg["id"], "not_found", "Snapshot not found")
         return
     data = await hass.async_add_executor_job(read_snapshot, path)
@@ -749,8 +749,7 @@ async def ws_actions(hass, connection, msg) -> None:
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_retention_status(hass, connection, msg) -> None:
-    connection.send_result(msg["id"], {**retention.status(hass), "next_run": retention.next_run_ts(hass),
-                                       "automation": automation_sync.info(hass), "mode": hass.data[DOMAIN].get("retention_mode")})
+    connection.send_result(msg["id"], {**retention.status(hass), "next_run": retention.next_run_ts(hass)})
 
 
 @websocket_api.websocket_command({vol.Required("type"): "db_storage/retention_run", vol.Required("confirm"): bool})
@@ -761,8 +760,7 @@ async def ws_retention_run(hass, connection, msg) -> None:
     if not msg["confirm"]:
         connection.send_error(msg["id"], "confirm_required", "Set confirm to true")
         return
-    res = await automation_sync.async_run_now(hass)
-    connection.send_result(msg["id"], {**(res["last_run"] or {}), "via": res["via"], "entity_id": res["entity_id"]})
+    connection.send_result(msg["id"], await retention.async_run(hass))
 
 
 @websocket_api.websocket_command({vol.Required("type"): "db_storage/backup_usage"})

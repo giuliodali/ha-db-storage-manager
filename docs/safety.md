@@ -16,7 +16,6 @@
 | Retention clean-up on rule creation | Backed up and undoable |
 | Nightly retention | A rolling window, **not** backed up, limited to entities with rules, never longer than Home Assistant's own limit |
 | Repack | The recorder's own purge with repack |
-| The maintained automation | One entry in `automations.yaml`, written atomically, other entries preserved |
 
 Other protections: previews before every action; a typed count for large batches; refusal when the disk can't hold the backup; one action at a time; actions cut short by a restart are marked Interrupted; the panel and its commands are admin-only.
 

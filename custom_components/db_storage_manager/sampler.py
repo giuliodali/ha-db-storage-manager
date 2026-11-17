@@ -40,6 +40,7 @@ class SizeSampler:
         return lambda: self._listeners.remove(cb)
 
     def _db_file(self) -> str | None:
+        """Blocking (checks the file exists): call from the executor."""
         url = make_url(str(get_instance(self.hass).db_url))
         if url.get_backend_name() == "sqlite" and url.database and os.path.isfile(url.database):
             return url.database
@@ -56,9 +57,9 @@ class SizeSampler:
 
     async def async_sample(self, _now: Any = None, *, record: bool = True) -> dict[str, Any] | None:
         instance = get_instance(self.hass)
-        path = self._db_file()
 
         def run() -> dict[str, Any] | None:
+            path = self._db_file()
             with session_scope(hass=self.hass, read_only=True) as session:
                 pages = page_stats(session)
                 stats = statistics_bytes(session) if record else None

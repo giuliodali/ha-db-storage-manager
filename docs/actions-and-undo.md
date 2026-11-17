@@ -30,4 +30,4 @@ One line per entity. Columns: when, action, **Est. freed** (database space), **B
 
 ## Reclaim free space
 
-Deleting rows leaves empty space inside the database file. **Reclaim free space** (the menu beside Re-Scan) asks the recorder to repack so the space goes back to the disk, waits for it, and reports the change in size. It refuses if under 1 MB would be reclaimed. The nightly retention automation repacks as well.
+Deleting rows leaves empty space inside the database file. **Reclaim free space** (the menu beside Re-Scan) asks the recorder to repack so the space goes back to the disk, waits for it, and reports the change in size. It refuses if under 1 MB would be reclaimed. The nightly retention job repacks as well.

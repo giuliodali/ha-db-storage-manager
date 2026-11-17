@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
@@ -13,15 +12,15 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
 from homeassistant.helpers.event import async_track_time_change, async_track_time_interval
-from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.start import async_at_started
 
 from .const import (CONF_RETENTION_ENABLED, CONF_RETENTION_TIME, CONF_SAMPLE_INTERVAL, DEFAULT_RETENTION_TIME, DEFAULT_SAMPLE_INTERVAL,
-                    DOMAIN, PANEL_URL_PATH, SAMPLE_INTERVALS, STATIC_URL, VERSION)
+                    DOMAIN, LEGACY_RETENTION_AUTOMATION_ID, PANEL_URL_PATH, SAMPLE_INTERVALS, STATIC_URL, VERSION)
 from .journal import Journal
 from .sampler import SizeSampler
-from . import automation_sync, retention
+from . import retention
 from .websocket import async_load_inventory, async_register_commands, start_scan
 
 PLATFORMS = [Platform.SENSOR]
@@ -55,22 +54,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_load_inventory(hass)
     await retention.async_load(hass)
 
-    async def _apply_retention(e: ConfigEntry) -> None:
-        """Keep the maintained automation in step with the options; schedule the job ourselves only if it cannot exist."""
+    @callback
+    def _apply_retention(e: ConfigEntry) -> None:
+        """Schedule the nightly job from the options."""
         if (unsub := state.pop("retention_unsub", None)):
             unsub()
         retention.configure(hass, e.options.get(CONF_RETENTION_ENABLED, True), e.options.get(CONF_RETENTION_TIME, DEFAULT_RETENTION_TIME))
         cfg = state["retention_cfg"]
-        mode = await automation_sync.async_sync(hass, cfg["enabled"], f"{cfg['hour']:02d}:{cfg['minute']:02d}:00")
-        state["retention_mode"] = mode
-        if mode == "unavailable" and cfg["enabled"]:
+        if cfg["enabled"]:
             state["retention_unsub"] = async_track_time_change(hass, retention.async_run, hour=cfg["hour"], minute=cfg["minute"], second=0)
         retention._notify()
 
-    retention.configure(hass, entry.options.get(CONF_RETENTION_ENABLED, True), entry.options.get(CONF_RETENTION_TIME, DEFAULT_RETENTION_TIME))
+    _apply_retention(entry)
     entry.async_on_unload(lambda: state.pop("retention_unsub", lambda: None)())
 
     async def _run_retention_service(call: ServiceCall) -> None:
+        # "count" and "record" were the first and last steps of the automation versions up to 1.0.5 wrote;
+        # they still work so such a leftover automation does not run the whole job twice.
         mode = call.data.get("mode", "all")
         if mode == "count":
             await retention.async_count(hass)
@@ -79,26 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             await retention.async_run(hass)
 
-    # The automation lists one purge step per retention setting, so rewrite it when the rules change.
-    rules_seen = [dict(retention.rules(hass))]
-
-    @callback
-    def _apply_later(_now: Any) -> None:
-        state.pop("apply_debounce", None)
-        hass.async_create_task(_apply_retention(entry))
-
-    def _rules_changed() -> None:
-        if retention.rules(hass) != rules_seen[0]:
-            rules_seen[0] = dict(retention.rules(hass))
-            # A bulk action changes many rules in a row: wait for it to settle and write the file once.
-            if (cancel := state.pop("apply_debounce", None)):
-                cancel()
-            state["apply_debounce"] = async_call_later(hass, 3, _apply_later)
-
-    entry.async_on_unload(lambda: (state.pop("apply_debounce", None) or (lambda: None))())
-
-    entry.async_on_unload(retention.add_listener(_rules_changed))
-
     hass.services.async_register(DOMAIN, "run_retention", _run_retention_service)
     entry.async_on_unload(lambda: hass.services.async_remove(DOMAIN, "run_retention"))
 
@@ -106,12 +86,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def _options_updated(_hass: HomeAssistant, updated: ConfigEntry) -> None:
         sampler.interval_s = _interval_s(updated)
-        await _apply_retention(updated)
+        _apply_retention(updated)
 
     entry.async_on_unload(entry.add_update_listener(_options_updated))
 
     async def _first_sample(_hass: HomeAssistant) -> None:
-        await _apply_retention(entry)
+        _check_legacy_automation(hass)
         await sampler.async_tick()
         if state.pop("rescan_needed", False):
             start_scan(hass)
@@ -142,6 +122,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Removing the integration takes its automation with it."""
-    await automation_sync.async_sync(hass, False, "00:00:00")
+@callback
+def _check_legacy_automation(hass: HomeAssistant) -> None:
+    """Versions up to 1.0.5 kept the nightly job as an automation in automations.yaml. The integration now
+    schedules the job itself and no longer touches that file, so ask the user to delete the old automation."""
+    eid = er.async_get(hass).async_get_entity_id("automation", "automation", LEGACY_RETENTION_AUTOMATION_ID)
+    if eid is None:
+        ir.async_delete_issue(hass, DOMAIN, "legacy_retention_automation")
+        return
+    ir.async_create_issue(
+        hass, DOMAIN, "legacy_retention_automation", is_fixable=False, severity=ir.IssueSeverity.WARNING,
+        translation_key="legacy_retention_automation",
+        translation_placeholders={"entity_id": eid, "link": f"/config/automation/edit/{LEGACY_RETENTION_AUTOMATION_ID}"},
+    )

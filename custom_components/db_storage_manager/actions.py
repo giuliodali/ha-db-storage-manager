@@ -39,9 +39,9 @@ MAX_ENTITIES = 500
 CHUNK = 50
 
 
-def _check_space(hass: HomeAssistant, est_bytes: int) -> None:
+async def _check_space(hass: HomeAssistant, est_bytes: int) -> None:
     """Refuse early if the backup could not fit (worst case: uncompressed, roughly the size being cleared)."""
-    free = shutil.disk_usage(hass.config.path()).free
+    free = (await hass.async_add_executor_job(shutil.disk_usage, hass.config.path())).free
     if free < est_bytes + 50 * 1048576:
         raise ValueError(f"Not enough free disk space for the backup ({free // 1048576} MB free, "
                          f"up to {est_bytes // 1048576 + 50} MB needed). Nothing was changed.")
@@ -241,7 +241,7 @@ async def run_retention_action(hass: HomeAssistant, kind: str, entity_ids: list[
                         "est_stats_bytes": 0, "est_states_bytes": r["est_bytes"], "est_bytes": r["est_bytes"]}
     do_purge = kind == "reduce_retention" and apply_now and days < pv["default_days"]
     if do_purge:
-        _check_space(hass, pv["est_bytes"])
+        await _check_space(hass, pv["est_bytes"])
     n = len(entity_ids)
     summary = (f"Keep {days} days of states: {n} entit{'y' if n == 1 else 'ies'}" if kind == "reduce_retention"
                else f"Use default retention: {n} entit{'y' if n == 1 else 'ies'}")
@@ -323,7 +323,7 @@ async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], stat
     if kind != "disable":
         est = sum(r["est_bytes"] for r in records.values())
     if kind != "disable":
-        _check_space(hass, est)
+        await _check_space(hass, est)
     summary = f"{KINDS[kind]}: {len(entity_ids)} entit{'y' if len(entity_ids) == 1 else 'ies'}"
     action_id = await hass.async_add_executor_job(
         journal.add_action, time.time(), kind, summary, list(records.values()), est)

@@ -687,44 +687,29 @@ async def test_nightly_retention_run_and_reset(recorder_mock, enable_custom_inte
     assert retention.rules(hass) == {"sensor.old": 1}
 
 
-async def test_retention_runs_as_a_maintained_automation(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+async def test_retention_is_scheduled_by_the_integration_not_an_automation(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
     import os
-    from homeassistant.helpers import category_registry as cr
-    from custom_components.db_storage_manager import automation_sync
-    cfg = hass.config.path("automations.yaml")
-    with open(hass.config.path("configuration.yaml"), "w") as fh:
-        fh.write("automation: !include automations.yaml\n")
-    with open(cfg, "w") as fh:
-        fh.write("- id: mine\n  alias: Mine\n  triggers: []\n  actions: []\n")
-    assert await async_setup_component(hass, "automation", {"automation": {"id": "mine", "alias": "Mine", "triggers": [], "actions": []}})
-    try:
-        await _retention_fixture(hass)
-        await retention.async_set_rule(hass, "sensor.old", 1)
-        async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=5))   # the rewrite waits a moment for more rule changes
-        await hass.async_block_till_done()
-        assert "keep_days: 1" in open(cfg).read()
-        assert await automation_sync.async_sync(hass, True, "05:10:00") == "automation"
-        text = open(cfg).read()
-        assert "db_storage_retention" in text and "05:10:00" in text and "id: mine" in text            # ours added, theirs kept
-        assert "action: recorder.purge_entities" in text and "- sensor.old" in text      # one visible purge step per retention setting
-        info = automation_sync.info(hass)
-        assert info["link"] == "/config/automation/edit/db_storage_retention" and info["on"]
-        reg = er.async_get(hass).async_get(info["entity_id"])
-        cat = next(c for c in cr.async_get(hass).async_list_categories(scope="automation") if c.name == "DB Storage")
-        assert reg.categories == {"automation": cat.category_id}
-        client = await hass_ws_client(hass)
-        st = (await _ws(client, "retention_status"))["result"]
-        assert st["automation"]["entity_id"] == info["entity_id"]
-        run = (await _ws(client, "retention_run", confirm=True))["result"]                              # runs the automation itself
-        assert run["via"] == "automation" and run["rows"] == 5 and await _count(hass) == 2
-        assert await automation_sync.async_sync(hass, True, "06:00:00") == "automation" and "06:00:00" in open(cfg).read()
-        assert await automation_sync.async_sync(hass, False, "06:00:00") == "off"
-        assert "db_storage_retention" not in open(cfg).read() and "id: mine" in open(cfg).read()
-        assert automation_sync.info(hass) is None
-        assert (await _ws(client, "retention_run", confirm=True))["result"]["via"] == "direct"          # no automation: runs the job itself
-    finally:
-        os.remove(cfg)
-        os.remove(hass.config.path("configuration.yaml"))
+    await _retention_fixture(hass)
+    await retention.async_set_rule(hass, "sensor.old", 1)
+    client = await hass_ws_client(hass)
+    st = (await _ws(client, "retention_status"))["result"]
+    assert st["run_at"] == "04:35" and "automation" not in st
+    nxt = dt_util.now().replace(hour=4, minute=35, second=0, microsecond=0) + timedelta(days=1)
+    async_fire_time_changed(hass, nxt)
+    await hass.async_block_till_done()
+    assert await _count(hass) == 2 and retention.status(hass)["last_run"]["rows"] == 5
+    assert not os.path.exists(hass.config.path("automations.yaml"))                          # no user YAML is written
+    assert er.async_get(hass).async_get_entity_id("automation", "automation", "db_storage_retention") is None
+
+
+async def test_leftover_automation_from_older_versions_raises_a_repair(recorder_mock, enable_custom_integrations, hass) -> None:
+    from homeassistant.helpers import issue_registry as ir
+    reg = er.async_get(hass)
+    old = reg.async_get_or_create("automation", "automation", "db_storage_retention", suggested_object_id="db_storage_nightly_retention")
+    await _setup(hass)
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, "legacy_retention_automation")
+    assert issue is not None and issue.translation_placeholders["entity_id"] == old.entity_id
+    assert reg.async_get(old.entity_id) is not None                                          # left for the user to delete
 
 
 async def test_disabling_drops_the_retention_rule_and_undo_restores_it(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -849,32 +834,3 @@ async def test_db_size_reports_what_a_repack_would_also_delete(recorder_mock, en
     res = (await _ws(client, "db_size", expired=True))["result"]
     assert res["keep_days"] >= 1 and res["expired_rows"] == 0 and "free_bytes" in res
     assert "expired_rows" not in (await _ws(client, "db_size"))["result"]
-
-
-async def test_many_simultaneous_rewrites_never_corrupt_automations_yaml(recorder_mock, enable_custom_integrations, hass) -> None:
-    """A bulk action changes many rules at once; every rewrite must go through one at a time."""
-    import asyncio
-    import glob
-    import os
-
-    from homeassistant.util.yaml import load_yaml
-    from custom_components.db_storage_manager import automation_sync
-
-    cfg = hass.config.path("automations.yaml")
-    with open(hass.config.path("configuration.yaml"), "w") as fh:
-        fh.write("automation: !include automations.yaml\n")
-    with open(cfg, "w") as fh:
-        fh.write("- id: mine\n  alias: Mine\n  triggers: []\n  actions: []\n")
-    assert await async_setup_component(hass, "automation", {"automation": {"id": "mine", "alias": "Mine", "triggers": [], "actions": []}})
-    try:
-        await _retention_fixture(hass)
-        for n in range(8):
-            await retention.async_set_rule(hass, "sensor.old", 1 + n % 3)
-            await asyncio.gather(*[automation_sync.async_sync(hass, True, "05:10:00") for _ in range(6)])
-        items = load_yaml(cfg)
-        assert isinstance(items, list) and [i["id"] for i in items].count("db_storage_retention") == 1 and items[0]["id"] == "mine"
-        assert not glob.glob(os.path.join(os.path.dirname(cfg), "*.dbs_tmp"))
-        assert os.path.exists(cfg + ".dbs_backup")
-    finally:
-        await automation_sync.async_sync(hass, False, "05:10:00")
-        os.remove(cfg)

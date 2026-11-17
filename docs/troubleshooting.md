@@ -8,7 +8,7 @@
 
 **Database size doesn't match what my tool shows.** Home Assistant runs SQLite in WAL mode. DB Storage reports pages × page size (what SQLite Web reports); hover the tile for the main file, the write-ahead log and the exact bytes. 1 MB here is 1,048,576 bytes.
 
-**I deleted a lot but the file didn't shrink.** Deleted rows leave empty space inside the file. Use **Reclaim free space**; the nightly retention automation also repacks.
+**I deleted a lot but the file didn't shrink.** Deleted rows leave empty space inside the file. Use **Reclaim free space**; the nightly retention job also repacks.
 
 **An entity shows "0 🔗" but I use it.** The scan finds literal ids only. Check dynamic templates, areas, labels and anything outside Home Assistant; look for "+N dynamic".
 
@@ -22,4 +22,4 @@
 
 **How do I report a problem?** Open an issue with your Home Assistant and integration versions and the log lines from `custom_components.db_storage_manager`.
 
-**automations.yaml has garbage after the DB Storage automation (version 1.0.4 and earlier).** Overlapping rewrites could corrupt it. Open the file, delete everything from `- id: db_storage_retention` to the end of that automation block, and remove any stray lines after it (leftover fragments such as `etention` or a repeated `data:` / `mode: record`). Check Settings → Developer tools → YAML → Check configuration, then restart. The integration recreates its automation. From 1.0.5 a copy of the previous file is kept as `automations.yaml.dbs_backup` before each change.
+**automations.yaml has garbage after the DB Storage automation (version 1.0.4 and earlier).** Overlapping rewrites could corrupt it. Open the file, delete everything from `- id: db_storage_retention` to the end of that automation block, and remove any stray lines after it (leftover fragments such as `etention` or a repeated `data:` / `mode: record`). Check Settings → Developer tools → YAML → Check configuration, then restart. From 1.1.0 the integration no longer writes to `automations.yaml` at all; 1.0.5 left a copy of the file as `automations.yaml.dbs_backup`, which you can delete.

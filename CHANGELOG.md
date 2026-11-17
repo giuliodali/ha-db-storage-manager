@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- The nightly retention job is scheduled by the integration itself. It no longer writes an automation to `automations.yaml` or touches the automation's registry entry. If you used 1.0.5 or earlier, Settings → Repairs asks you to delete the old **DB Storage: nightly retention** automation. To run retention from your own automation, turn the nightly run off and call `db_storage_manager.run_retention`.
+- File checks (free disk space, backup files, the database file during size sampling) no longer run on Home Assistant's event loop, so slow storage can't stall it.
+- The Energy dashboard's configuration is read through the energy integration's own API, not its storage file.
+- Installation is now a search in HACS.
+
 ## 1.0.5
 
 - Fixed automations.yaml being corrupted after a bulk action. Rewrites of the retention automation could overlap and share one temporary file. They now go through one at a time, wait for a bulk action to settle, use a private temp file, check the result parses first, and keep a copy of the previous file as `automations.yaml.dbs_backup`.

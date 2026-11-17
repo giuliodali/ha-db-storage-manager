@@ -80,7 +80,7 @@ async def make_batch_backup(hass: HomeAssistant, action_id: int, statistic_ids: 
     path = _snapshot_dir(hass) / name
     out = await _read(hass, lambda s: export_batch(s, path, statistic_ids, state_entity_ids, states_before))
     if not any(sum(c.values()) for c in out["counts"].values()):
-        path.unlink(missing_ok=True)
+        await hass.async_add_executor_job(lambda: path.unlink(missing_ok=True))
         return None
     return {"file": name, "bytes": out["bytes"], "counts": out["counts"]}
 

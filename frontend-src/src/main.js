@@ -118,7 +118,7 @@ class DbStoragePanel extends LitElement {
 
   async _loadActions() { try { this.actionsList = await this._ws("actions", { limit: 200 }); } catch (e) { this.error = e.message; } this._loadRet(); }
   async _loadRet() { try { this.ret = await this._ws("retention_status"); } catch (e) { /* not essential */ } }
-  // Runs the automation this integration maintains (or the job directly if the automation could not be created).
+  // Runs the nightly retention job now.
   async _runRetention() {
     this.menuOpen = false; this.retBusy = true;
     try {
@@ -220,7 +220,7 @@ class DbStoragePanel extends LitElement {
         <div class="seg">${DAY_CHOICES.map((c) => html`<button class=${m.days === c ? "on" : ""} @click=${() => this._retChange({ days: c })}>${c === "default" ? `default (${pv.default_days}d)` : `${c}d`}</button>`)}</div>
         <div class="muted" style="margin:0 0 8px">Long-term statistics (history graphs, Energy) are not touched.</div>
         ${reset ? html`<div>Back to Home Assistant's default. Nothing is deleted.</div>`
-          : html`<label class="chk" title="Saved in a backup first, so it can be undone. If unticked, the nightly automation deletes them without a backup."><input type="checkbox" .checked=${m.applyNow} @change=${(e) => this._retChange({ applyNow: e.target.checked })}>
+          : html`<label class="chk" title="Saved in a backup first, so it can be undone. If unticked, the nightly retention job deletes them without a backup."><input type="checkbox" .checked=${m.applyNow} @change=${(e) => this._retChange({ applyNow: e.target.checked })}>
           Delete older states now${pv.est_bytes ? ` (${pv.entities.reduce((s, e) => s + (e.rows || 0), 0).toLocaleString()} states, ${fmtBytes(pv.est_bytes)})` : ""}</label>`}`
         : clears ? html`<div>Frees about <b>${fmtBytes(pv.est_bytes)}</b>. Backed up first; undo from History.</div>` : html`<div>Stops recording. Nothing is deleted.</div>`}
       ${clears ? html`<label class="chk"><input type="checkbox" .checked=${m.states} @change=${(e) => this._setStates(e.target.checked)}>
@@ -322,8 +322,7 @@ class DbStoragePanel extends LitElement {
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>
             ${this.menuOpen ? html`<div class="menu-pop" @click=${(e) => e.stopPropagation()}>
               <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
-              <div><button ?disabled=${!this.ret?.rules || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!this.ret?.rules ? "No retention rules yet." : this.ret?.automation ? "Runs the DB Storage automation in Home Assistant now." : "Deletes states older than each rule now."}</span></button>
-                ${this.ret?.automation ? html`<a @click=${() => { this.menuOpen = false; this._go(this.ret.automation.link); }}>Open the automation ↗</a>` : ""}</div>
+              <div><button ?disabled=${!this.ret?.rules || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!this.ret?.rules ? "No retention rules yet." : "Deletes states older than each rule now."}</span></button></div>
               <button @click=${() => { this.menuOpen = false; this._openReclaim(); }}><b>Reclaim free space…</b><span>Repack the database so space freed by deletions goes back to the disk.</span></button></div>` : ""}</span></span>` : ""}</h2>
       <div class="tabs">${tabs.map(([k, v]) => html`<button class=${this.tab === k ? "on" : ""} @click=${() => { this.tab = k; if (k === "history") this._loadActions(); }}>${v}</button>`)}</div>
       ${this.error ? html`<div class="err">${this.error}</div>` : ""}

@@ -9,7 +9,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import RETENTION_AUTOMATION_ID
+from .const import LEGACY_RETENTION_AUTOMATION_ID
 from .usage import (
     Matcher, Usage, dynamic_in, lovelace_label, scan_json, scan_lines, split_yaml_items, view_meta,
 )
@@ -57,8 +57,8 @@ def scan_yaml_dir(config_dir: str, matcher: Matcher, usage: Usage) -> None:
             if special:
                 kind, style, link_fmt = special
                 for item in split_yaml_items(lines, style):
-                    if kind == "Automation" and item["id"] == RETENTION_AUTOMATION_ID:
-                        continue  # our own nightly automation names every entity with a rule, so it is not a real reference
+                    if kind == "Automation" and item["id"] == LEGACY_RETENTION_AUTOMATION_ID:
+                        continue  # the nightly automation older versions wrote names every entity with a rule, so it is not a real reference
                     chunk = lines[item["start"]:item["end"]]
                     hits, dyn = scan_lines(matcher, chunk, item["start"] + 1)
                     link = link_fmt.format(id=item["id"]) if item["id"] else None
@@ -106,10 +106,13 @@ def _scan_config_entries(hass: HomeAssistant, matcher: Matcher, usage: Usage, ow
 
 
 async def _scan_energy(hass: HomeAssistant, matcher: Matcher, usage: Usage) -> None:
-    from homeassistant.helpers.storage import Store  # noqa: PLC0415
+    """The Energy dashboard's configuration, through the energy integration's own manager."""
+    if "energy" not in hass.config.components:
+        return
+    from homeassistant.components.energy.data import async_get_manager  # noqa: PLC0415
 
     try:
-        data = await Store(hass, 1, "energy").async_load()
+        data = (await async_get_manager(hass)).data
     except Exception:  # noqa: BLE001
         return
     if data:

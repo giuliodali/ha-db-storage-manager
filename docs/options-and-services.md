@@ -7,7 +7,7 @@ Settings → Devices & services → DB Storage Manager → **Configure**.
 | Option | Meaning |
 |---|---|
 | **Snapshot frequency** | How often a point is added to the size history: hourly, 6 hours, daily (default), weekly. The two size sensors update at the same time. "Sample now", Re-Scan, actions and undo always add a point. |
-| **Nightly retention** | On or off. Off removes the maintained automation. |
+| **Nightly retention** | On or off. Turn it off to run `db_storage_manager.run_retention` from your own automation instead. |
 | **Retention time** | When it runs. Default 04:35, after Home Assistant's own purge at 04:12. |
 
 Changes apply immediately.
@@ -26,12 +26,7 @@ Changes apply immediately.
 
 ## Action (service)
 
-`db_storage_manager.run_retention` applies every rule now.
-
-| `mode` | Use |
-|---|---|
-| `all` (default) | The whole job in one call, then a repack |
-| `count`, `record` | The first and last steps of the maintained automation |
+`db_storage_manager.run_retention` applies every rule now, then repacks the database.
 
 ## Files it keeps
 
@@ -41,4 +36,3 @@ Changes apply immediately.
 | `/config/db_storage_manager/inventory.json.gz` | The last scan |
 | `/config/db_storage_manager/snapshots/` | Undo backups |
 | `/config/.storage/db_storage_manager.retention` | Retention rules |
-| `/config/automations.yaml` | The one maintained automation (when retention is on) |

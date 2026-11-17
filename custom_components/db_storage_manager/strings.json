@@ -26,13 +26,13 @@
   "services": {
     "run_retention": {
       "name": "Run retention rules",
-      "description": "Delete detailed states older than each entity's retention rule (set in the DB Storage panel). Long-term statistics are not touched.",
-      "fields": {
-        "mode": {
-          "name": "Mode",
-          "description": "all (default) runs the whole job. count and record are the first and last steps of the maintained automation."
-        }
-      }
+      "description": "Delete detailed states older than each entity's retention rule (set in the DB Storage panel), then repack the database. Long-term statistics are not touched."
+    }
+  },
+  "issues": {
+    "legacy_retention_automation": {
+      "title": "Delete the old DB Storage retention automation",
+      "description": "DB Storage now runs the nightly retention job itself and no longer maintains an automation. Version 1.0.5 and earlier created the automation {entity_id} (\"DB Storage: nightly retention\") in automations.yaml; it is no longer updated and would run the job a second time. Open it in Settings > Automations & scenes ({link}) and delete it. This message disappears after the next restart once it is gone."
     }
   }
 }
