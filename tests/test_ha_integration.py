@@ -697,7 +697,7 @@ async def test_retention_is_scheduled_by_the_integration_not_an_automation(recor
     assert st["run_at"] == "04:35" and "automation" not in st
     nxt = dt_util.now().replace(hour=4, minute=35, second=0, microsecond=0) + timedelta(days=1)
     async_fire_time_changed(hass, nxt)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)              # time triggers run as background tasks
     assert await _count(hass) == 2 and retention.status(hass)["last_run"]["rows"] == 5
     assert not os.path.exists(hass.config.path("automations.yaml"))                          # no user YAML is written
     assert er.async_get(hass).async_get_entity_id("automation", "automation", "db_storage_retention") is None
