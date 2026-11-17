@@ -1,9 +1,9 @@
 import { LitElement, html, css } from "lit";
 import "./chart.js";
-import { fmtBytes, entityIcon, COLOR_STATS, COLOR_UNDO, themeColor } from "./util.js";
+import { fmtAge, fmtBytes, entityIcon, COLOR_STATS, COLOR_UNDO, themeColor } from "./util.js";
 
 export class DbOverview extends LitElement {
-  static properties = { data: { attribute: false }, history: { attribute: false }, days: { type: Number }, window: { attribute: false }, hass: { attribute: false }, live: { attribute: false } };
+  static properties = { data: { attribute: false }, history: { attribute: false }, days: { type: Number }, window: { attribute: false }, hass: { attribute: false }, live: { attribute: false }, ret: { attribute: false } };
   static styles = css`
     :host{display:block}
     select option{background:var(--card-background-color,#fff);color:var(--primary-text-color,#000)}
@@ -85,6 +85,17 @@ export class DbOverview extends LitElement {
     const notRefBytes = notRef.reduce((s, i) => s + i.total_bytes, 0);
     const clean = d.items.filter((i) => i.suggestion === "Remove history" || i.suggestion === "Disable");
     const cleanBytes = clean.reduce((s, i) => s + i.total_bytes, 0);
+    // Entities keeping less state history than Home Assistant's default (their retention facet value is not "Default").
+    const reduced = d.items.filter((i) => i.retention && i.retention !== "Default");
+    const reducedVals = [...new Set(reduced.map((i) => i.retention))];
+    const r = this.ret, lr = r?.last_run;
+    const retAgo = lr ? `Last run ${fmtAge(Math.max(0, Math.round(Date.now() / 1000 - lr.ts)))}` : "Has not run yet";
+    const retTip = [
+      `Entities that keep less state history than Home Assistant's ${r?.default_days ?? "default number of"} days. Click to see them.`,
+      lr ? `Last run ${new Date(lr.ts * 1000).toLocaleString()}: ${lr.rows.toLocaleString()} rows deleted for ${lr.entities} entit${lr.entities === 1 ? "y" : "ies"}.` : "The retention job has not run yet.",
+      r?.run_at ? `Runs nightly at ${r.run_at}.` : "Nightly run is off (see the integration options).",
+      "Change the time or turn it off in the integration options; to run it from your own automation instead, turn it off and call the db_storage_manager.run_retention action. Run retention now is in the menu beside Re-Scan. Rows it deletes are not backed up.",
+    ].join("\n");
     const h = this.history || [];
     const spanDays = h.length > 1 ? (h.at(-1).ts - h[0].ts) / 86400 : 0;
     const since = h.length ? new Date(h[0].ts * 1000).toLocaleDateString([], { dateStyle: "medium" }) : null;
@@ -104,6 +115,9 @@ export class DbOverview extends LitElement {
         <div class="kpi click" title="Entities whose history is leftover (orphaned or disabled) or that look unused and stale. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { suggestion: ["Remove history", "Disable"] } }))}>
           <span>Cleanup candidates</span><b>${fmtBytes(cleanBytes)}</b><span>${clean.length} entities</span></div>
+        <div class="kpi ${reduced.length ? "click" : ""}" title=${retTip}
+          @click=${() => reduced.length && this.dispatchEvent(new CustomEvent("goto-filter", { detail: { retention: reducedVals } }))}>
+          <span>Reduced retention</span><b>${reduced.length} entit${reduced.length === 1 ? "y" : "ies"}</b><span>${retAgo}</span></div>
       </div>
       <div class="grid">
         <div class="card tree"><h3>By integration and type</h3>

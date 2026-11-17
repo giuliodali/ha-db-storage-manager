@@ -30,7 +30,8 @@ Rows deleted by the nightly run are not backed up: it is a rolling window by des
 
 ## Seeing and tracking it
 
-- **History tab**: the Retention rules card (rules, last run, rows deleted, next run) and an entry whenever rows were deleted.
+- **Overview tab**: the **Reduced retention** KPI shows how many entities have a rule and when the job last ran; hover for the exact time, rows deleted and schedule, click to list those entities.
+- **History tab**: an entry whenever rows were deleted.
 - **Sensors:** `Retention rules` and `Retention last run`.
 - **Event** `db_storage_manager_retention_run` after every run, for notifications.
 - The Home Assistant log (`custom_components.db_storage_manager.retention`).
