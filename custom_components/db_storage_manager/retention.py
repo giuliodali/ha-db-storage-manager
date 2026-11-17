@@ -5,7 +5,8 @@ shortens that for one entity ("keep 7 days of this chatty sensor"). A rule can o
 lengthen, because Home Assistant's own purge still applies.
 
 Rules live in .storage. A nightly job (after Home Assistant's own purge) deletes rows older than
-each rule using the recorder's purge_entities service. Only long-term statistics are untouched.
+each rule using the recorder's purge_entities service. Long-term statistics are untouched by rules; the
+first run of each month also applies the long-term statistics limits from the Settings page (see settings).
 Rows deleted by the nightly job are not backed up (it is a rolling window by design); the first
 clean-up when you create a rule is backed up and can be undone.
 """
@@ -22,6 +23,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
+from . import settings
 from .const import DOMAIN
 from .queries import states_older_than
 from .recorder_ops import _read, wait_purged
@@ -114,8 +116,11 @@ async def _save(hass: HomeAssistant) -> None:
 
 def status(hass: HomeAssistant) -> dict[str, Any]:
     st, c = _state(hass), _cfg(hass)
+    s = settings.get(hass)
     return {"rules": len(st["rules"]), "default_days": default_days(hass), "last_run": st["last_run"],
-            "run_at": f"{c['hour']:02d}:{c['minute']:02d}" if c["enabled"] else None}
+            "run_at": f"{c['hour']:02d}:{c['minute']:02d}" if c["enabled"] else None,
+            "stats_limits": s["stats_keep_months"] is not None or s["energy_stats_keep_months"] is not None,
+            "last_stats_trim": s.get("last_stats_trim")}
 
 
 def _groups(rule_map: dict[str, int]) -> dict[int, list[str]]:
@@ -168,16 +173,24 @@ async def async_run(hass: HomeAssistant, *_: Any) -> dict[str, Any]:
             await hass.services.async_call("recorder", "purge_entities", {"entity_id": todo, "keep_days": days}, blocking=True)
             purged.update({e: counts[e] for e in todo})
             await wait_purged(hass, todo, days)
+    stats = None
+    if settings.trim_due(hass, now):  # long-term statistics: once a month, on the month's first run
+        try:
+            stats = await settings.async_trim_statistics(hass, now)
+        except Exception:  # noqa: BLE001 - the state rules above still count
+            _LOGGER.exception("Long-term statistics retention failed")
     await get_instance(hass).async_block_till_done()
     await hass.services.async_call("recorder", "purge", {"repack": True}, blocking=False)  # return the space, as the automation does
-    return await _finish(hass, purged, now)
+    return await _finish(hass, purged, now, stats)
 
 
-async def _finish(hass: HomeAssistant, purged: dict[str, int], now: float) -> dict[str, Any]:
+async def _finish(hass: HomeAssistant, purged: dict[str, int], now: float, stats: dict[str, Any] | None = None) -> dict[str, Any]:
     st = _state(hass)
     journal = hass.data[DOMAIN]["journal"]
     default = default_days(hass)
     st["last_run"] = {"ts": now, "rows": sum(purged.values()), "entities": len(purged)}
+    if stats is not None:
+        st["last_run"]["stats_rows"] = stats["rows"]
     await _save(hass)
     _LOGGER.info("Retention rules ran: %s state rows deleted for %s entities", st["last_run"]["rows"], st["last_run"]["entities"])
     hass.bus.async_fire(f"{DOMAIN}_retention_run", {**st["last_run"], "rules": len(st["rules"]), "default_days": default})
@@ -189,6 +202,11 @@ async def _finish(hass: HomeAssistant, purged: dict[str, int], now: float) -> di
         aid = await hass.async_add_executor_job(
             journal.add_action, now, "retention_run",
             f"Retention rules: {n_rows:,} state rows deleted for {len(purged)} entit{'y' if len(purged) == 1 else 'ies'}", recs, None)
+        await hass.async_add_executor_job(lambda: journal.update_action(aid, status="applied"))
+    if stats and stats["rows"]:
+        aid = await hass.async_add_executor_job(
+            journal.add_action, now, "retention_run",
+            f"Long-term statistics retention: {stats['rows']:,} hourly statistics rows deleted", [], None)
         await hass.async_add_executor_job(lambda: journal.update_action(aid, status="applied"))
     return st["last_run"]
 

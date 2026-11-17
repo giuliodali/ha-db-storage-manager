@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .const import LEGACY_RETENTION_AUTOMATION_ID
 from .usage import (
@@ -106,17 +107,30 @@ def _scan_config_entries(hass: HomeAssistant, matcher: Matcher, usage: Usage, ow
 
 
 async def _scan_energy(hass: HomeAssistant, matcher: Matcher, usage: Usage) -> None:
-    """The Energy dashboard's configuration, through the energy integration's own manager."""
+    """The Energy dashboard's configuration, through the energy integration's own manager.
+
+    Besides the entities its configuration names, every statistic it names (including imported ones,
+    which are not entity ids) and the cost sensors the energy integration creates for it count as used
+    by the Energy dashboard. The Settings page keeps exactly this set under its own statistics limit.
+    """
     if "energy" not in hass.config.components:
         return
     from homeassistant.components.energy.data import async_get_manager  # noqa: PLC0415
+
+    from .settings import stat_ids_in  # noqa: PLC0415
 
     try:
         data = (await async_get_manager(hass)).data
     except Exception:  # noqa: BLE001
         return
-    if data:
-        hits, dyn = scan_json(matcher, data)
+    hits, dyn = scan_json(matcher, data) if data else ({}, set())
+    for sid in stat_ids_in(data or {}):
+        if sid not in hits:  # imported statistics (source:id) are not entity ids, so the text match misses them
+            hits[sid] = ["statistic"]
+    for ent in er.async_get(hass).entities.values():
+        if ent.platform == "energy":
+            hits.setdefault(ent.entity_id, []).append("cost sensor created by the Energy dashboard")
+    if hits or dyn:
         usage.add("Energy dashboard", "Energy configuration", "/config/energy", hits)
         usage.add_dynamic("Energy dashboard", "Energy configuration", "/config/energy", dyn)
 

@@ -4,6 +4,7 @@ import "./entities.js";
 import "./progress.js";
 import "./history.js";
 import "./inspect.js";
+import "./settings.js";
 import { FACET_LABELS, fmtAge, fmtBytes, fmtPeriod, prefs } from "./util.js";
 
 const DAY_CHOICES = [1, 3, 5, 7, "default"];
@@ -12,7 +13,7 @@ class DbStoragePanel extends LitElement {
   static properties = {
     all: { state: true }, window: { state: true }, chipsIn: { state: true }, inspect: { state: true }, job: { state: true }, modal: { state: true }, actionsList: { state: true }, live: { state: true }, menuOpen: { state: true }, reclaim: { state: true }, now: { state: true }, hass: { attribute: false }, narrow: { type: Boolean }, tab: { state: true }, data: { state: true }, history: { state: true },
     days: { state: true }, filters: { state: true }, search: { state: true }, sort: { state: true }, selected: { state: true },
-    shown: { state: true }, usage: { state: true }, resync: { state: true }, expand: { state: true }, hideAuto: { state: true }, ret: { state: true }, notice: { state: true }, retBusy: { state: true }, progress: { state: true }, error: { state: true },
+    shown: { state: true }, usage: { state: true }, resync: { state: true }, expand: { state: true }, hideAuto: { state: true }, cfg: { state: true }, ret: { state: true }, notice: { state: true }, retBusy: { state: true }, progress: { state: true }, error: { state: true },
   };
   static styles = css`
     :host{display:block;height:100%;overflow:auto;box-sizing:border-box;padding:16px;color:var(--primary-text-color);background:var(--primary-background-color)}
@@ -123,7 +124,9 @@ class DbStoragePanel extends LitElement {
     this.menuOpen = false; this.retBusy = true;
     try {
       const r = await this._ws("retention_run", { confirm: true });
-      this.notice = r.rows ? `Retention ran: ${r.rows.toLocaleString()} old states deleted for ${r.entities} entit${r.entities === 1 ? "y" : "ies"}.` : "Retention ran: nothing was older than its limit.";
+      this.notice = (r.rows ? `Retention ran: ${r.rows.toLocaleString()} old states deleted for ${r.entities} entit${r.entities === 1 ? "y" : "ies"}.` : "Retention ran: no states were older than their rule.") +
+        (r.stats_rows != null ? ` Long-term statistics: ${r.stats_rows.toLocaleString()} old rows deleted.` : "");
+      if (r.stats_rows) this.resync = true;
       if (r.rows) this.resync = true;
       await this._loadActions();
     } catch (e) { this.error = e.message || JSON.stringify(e); }
@@ -238,7 +241,14 @@ class DbStoragePanel extends LitElement {
 
   _toggleMenu() { this.dispatchEvent(new Event("hass-toggle-menu", { bubbles: true, composed: true })); }
 
-  async _loadAll() { await Promise.all([this._loadEntities(false), this._loadHistory(), this._loadLive(), this._loadRet()]); }
+  async _loadAll() { await this._loadCfg(); await Promise.all([this._loadEntities(false), this._loadHistory(), this._loadLive(), this._loadRet()]); }
+  // Saved settings; Hide automations decides what the Overview and Entities count.
+  async _loadCfg() { try { this.cfg = await this._ws("settings_get"); this.hideAuto = this.cfg.hide_automations; } catch (e) { /* defaults stay */ } }
+  _cfgSaved(cfg) {
+    const changed = cfg.hide_automations !== this.hideAuto;
+    this.cfg = cfg; this.hideAuto = cfg.hide_automations; this.ret = cfg.retention;
+    if (changed) { this.shown = 100; this._loadEntities(false); }
+  }
   async _loadLive() { try { this.live = await this._ws("db_size"); } catch (e) { /* recorder busy: the snapshot is shown instead */ } }
   async _loadHistory() { try { this.history = await this._ws("size_history", { days: 3650 }); } catch (e) { this.error = e.message; } }
   async _loadEntities(refresh) {
@@ -248,8 +258,9 @@ class DbStoragePanel extends LitElement {
       if (res.no_data) { this.data = null; this.all = null; } else {
         this.data = res;
         this._scanTs = Date.now() / 1000 - res.scan_age_s;
-        if (!Object.values(this.filters).some((v) => v.length) && !this.search && !this.window && !this._exclude().length) this.all = res;
-        else this.all = await this._ws("entities", { filters: {}, search: "", refresh: false, limit: 5000 });
+        // The Overview counts everything except what Hide automations leaves out, so its drill-downs list the same entities.
+        if (!Object.values(this.filters).some((v) => v.length) && !this.search && !this.window) this.all = res;
+        else this.all = await this._ws("entities", { filters: {}, search: "", refresh: false, limit: 5000, exclude_domains: this.hideAuto ? ["automation"] : [] });
       }
       if (res.no_data || res.scanning || refresh) this._poll();
       await this.updateComplete;
@@ -273,7 +284,7 @@ class DbStoragePanel extends LitElement {
     this._polling = false;
   }
   // The "Referenced in" panel shows one entity, or the combined places of everything ticked while it is open.
-  // Automations are hidden from the Entities view unless switched on, or picked in the Type filter.
+  // Automations are hidden (Settings > Hide automations) unless picked in the Type filter.
   _exclude() { return this.hideAuto && !(this.filters.domain || []).includes("automation") ? ["automation"] : []; }
   async _loadUsage(eid) {
     if (eid !== undefined) this._usageFor = eid;
@@ -309,7 +320,7 @@ class DbStoragePanel extends LitElement {
   }
 
   render() {
-    const tabs = [["overview", "Overview"], ["entities", "Entities"], ["history", "History"]];
+    const tabs = [["overview", "Overview"], ["entities", "Entities"], ["history", "History"], ["settings", "Settings"]];
     return html`<div class="wrap">
       <h2>${this.narrow ? html`<button class="menu" @click=${this._toggleMenu}>☰</button>` : ""}DB Storage${this._chips()}
         ${this.all || this.data ? html`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
@@ -322,9 +333,9 @@ class DbStoragePanel extends LitElement {
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>
             ${this.menuOpen ? html`<div class="menu-pop" @click=${(e) => e.stopPropagation()}>
               <button @click=${() => { this.menuOpen = false; this._loadEntities(true); }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
-              <div><button ?disabled=${!this.ret?.rules || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!this.ret?.rules ? "No retention rules yet." : "Deletes states older than each rule now."}</span></button></div>
+              <div><button ?disabled=${!(this.ret?.rules || this.ret?.stats_limits) || this.retBusy || this.job?.running} @click=${() => this._runRetention()}><b>Run retention now</b><span>${!(this.ret?.rules || this.ret?.stats_limits) ? "No retention rules or statistics limits yet." : "Deletes states older than each rule now (and long-term statistics past their limit, if not yet done this month)."}</span></button></div>
               <button @click=${() => { this.menuOpen = false; this._openReclaim(); }}><b>Reclaim free space…</b><span>Repack the database so space freed by deletions goes back to the disk.</span></button></div>` : ""}</span></span>` : ""}</h2>
-      <div class="tabs">${tabs.map(([k, v]) => html`<button class=${this.tab === k ? "on" : ""} @click=${() => { this.tab = k; if (k === "history") this._loadActions(); }}>${v}</button>`)}</div>
+      <div class="tabs">${tabs.map(([k, v]) => html`<button class=${this.tab === k ? "on" : ""} @click=${() => { this.tab = k; if (k === "history") this._loadActions(); if (k === "settings") this._loadCfg(); }}>${v}</button>`)}</div>
       ${this.error ? html`<div class="err">${this.error}</div>` : ""}
       ${this._reclaimUi()}
       ${this.notice ? html`<div class="rcard"><h3>Retention</h3><div class="sub">${this.notice}</div><div style="margin-top:8px"><button class="rescan" @click=${() => (this.notice = null)}>Dismiss</button></div></div>` : ""}
@@ -334,14 +345,16 @@ class DbStoragePanel extends LitElement {
       ${this.progress ? html`<db-progress .status=${this.progress} .first=${!this.data}></db-progress>` : ""}
       ${this.tab === "overview" ? html`<db-overview .live=${this.live} .ret=${this.ret} .hass=${this.hass} .data=${this.all} .history=${this.history} .days=${this.days} .window=${this.window}
           @days=${(e) => { this.days = e.detail; }}
-          @goto-entity=${(e) => { this.hideAuto = false; this.search = e.detail; this.filters = {}; this.window = null; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
-          @goto-window=${(e) => { this.hideAuto = false; this.window = e.detail; this.search = ""; this.filters = {}; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
-          @goto-filter=${(e) => { this.hideAuto = false; this.search = ""; this.window = null; this.filters = e.detail; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}></db-overview>` : ""}
-      ${this.tab === "entities" ? html`<db-entities .hass=${this.hass} .data=${this.data} .filters=${this.filters} .search=${this.search} .sort=${this.sort} .expand=${this.expand} .hideAuto=${this.hideAuto && !(this.filters.domain || []).includes("automation")}
+          @goto-entity=${(e) => { this.search = e.detail; this.filters = {}; this.window = null; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
+          @goto-window=${(e) => { this.window = e.detail; this.search = ""; this.filters = {}; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}
+          @goto-filter=${(e) => { this.search = ""; this.window = null; this.filters = e.detail; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}></db-overview>` : ""}
+      ${this.tab === "entities" ? html`<db-entities .hass=${this.hass} .data=${this.data} .filters=${this.filters} .search=${this.search} .sort=${this.sort} .expand=${this.expand} 
           .selected=${this.selected} .shown=${this.shown} .usage=${this.usage} .growth=${this._growth()} .busy=${!!this.progress?.running}
-          @clearwindow=${() => { this.window = null; this.shown = 100; this._loadEntities(false); }} @filters=${(e) => this._filters(e.detail)} @hideauto=${(e) => { this.hideAuto = e.detail; this.shown = 100; this._loadEntities(false); }} @expand=${(e) => { const s = new Set(this.expand); e.detail.on ? s.add(e.detail.facet) : s.delete(e.detail.facet); this.expand = [...s]; this._loadEntities(false); }} @search=${(e) => { this.search = e.detail; this.shown = 100; this._loadEntities(false); }}
+          @clearwindow=${() => { this.window = null; this.shown = 100; this._loadEntities(false); }} @filters=${(e) => this._filters(e.detail)} @expand=${(e) => { const s = new Set(this.expand); e.detail.on ? s.add(e.detail.facet) : s.delete(e.detail.facet); this.expand = [...s]; this._loadEntities(false); }} @search=${(e) => { this.search = e.detail; this.shown = 100; this._loadEntities(false); }}
           @sort=${(e) => (this.sort = e.detail)} @selected=${(e) => { this.selected = e.detail; if (this.usage) this._loadUsage(); }} @more=${() => (this.shown += 100)}
           @action=${(e) => this._askAction(e.detail)} @inspect=${(e) => (this.inspect = e.detail)} @refresh=${() => this._loadEntities(true)} @usage=${(e) => this._loadUsage(e.detail)} @navigate=${(e) => this._go(e.detail)}></db-entities>` : ""}
+      ${this.tab === "settings" ? html`<db-settings .hass=${this.hass} .ws=${(t, x) => this._ws(t, x)} .cfg=${this.cfg} @saved=${(e) => this._cfgSaved(e.detail)}
+          @goto-filter=${(e) => { this.search = ""; this.window = null; this.filters = e.detail; this.tab = "entities"; this.shown = 100; this.chipsIn = false; this._loadEntities(false); }}></db-settings>` : ""}
       ${this.tab === "history" ? html`<db-history .actions=${this.actionsList} @navigate=${(e) => this._go(e.detail)} .ws=${(t, x) => this._ws(t, x)} .busy=${!!this.job?.running} @changed=${() => this._loadActions()} @undo=${(e) => this._askUndo(e.detail)}></db-history>` : ""}
     </div>`;
   }

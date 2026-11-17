@@ -3,8 +3,8 @@
 ## What it never does
 
 - **It never deletes entities.** Disabling keeps the registry entry, which is what stops an integration re-creating the entity next time it starts. Clearing history never touches the entity itself.
-- **It never edits `configuration.yaml`.** YAML-defined entities stay defined; the panel only points them out.
-- **It never touches long-term statistics through retention.** Rules limit detailed states only.
+- **It edits your YAML only when you save the default state retention on the Settings page**, and then only the `purge_keep_days` line under `recorder:` (checked before saving, original kept as `<file>.dbs_backup`). YAML-defined entities stay defined; the panel only points them out.
+- **It never touches long-term statistics unless you set a limit** on the Settings page. Retention rules limit detailed states only.
 - **It never writes to the recorder database directly** except through the recorder's own services and tasks, and read-only queries to measure it.
 
 ## What it does, and how that is protected
@@ -15,6 +15,8 @@
 | Clear statistics and state history | One compressed backup per action first; undo restores missing rows without duplicating |
 | Retention clean-up on rule creation | Backed up and undoable |
 | Nightly retention | A rolling window, **not** backed up, limited to entities with rules, never longer than Home Assistant's own limit |
+| Default state retention (Settings) | One line in your YAML, validated, written atomically, previous file kept as `.dbs_backup`; applies after a restart |
+| Long-term statistics limit (Settings) | Off by default, applied once a month, **not** backed up; Energy dashboard statistics have their own limit |
 | Repack | The recorder's own purge with repack |
 
 Other protections: previews before every action; a typed count for large batches; refusal when the disk can't hold the backup; one action at a time; actions cut short by a restart are marked Interrupted; the panel and its commands are admin-only.

@@ -835,3 +835,89 @@ async def test_db_size_reports_what_a_repack_would_also_delete(recorder_mock, en
     res = (await _ws(client, "db_size", expired=True))["result"]
     assert res["keep_days"] >= 1 and res["expired_rows"] == 0 and "free_bytes" in res
     assert "expired_rows" not in (await _ws(client, "db_size"))["result"]
+
+
+async def test_settings_page_loads_current_config_and_saves_display_option(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    s = (await _ws(client, "settings_get"))["result"]
+    assert s["hide_automations"] is True and s["stats_keep_months"] is None and s["energy_stats_keep_months"] is None
+    assert s["month_steps"][0] == 6 and s["month_steps"][-1] == 84
+    assert s["recorder"]["running_days"] >= 1 and s["recorder"]["file"] == "configuration.yaml"
+    s = (await _ws(client, "settings_set", hide_automations=False))["result"]
+    assert s["hide_automations"] is False
+    assert (await _ws(client, "settings_set", stats_keep_months=5))["success"] is False      # 6-month steps only
+    pred = (await _ws(client, "settings_predict"))["result"]
+    assert {"hist", "rate_per_day"} <= set(pred["states"]) and {"other", "energy"} <= set(pred["statistics"])
+
+
+async def test_default_retention_is_written_to_configuration_yaml(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+    import os
+    path = hass.config.path("configuration.yaml")
+    had = os.path.exists(path)
+    old = open(path, encoding="utf-8").read() if had else None
+    try:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("default_config:\n\nrecorder:\n  commit_interval: 5  # keep\n")
+        await _setup(hass)
+        client = await hass_ws_client(hass)
+        res = await _ws(client, "settings_set", keep_days=30)
+        assert res["success"], res
+        rec = res["result"]["recorder"]
+        assert rec["configured_days"] == 30 and rec["restart_needed"] is True and rec["file"] == "configuration.yaml"
+        assert open(path, encoding="utf-8").read() == "default_config:\n\nrecorder:\n  purge_keep_days: 30\n  commit_interval: 5  # keep\n"
+        assert os.path.exists(path + ".dbs_backup")
+    finally:
+        if had:
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(old)
+        elif os.path.exists(path):
+            os.remove(path)
+        if os.path.exists(path + ".dbs_backup"):
+            os.remove(path + ".dbs_backup")
+
+
+async def test_long_term_statistics_limit_trims_monthly_and_spares_energy(recorder_mock, enable_custom_integrations, hass, hass_ws_client, monkeypatch) -> None:
+    from custom_components.db_storage_manager import settings
+    await _setup(hass)
+    now = dt_util.utcnow().replace(minute=0, second=0, microsecond=0)
+
+    def meta(sid):
+        kw = dict(has_mean=True, has_sum=False, name=sid, source="test", statistic_id=sid, unit_of_measurement="W")
+        return StatisticMetaData(**kw, mean_type=1, unit_class=None) if _supports_mean_type() else StatisticMetaData(**kw)
+
+    ages = [400, 300, 100, 10]  # days old: two older than 6 months, two newer
+    for sid in ("test:other", "test:grid"):
+        async_add_external_statistics(hass, meta(sid), [StatisticData(start=now - timedelta(days=d), mean=1.0, min=0.0, max=2.0) for d in ages])
+    await async_wait_recording_done(hass)
+
+    async def energy_ids(_hass):
+        return {"test:grid"}
+    monkeypatch.setattr(settings, "async_energy_statistic_ids", energy_ids)
+
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, "settings_set", stats_keep_months=6))["success"]
+    pred = (await _ws(client, "settings_predict"))["result"]["statistics"]
+    assert sum(pred["other"]) == 4 and sum(pred["energy"]) == 4
+    assert pred["energy_ids"] == ["test:grid"] and pred["energy_count"] == 1                # what the Settings link lists
+
+    res = (await _ws(client, "retention_run", confirm=True))["result"]
+    assert res["stats_rows"] == 2
+    other = (await _ws(client, "stats_info", statistic_id="test:other"))["result"]["statistics"]
+    grid = (await _ws(client, "stats_info", statistic_id="test:grid"))["result"]["statistics"]
+    assert other == 2 and grid == 4                                         # Energy statistics keep their own (unlimited) setting
+    assert "stats_rows" not in (await _ws(client, "retention_run", confirm=True))["result"]   # once a month only
+
+    assert (await _ws(client, "settings_set", energy_stats_keep_months=12))["success"]     # a changed limit applies at the next run
+    assert (await _ws(client, "retention_run", confirm=True))["result"]["stats_rows"] == 1
+    assert (await _ws(client, "stats_info", statistic_id="test:grid"))["result"]["statistics"] == 3
+
+
+def test_energy_statistic_ids_are_read_from_every_stat_key() -> None:
+    from custom_components.db_storage_manager.settings import stat_ids_in
+    prefs = {"energy_sources": [
+        {"type": "grid", "flow_from": [{"stat_energy_from": "sensor.imp", "stat_cost": "sensor.imp_cost", "entity_energy_price": "sensor.price"}],
+         "flow_to": [{"stat_energy_to": "sensor.exp", "stat_compensation": None}]},
+        {"type": "solar", "stat_energy_from": "sensor.pv"}],
+        "device_consumption": [{"stat_consumption": "sensor.washer"}]}
+    assert stat_ids_in(prefs) == {"sensor.imp", "sensor.imp_cost", "sensor.exp", "sensor.pv", "sensor.washer"}

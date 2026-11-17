@@ -49,6 +49,7 @@ costing you space, **whether anything uses it**, or let you **take it back** if 
 | **Undo** | Whole-batch undo from the History tab. Only missing rows are restored, so data recorded since is kept. |
 | **Retention** | Per-entity limits on *state* history, enforced by a nightly job the integration schedules itself, followed by a repack to return the space. |
 | **Inspector** | Browse the raw stored states (with collapsible JSON attributes), hourly and 5-minute statistics for any entity. |
+| **Settings** | Hide automations; Home Assistant's default state retention as a slider with the predicted space freed or gained (saved to `recorder: purge_keep_days`); long-term statistics retention in 6-month steps, with a separate limit for Energy dashboard statistics. |
 | **Reclaim** | Repack the database so freed space goes back to the disk, and watch the file shrink. |
 | **Sensors, event, services** | Database size and free space, retention rules and last run, a `db_storage_manager_retention_run` event and a `db_storage_manager.run_retention` action for your own automations. |
 
@@ -92,6 +93,7 @@ More in the docs below.
 | [Finding things](docs/entities.md) | Search, filters, suggestions, Referenced In, the period drill-down, the inspector |
 | [Actions and undo](docs/actions-and-undo.md) | What each action does, previews, backups, undoing, History tab |
 | [Retention](docs/retention.md) | Per-entity limits, how the nightly job runs, how to see and trace it |
+| [Settings](docs/settings.md) | Hide automations, default state retention, long-term statistics retention |
 | [Options, sensors and services](docs/options-and-services.md) | Everything you can configure or automate against |
 | [How it stays safe](docs/safety.md) | What it touches, what it never touches, where files live |
 | [Troubleshooting and FAQ](docs/troubleshooting.md) | Common questions and fixes |
@@ -104,7 +106,7 @@ More in the docs below.
 ## Limits worth knowing
 
 - "Referenced In" matches literal entity ids. It can't see dynamic references (`expand()`, `states.sensor`, built-up ids, area or label targets) or anything outside Home Assistant. Entities in a domain used by such templates are flagged "+N dynamic". Suggestions are advice, not verdicts.
-- It never deletes entities themselves. Disabling keeps the registry entry, which is what stops an integration re-creating the entity. It also does not edit `configuration.yaml`.
+- It never deletes entities themselves. Disabling keeps the registry entry, which is what stops an integration re-creating the entity. It edits `configuration.yaml` only to save the default state retention you set on the Settings page.
 - Size figures for single entities are estimates scaled to the real table sizes. Rankings are reliable.
 - Nightly retention runs are a rolling window and are not backed up. The first clean-up when you create a rule is.
 

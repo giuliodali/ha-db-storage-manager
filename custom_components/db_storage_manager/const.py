@@ -6,7 +6,7 @@ STATIC_URL = "/db_storage_manager_static"
 SNAPSHOT_DIR = "db_storage_manager/snapshots"
 VERSION = "1.0.7"
 # Bump when a release changes what a scan records or how it is read: the saved scan is then discarded and redone on start.
-SCAN_VERSION = 2
+SCAN_VERSION = 3
 # id of the nightly automation versions up to 1.0.5 wrote to automations.yaml (now scheduled internally)
 LEGACY_RETENTION_AUTOMATION_ID = "db_storage_retention"
 

@@ -8,7 +8,7 @@ export class DbEntities extends LitElement {
   static properties = {
     data: { attribute: false }, filters: { attribute: false }, search: { type: String },
     sort: { type: String }, selected: { attribute: false }, shown: { type: Number }, usage: { attribute: false },
-    busy: { type: Boolean }, growth: { type: Number }, hass: { attribute: false }, expand: { attribute: false }, hideAuto: { type: Boolean },
+    busy: { type: Boolean }, growth: { type: Number }, hass: { attribute: false }, expand: { attribute: false },
   };
   static styles = css`
     :host{display:block}
@@ -53,7 +53,6 @@ export class DbEntities extends LitElement {
     .kind{font-size:11px;border:1px solid var(--divider-color);border-radius:8px;padding:0 6px;margin-right:4px} .warn{background:var(--secondary-background-color);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:12px}
     a{color:var(--primary-color)} .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px} .fchip{font-size:12px;border:1px solid var(--primary-color);border-radius:12px;padding:1px 8px;cursor:pointer}
     .ret{flex:0 0 auto;font-size:11px;border:1px solid var(--primary-color);color:var(--primary-color);border-radius:8px;padding:0 6px;line-height:16px;cursor:help}
-    .hideauto{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;cursor:pointer} .hideauto input{margin:0}
     .filtertoggle{display:none}
     @media (max-width:900px){.layout{grid-template-columns:1fr}.filtertoggle{display:inline-block}.facets.closed{display:none}
       .head,.row{grid-template-columns:32px minmax(0,1fr) auto auto}.c-int,.c-dev,.c-age,.c-status{display:none}}`;
@@ -144,7 +143,6 @@ export class DbEntities extends LitElement {
       <div class="bar">
         <input type="search" placeholder="Search name or entity id" .value=${this.search} @input=${(e) => this._onSearch(e.target.value)} @change=${(e) => this._onSearch(e.target.value, true)}>
         <select @change=${(e) => this._emit("sort", e.target.value)} title="Sort">${Object.entries(SORTS).map(([k, v]) => html`<option value=${k} ?selected=${this.sort === k}>Sort: ${v}</option>`)}</select>
-        <label class="hideauto" title="Automation entities are hidden by default. Untick to include them."><input type="checkbox" .checked=${this.hideAuto} @change=${(e) => this._emit("hideauto", e.target.checked)}> Hide automations</label>
         <button class="filtertoggle" @click=${() => { this._facetsOpen = !this._facetsOpen; this.requestUpdate(); }}>Filters${active.length ? ` (${active.length})` : ""}</button>
       </div>
       ${this.selected.size ? html`<div class="selbar"><b>${this.selected.size} selected</b>${hidden ? html` <span class="muted" title="These were ticked earlier and are not in the list now (filters, search or period changed). Actions still include them.">(${hidden} not in the current list)</span> <button title="Drop the selected entities that are not in the current list" @click=${() => this._emit("selected", new Set([...this.selected].filter((id) => inList.has(id))))}>Keep only listed</button>` : nothing}

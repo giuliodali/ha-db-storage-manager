@@ -1,6 +1,6 @@
 # Retention
 
-Home Assistant keeps every entity's state history for one global number of days (`purge_keep_days`, 10 by default). DB Storage Manager adds **per-entity** limits: keep 1, 3, 5 or 7 days of detailed *states* for a noisy sensor, and the global default for everything else.
+Home Assistant keeps every entity's state history for one global number of days (`purge_keep_days`, 10 by default). DB Storage Manager adds **per-entity** limits: keep 1, 3, 5 or 7 days of detailed *states* for a noisy sensor, and the global default for everything else. The global default and long-term statistics limits are on the [Settings](settings.md) tab.
 
 ## What it limits (and what it doesn't)
 

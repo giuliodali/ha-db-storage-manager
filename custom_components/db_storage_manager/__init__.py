@@ -20,7 +20,7 @@ from .const import (CONF_RETENTION_ENABLED, CONF_RETENTION_TIME, CONF_SAMPLE_INT
                     DOMAIN, LEGACY_RETENTION_AUTOMATION_ID, PANEL_URL_PATH, SAMPLE_INTERVALS, STATIC_URL, VERSION)
 from .journal import Journal
 from .sampler import SizeSampler
-from . import retention
+from . import retention, settings
 from .websocket import async_load_inventory, async_register_commands, start_scan
 
 PLATFORMS = [Platform.SENSOR]
@@ -53,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     state["sampler"] = sampler
     await async_load_inventory(hass)
     await retention.async_load(hass)
+    await settings.async_load(hass)
 
     async def _nightly(_now: datetime) -> None:
         await retention.async_run(hass)

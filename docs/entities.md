@@ -14,7 +14,7 @@ The search box matches names and entity ids as you type. The filter column on th
 | **Status** | Active, Disabled, Orphaned (history only), External |
 | **Last update** | This week, 1 to 6 months, 6+ months |
 
-"N more" at the bottom of a list expands it. Automations are hidden by default (they are rarely the problem); untick **Hide automations** or filter on Type: automation to see them.
+"N more" at the bottom of a list expands it. Automations are hidden by default (they are rarely the problem); turn off **Hide automations** on the Settings tab or filter on Type: automation to see them.
 
 ## Suggestions
 

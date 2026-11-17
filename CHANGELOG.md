@@ -2,6 +2,11 @@
 
 ## 1.0.7
 
+- New **Settings** tab, showing what is configured now:
+  - **Default state retention** as a slider, with the space it would free or add. Saving writes `purge_keep_days` under `recorder:` in your YAML (validated, previous file kept as `.dbs_backup`) and applies after a restart.
+  - **Long-term statistics retention**, kept forever by default, in 6-month steps from 6 months to 7 years, with a separate setting for Energy dashboard statistics. Each step shows what it frees and keeps. Limits are applied once a month by the nightly retention run and are not backed up.
+  - **Hide automations** moved here from the Entities tab, on by default. The Overview figures always follow it, and clicking a KPI no longer changes it.
+- **Referenced In: Energy dashboard** now also counts imported statistics the Energy dashboard uses and the cost sensors it creates, so it matches the Energy statistics on the Settings page. The saved scan is redone once after updating.
 - The Database size KPI shows the free space inside the database as a line underneath ("~ 120 MB Free"), replacing the separate Free inside database KPI.
 - New **Reduced retention** KPI on the Overview: how many entities keep less state history than the default, and when retention last ran. Hover for the details, click to list those entities. It replaces the Retention rules card on the History tab.
 - Clicking an Overview KPI, chart or list now shows the same entities it counted. Drill-downs used to keep automations hidden, so the Entities grid could show fewer entities and less data than the KPI.
