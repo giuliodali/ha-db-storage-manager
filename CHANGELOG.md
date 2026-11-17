@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.7
 
 - The Database size KPI shows the free space inside the database as a line underneath ("~ 120 MB Free"), replacing the separate Free inside database KPI.
 - New **Reduced retention** KPI on the Overview: how many entities keep less state history than the default, and when retention last ran. Hover for the details, click to list those entities. It replaces the Retention rules card on the History tab.
