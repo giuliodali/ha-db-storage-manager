@@ -7,7 +7,7 @@ from pathlib import Path
 
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -54,6 +54,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_load_inventory(hass)
     await retention.async_load(hass)
 
+    async def _nightly(_now: datetime) -> None:
+        await retention.async_run(hass)
+
     @callback
     def _apply_retention(e: ConfigEntry) -> None:
         """Schedule the nightly job from the options."""
@@ -62,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         retention.configure(hass, e.options.get(CONF_RETENTION_ENABLED, True), e.options.get(CONF_RETENTION_TIME, DEFAULT_RETENTION_TIME))
         cfg = state["retention_cfg"]
         if cfg["enabled"]:
-            state["retention_unsub"] = async_track_time_change(hass, retention.async_run, hour=cfg["hour"], minute=cfg["minute"], second=0)
+            state["retention_unsub"] = async_track_time_change(hass, _nightly, hour=cfg["hour"], minute=cfg["minute"], second=0)
         retention._notify()
 
     _apply_retention(entry)

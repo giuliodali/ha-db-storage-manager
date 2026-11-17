@@ -15,6 +15,7 @@ from pytest_homeassistant_custom_component.components.recorder.common import asy
 from pytest_homeassistant_custom_component.typing import RecorderInstanceContextManager
 
 DOMAIN = "db_storage_manager"
+from custom_components.db_storage_manager.const import VERSION
 
 
 async def _setup(hass):
@@ -37,7 +38,7 @@ async def test_panel_and_ping(recorder_mock, enable_custom_integrations, hass, h
     assert "db-storage" in hass.data["frontend_panels"]
     client = await hass_ws_client(hass)
     res = await _ws(client, "ping")
-    assert res["success"] and res["result"]["integration_version"] == "1.0.5"
+    assert res["success"] and res["result"]["integration_version"] == VERSION
 
 
 async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
