@@ -1,7 +1,7 @@
 import { LitElement, html, css, nothing } from "lit";
 import { fmtBytes } from "./util.js";
 
-// Settings: display options, Home Assistant's default state retention (recorder purge_keep_days in YAML),
+// Settings: display options, Home Assistant's default state retention (a prediction plus the YAML to set yourself),
 // and long-term statistics retention (applied monthly by the nightly job). Everything loads as configured now.
 const fmtMonths = (m) => (m == null ? "Indefinitely" : m < 12 ? `${m} months` : m % 12 ? `${(m / 12).toFixed(1)} years` : `${m / 12} year${m === 12 ? "" : "s"}`);
 const fmtRows = (n) => `${Math.round(n).toLocaleString()} rows`;
@@ -11,7 +11,7 @@ const sumFrom = (h, i) => (h || []).slice(Math.max(0, i)).reduce((s, n) => s + n
 export class DbSettings extends LitElement {
   static properties = {
     hass: { attribute: false }, ws: { attribute: false }, cfg: { attribute: false },
-    pred: { state: true }, days: { state: true }, stats: { state: true }, energy: { state: true }, ask: { state: true }, busy: { state: true }, msg: { state: true }, err: { state: true },
+    pred: { state: true }, days: { state: true }, stats: { state: true }, energy: { state: true }, ask: { state: true }, copied: { state: true }, busy: { state: true }, msg: { state: true }, err: { state: true },
   };
   static styles = css`
     :host{display:block}
@@ -37,6 +37,7 @@ export class DbSettings extends LitElement {
     .tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:6px;font-weight:400} .tip .pop{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:15;width:300px;text-align:left;white-space:normal;font-size:12px;line-height:1.45;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px}
     .tip:hover .pop,.tip:focus .pop{display:block} .pop p{margin:0 0 6px}
     .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--secondary-text-color);color:var(--secondary-text-color);font-size:11px;cursor:help}
+    .yaml{margin-top:10px} pre{margin:6px 0;padding:8px 10px;border-radius:8px;background:var(--secondary-background-color);font-size:12px;user-select:all;overflow-x:auto}
     a.link{color:var(--primary-color);cursor:pointer;text-decoration:none} a.link:hover{text-decoration:underline}`;
 
   updated(ch) {
@@ -48,7 +49,7 @@ export class DbSettings extends LitElement {
   }
   _reset() {
     const c = this.cfg;
-    this.days = c.recorder.effective_days;
+    this.days = c.recorder.running_days;
     this.stats = c.stats_keep_months;
     this.energy = c.energy_stats_keep_months;
   }
@@ -59,7 +60,6 @@ export class DbSettings extends LitElement {
       const cfg = await this.ws("settings_set", patch);
       this.dispatchEvent(new CustomEvent("saved", { detail: cfg }));
       this.cfg = cfg; this.msg = done;
-      if ("keep_days" in patch) this.days = cfg.recorder.effective_days;  // other unsaved choices stay as they are
       if ("stats_keep_months" in patch) { this.stats = cfg.stats_keep_months; this.energy = cfg.energy_stats_keep_months; }
     } catch (e) { this.err = e.message || JSON.stringify(e); }
     this.busy = false; this.ask = null;
@@ -82,21 +82,25 @@ export class DbSettings extends LitElement {
     return html`<div class="pred">No change from what Home Assistant keeps now (${fmtRows(p.rows)}${bpr ? `, about ${fmtBytes(p.rows * bpr)}` : ""}).</div>`;
   }
   _statesCard() {
-    const r = this.cfg.recorder, max = Math.max(30, r.effective_days, r.running_days);  // 1 to 30 days (further only if already set higher)
-    const where = html`<code>recorder: purge_keep_days</code> in <code>${r.file}</code>`;
-    const locked = r.kind === "unsupported";
-    return html`<div class="card"><h3>State history (default retention)${tip(html`<p>How many days of detailed states Home Assistant keeps for every entity: its <code>recorder: purge_keep_days</code> setting.</p>
-        <p>Saving writes that one line in your YAML (the old file is kept as a .dbs_backup copy) and takes effect when Home Assistant restarts.</p>
+    const r = this.cfg.recorder, run = r.running_days, max = Math.max(30, run);  // 1 to 30 days (further only if already set higher)
+    const snippet = `recorder:\n  purge_keep_days: ${this.days}`;
+    return html`<div class="card"><h3>State history (default retention)${tip(html`<p>How many days of detailed states Home Assistant keeps for every entity: its <code>recorder: purge_keep_days</code> setting (10 days if it is not set).</p>
+        <p>This page does not change your configuration. Pick a value to see its effect, then set it in your YAML yourself and restart Home Assistant.</p>
         <p>Entities with their own retention rule keep their rule when it is shorter.</p>`)}</h3>
-      <p class="muted">${r.configured_days == null ? html`Now ${r.effective_days} days: Home Assistant's default, because <code>${r.file}</code> has no <code>purge_keep_days</code> yet. Saving adds it.` : html`Now ${r.configured_days} days, set by ${where}.`}</p>
-      ${r.restart_needed ? html`<div class="warn">Your configuration says <b>${r.effective_days} days</b>, but Home Assistant is running with <b>${r.running_days}</b>. Restart Home Assistant to apply it.
-        <button class="b" style="margin-left:8px" @click=${() => (this.ask = { restart: true })}>Restart…</button></div>` : nothing}
-      ${locked ? html`<div class="warn err">${r.reason}</div>` : nothing}
-      <div class="row"><input type="range" min="1" max=${max} .value=${String(this.days)} ?disabled=${locked} @input=${(e) => (this.days = +e.target.value)}>
+      <p class="muted">Home Assistant is running with ${run} day${run === 1 ? "" : "s"}.</p>
+      <div class="row"><input type="range" min="1" max=${max} .value=${String(this.days)} @input=${(e) => (this.days = +e.target.value)}>
         <span class="val">${this.days} day${this.days === 1 ? "" : "s"}</span></div>
       ${this._statesPred(this.days)}
-      <div class="row"><button class="b" ?disabled=${this.days === r.effective_days} @click=${() => (this.days = r.effective_days)}>Undo change</button>
-        <button class="b go" ?disabled=${locked || this.busy || this.days === r.effective_days} @click=${() => (this.ask = { days: this.days })}>Save…</button></div></div>`;
+      ${this.days !== run ? html`<div class="yaml"><p>To use ${this.days} days, set this in your <code>configuration.yaml</code> (or wherever your <code>recorder:</code> configuration is), then restart Home Assistant:</p>
+        <pre>${snippet}</pre>
+        <div class="row"><button class="b" @click=${() => this._copy(snippet)}>${this.copied ? "Copied" : "Copy"}</button>
+          <a class="link" href="https://www.home-assistant.io/integrations/recorder/#purge_keep_days" target="_blank" rel="noreferrer">Recorder documentation</a>
+          <span style="flex:1"></span>
+          <button class="b" @click=${() => (this.days = run)}>Undo change</button>
+          <button class="b" @click=${() => (this.ask = { restart: true })}>Restart…</button></div></div>` : nothing}</div>`;
+  }
+  async _copy(text) {
+    try { await navigator.clipboard.writeText(text); this.copied = true; setTimeout(() => (this.copied = false), 1500); } catch (e) { this.err = "Copy failed: select the text and copy it yourself."; }
   }
 
   // --- long-term statistics ------------------------------------------------------------------
@@ -136,15 +140,11 @@ export class DbSettings extends LitElement {
   _dialog() {
     const a = this.ask;
     if (!a) return nothing;
-    const r = this.cfg.recorder, ret = this.cfg.retention;
+    const ret = this.cfg.retention;
     let title, body, go, label = "Save", danger = false;
     if (a.restart) {
-      title = "Restart Home Assistant?"; body = html`Home Assistant restarts now and is unavailable for a minute or two.`; label = "Restart";
+      title = "Restart Home Assistant?"; body = html`Save your YAML change first. Home Assistant checks the configuration, restarts and is unavailable for a minute or two.`; label = "Restart";
       go = async () => { this.ask = null; await this.hass.callService("homeassistant", "restart"); };
-    } else if (a.days != null) {
-      title = `Keep ${a.days} days of state history?`;
-      body = html`Writes <code>purge_keep_days: ${a.days}</code> under <code>recorder:</code> in <code>${r.file}</code>. The current file is copied to <code>${r.file}.dbs_backup</code> first. It takes effect when Home Assistant restarts.`;
-      go = () => this._save({ keep_days: a.days }, "Saved. Restart Home Assistant to apply the new state retention.");
     } else {
       const next = ret.next_run ? new Date(ret.next_run * 1000).toLocaleString() : "the next Run retention now";
       const less = (a.stats != null && (this.cfg.stats_keep_months == null || a.stats < this.cfg.stats_keep_months)) || (a.energy != null && (this.cfg.energy_stats_keep_months == null || a.energy < this.cfg.energy_stats_keep_months));

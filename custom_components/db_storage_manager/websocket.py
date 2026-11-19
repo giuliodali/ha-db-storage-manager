@@ -929,7 +929,7 @@ async def _settings_payload(hass: HomeAssistant) -> dict[str, Any]:
         "energy_stats_keep_months": s["energy_stats_keep_months"],
         "last_stats_trim": s.get("last_stats_trim"),
         "month_steps": list(settings.MONTH_STEPS),
-        "recorder": await settings.recorder_status(hass),
+        "recorder": settings.recorder_status(hass),
         "retention": {**retention.status(hass), "next_run": retention.next_run_ts(hass)},
     }
 
@@ -956,24 +956,17 @@ _MONTHS = vol.Any(None, vol.In(settings.MONTH_STEPS))
 @websocket_api.websocket_command(
     {vol.Required("type"): "db_storage/settings_set",
      vol.Optional("hide_automations"): bool,
-     vol.Optional("keep_days"): vol.All(int, vol.Range(min=1, max=retention.MAX_DAYS)),
      vol.Optional("stats_keep_months"): _MONTHS,
      vol.Optional("energy_stats_keep_months"): _MONTHS}
 )
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_settings_set(hass, connection, msg) -> None:
-    """Save settings. keep_days is written to the recorder's YAML and applies after a restart."""
+    """Save settings (stored by this integration; the user's YAML is never changed)."""
     patch = {k: msg[k] for k in ("hide_automations", "stats_keep_months", "energy_stats_keep_months") if k in msg}
     cur = settings.get(hass)
     if any(k in patch and patch[k] != cur[k] for k in ("stats_keep_months", "energy_stats_keep_months")):
         patch["last_stats_trim"] = None  # a changed limit is applied by the next nightly run, then monthly
-    if "keep_days" in msg:
-        try:
-            await settings.async_set_keep_days(hass, msg["keep_days"])
-        except Exception as err:  # noqa: BLE001
-            connection.send_error(msg["id"], "yaml_not_changed", f"configuration was not changed: {err}")
-            return
     if patch:
         await settings.async_update(hass, patch)
         retention._notify()

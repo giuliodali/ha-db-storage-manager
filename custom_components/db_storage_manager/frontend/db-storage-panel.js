@@ -289,7 +289,7 @@ Ui.elementStyles = [], Ui.shadowRootOptions = { mode: "open" }, Ui[la("elementPr
  */
 const ua = globalThis, id = (r) => r, ls = ua.trustedTypes, nd = ls ? ls.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, Fy = "$lit$", yr = `lit$${Math.random().toFixed(9).slice(2)}$`, Hy = "?" + yr, l1 = `<${Hy}>`, pi = document, Ta = () => pi.createComment(""), Ca = (r) => r === null || typeof r != "object" && typeof r != "function", kc = Array.isArray, u1 = (r) => kc(r) || typeof (r == null ? void 0 : r[Symbol.iterator]) == "function", Sl = `[ 	
 \f\r]`, An = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ad = /-->/g, od = />/g, Pr = RegExp(`>|${Sl}(?:([^\\s"'>=/]+)(${Sl}*=${Sl}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), sd = /'/g, ld = /"/g, Vy = /^(?:script|style|textarea|title)$/i, h1 = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), k = h1(1), sn = Symbol.for("lit-noChange"), G = Symbol.for("lit-nothing"), ud = /* @__PURE__ */ new WeakMap(), ii = pi.createTreeWalker(pi, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), sd = /'/g, ld = /"/g, Vy = /^(?:script|style|textarea|title)$/i, h1 = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), I = h1(1), sn = Symbol.for("lit-noChange"), G = Symbol.for("lit-nothing"), ud = /* @__PURE__ */ new WeakMap(), ii = pi.createTreeWalker(pi, 129);
 function Gy(r, t) {
   if (!kc(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return nd !== void 0 ? nd.createHTML(t) : t;
@@ -3905,8 +3905,8 @@ function fm(r, t, e, i, n, a, o, s) {
         D[y] = qo(e[y]), qx(e, i, y);
       }
     }
-    var w = new Fc(e, !1, !1, c ? Pt(v, function(I) {
-      return I.targetName === t;
+    var w = new Fc(e, !1, !1, c ? Pt(v, function(k) {
+      return k.targetName === t;
     }) : null);
     w.targetName = t, n.scope && (w.scope = n.scope), f && A && w.whenWithKeys(0, A, g), D && w.whenWithKeys(0, D, g), w.whenWithKeys(u ?? 500, s ? M : i, g).delay(h || 0), r.addAnimator(w, t), o.push(w);
   }
@@ -4789,8 +4789,8 @@ function Hw(r, t) {
     for (var _ = e.lines[m], b = 0, w = 0, x = 0; x < _.tokens.length; x++) {
       var S = _.tokens[x], A = S.styleName && t.rich[S.styleName] || {}, M = S.textPadding = A.padding, D = M ? M[1] + M[3] : 0, C = S.font = A.font || t.font;
       S.contentHeight = Gc(C);
-      var I = st(A.height, S.contentHeight);
-      if (S.innerHeight = I, M && (I += M[0] + M[2]), S.height = I, S.lineHeight = Xo(A.lineHeight, t.lineHeight, I), S.align = A && A.align || t.align, S.verticalAlign = A && A.verticalAlign || "middle", g && n != null && c + S.lineHeight > n) {
+      var k = st(A.height, S.contentHeight);
+      if (S.innerHeight = k, M && (k += M[0] + M[2]), S.height = k, S.lineHeight = Xo(A.lineHeight, t.lineHeight, k), S.align = A && A.align || t.align, S.verticalAlign = A && A.verticalAlign || "middle", g && n != null && c + S.lineHeight > n) {
         var L = e.lines.length;
         x > 0 ? (_.tokens = _.tokens.slice(0, x), y(_, w, b), e.lines = e.lines.slice(0, m + 1)) : e.lines = e.lines.slice(0, m), e.isTruncated = e.isTruncated || e.lines.length < L;
         break t;
@@ -4801,7 +4801,7 @@ function Hw(r, t) {
       else {
         if (E) {
           var R = A.backgroundColor, Y = R && R.image;
-          Y && (Y = $w(Y), Ks(Y) && (S.width = Math.max(S.width, Y.width * I / Y.height)));
+          Y && (Y = $w(Y), Ks(Y) && (S.width = Math.max(S.width, Y.width * k / Y.height)));
         }
         var O = v && i != null ? i - w : null;
         O != null && O < S.width ? !E || O < D ? (S.text = "", S.width = S.contentWidth = 0) : (Ow(p, S.text, O - D, C, t.ellipsis, { minChar: t.truncateMinChar }), S.text = p.text, e.isTruncated = e.isTruncated || p.isTruncated, S.width = S.contentWidth = re(S.text, C)) : S.contentWidth = re(S.text, C);
@@ -5215,8 +5215,8 @@ var bi = function() {
           break;
         }
         case vt.A:
-          var A = t[f++], M = t[f++], D = t[f++], C = t[f++], I = t[f++], L = t[f++], P = L + I;
-          f += 1, v && (s = Gr(I) * D + A, l = Wr(I) * C + M), g = eu(D, C) * tu(pr, Math.abs(L)), a = Gr(P) * D + A, o = Wr(P) * C + M;
+          var A = t[f++], M = t[f++], D = t[f++], C = t[f++], k = t[f++], L = t[f++], P = L + k;
+          f += 1, v && (s = Gr(k) * D + A, l = Wr(k) * C + M), g = eu(D, C) * tu(pr, Math.abs(L)), a = Gr(P) * D + A, o = Wr(P) * C + M;
           break;
         case vt.R: {
           s = a = t[f++], l = o = t[f++];
@@ -5249,8 +5249,8 @@ var bi = function() {
               if (d) {
                 var C = v[y++];
                 if (p + C > m) {
-                  var I = (m - p) / C;
-                  t.lineTo(u * (1 - I) + c * I, h * (1 - I) + f * I);
+                  var k = (m - p) / C;
+                  t.lineTo(u * (1 - k) + c * k, h * (1 - k) + f * k);
                   break t;
                 }
                 p += C;
@@ -5267,8 +5267,8 @@ var bi = function() {
             if (d) {
               var C = v[y++];
               if (p + C > m) {
-                var I = (m - p) / C;
-                vs(u, P, R, O, I, Hr), vs(h, E, Y, z, I, Vr), t.bezierCurveTo(Hr[1], Vr[1], Hr[2], Vr[2], Hr[3], Vr[3]);
+                var k = (m - p) / C;
+                vs(u, P, R, O, k, Hr), vs(h, E, Y, z, k, Vr), t.bezierCurveTo(Hr[1], Vr[1], Hr[2], Vr[2], Hr[3], Vr[3]);
                 break t;
               }
               p += C;
@@ -5281,8 +5281,8 @@ var bi = function() {
             if (d) {
               var C = v[y++];
               if (p + C > m) {
-                var I = (m - p) / C;
-                ps(u, P, R, I, Hr), ps(h, E, Y, I, Vr), t.quadraticCurveTo(Hr[1], Vr[1], Hr[2], Vr[2]);
+                var k = (m - p) / C;
+                ps(u, P, R, k, Hr), ps(h, E, Y, k, Vr), t.quadraticCurveTo(Hr[1], Vr[1], Hr[2], Vr[2]);
                 break t;
               }
               p += C;
@@ -5318,8 +5318,8 @@ var bi = function() {
             if (d) {
               var C = v[y++];
               if (p + C > m) {
-                var I = (m - p) / C;
-                t.lineTo(u * (1 - I) + s * I, h * (1 - I) + l * I);
+                var k = (m - p) / C;
+                t.lineTo(u * (1 - k) + s * k, h * (1 - k) + l * k);
                 break t;
               }
               p += C;
@@ -5969,9 +5969,9 @@ var tv = {
       s && this._renderBackground(e, e, w, x, h, u);
     }
     b += d / 2, n && (_ = sv(g, y, n), m === "top" ? b += n[0] : m === "bottom" && (b -= n[2]));
-    for (var S = 0, A = !1, M = ov("fill" in e ? e.fill : (A = !0, v.fill)), D = av("stroke" in e ? e.stroke : !l && (!v.autoStroke || A) ? (S = ev, v.stroke) : null), C = e.textShadowBlur > 0, I = e.width != null && (e.overflow === "truncate" || e.overflow === "break" || e.overflow === "breakAll"), L = o.calculatedLineHeight, P = 0; P < f.length; P++) {
+    for (var S = 0, A = !1, M = ov("fill" in e ? e.fill : (A = !0, v.fill)), D = av("stroke" in e ? e.stroke : !l && (!v.autoStroke || A) ? (S = ev, v.stroke) : null), C = e.textShadowBlur > 0, k = e.width != null && (e.overflow === "truncate" || e.overflow === "break" || e.overflow === "breakAll"), L = o.calculatedLineHeight, P = 0; P < f.length; P++) {
       var E = this._getOrCreateChild(ws), R = E.createStyle();
-      E.useStyle(R), R.text = f[P], R.x = _, R.y = b, R.textAlign = y, R.textBaseline = "middle", R.opacity = e.opacity, R.strokeFirst = !0, C && (R.shadowBlur = e.textShadowBlur || 0, R.shadowColor = e.textShadowColor || "transparent", R.shadowOffsetX = e.textShadowOffsetX || 0, R.shadowOffsetY = e.textShadowOffsetY || 0), R.stroke = D, R.fill = M, D && (R.lineWidth = e.lineWidth || S, R.lineDash = e.lineDash, R.lineDashOffset = e.lineDashOffset || 0), R.font = i, iv(R, e), b += d, I && E.setBoundingRect(new ot(ea(R.x, c, R.textAlign), Xi(R.y, L, R.textBaseline), c, L));
+      E.useStyle(R), R.text = f[P], R.x = _, R.y = b, R.textAlign = y, R.textBaseline = "middle", R.opacity = e.opacity, R.strokeFirst = !0, C && (R.shadowBlur = e.textShadowBlur || 0, R.shadowColor = e.textShadowColor || "transparent", R.shadowOffsetX = e.textShadowOffsetX || 0, R.shadowOffsetY = e.textShadowOffsetY || 0), R.stroke = D, R.fill = M, D && (R.lineWidth = e.lineWidth || S, R.lineDash = e.lineDash, R.lineDashOffset = e.lineDashOffset || 0), R.font = i, iv(R, e), b += d, k && E.setBoundingRect(new ot(ea(R.x, c, R.textAlign), Xi(R.y, L, R.textBaseline), c, L));
     }
   }, t.prototype._updateRichTexts = function() {
     var e = this.style, i = lv(e), n = Hw(i, e), a = n.width, o = n.outerWidth, s = n.outerHeight, l = e.padding, u = e.x || 0, h = e.y || 0, c = this._defaultStyle, f = e.align || c.align, d = e.verticalAlign || c.verticalAlign;
@@ -5981,11 +5981,11 @@ var tv = {
     var m = p + a;
     au(e) && this._renderBackground(e, e, v, g, o, s);
     for (var _ = !!e.backgroundColor, b = 0; b < n.lines.length; b++) {
-      for (var w = n.lines[b], x = w.tokens, S = x.length, A = w.lineHeight, M = w.width, D = 0, C = p, I = m, L = S - 1, P = void 0; D < S && (P = x[D], !P.align || P.align === "left"); )
+      for (var w = n.lines[b], x = w.tokens, S = x.length, A = w.lineHeight, M = w.width, D = 0, C = p, k = m, L = S - 1, P = void 0; D < S && (P = x[D], !P.align || P.align === "left"); )
         this._placeToken(P, e, A, y, C, "left", _), M -= P.width, C += P.width, D++;
       for (; L >= 0 && (P = x[L], P.align === "right"); )
-        this._placeToken(P, e, A, y, I, "right", _), M -= P.width, I -= P.width, L--;
-      for (C += (a - (C - p) - (m - I) - M) / 2; D <= L; )
+        this._placeToken(P, e, A, y, k, "right", _), M -= P.width, k -= P.width, L--;
+      for (C += (a - (C - p) - (m - k) - M) / 2; D <= L; )
         P = x[D], this._placeToken(P, e, A, y, C + P.width / 2, "center", _), C += P.width, D++;
       y += A;
     }
@@ -6645,8 +6645,8 @@ function jS(r, t, e, i, n, a, o, s) {
     return f = (h * (t - a) - c * (r - n)) / f, [r + f * l, t + f * u];
 }
 function po(r, t, e, i, n, a, o) {
-  var s = r - e, l = t - i, u = (o ? a : -a) / ga(s * s + l * l), h = u * l, c = -u * s, f = r + h, d = t + c, v = e + h, g = i + c, p = (f + v) / 2, y = (d + g) / 2, m = v - f, _ = g - d, b = m * m + _ * _, w = n - a, x = f * g - v * d, S = (_ < 0 ? -1 : 1) * ga(ra(0, w * w * b - x * x)), A = (x * _ - m * S) / b, M = (-x * m - _ * S) / b, D = (x * _ + m * S) / b, C = (-x * m + _ * S) / b, I = A - p, L = M - y, P = D - p, E = C - y;
-  return I * I + L * L > P * P + E * E && (A = D, M = C), {
+  var s = r - e, l = t - i, u = (o ? a : -a) / ga(s * s + l * l), h = u * l, c = -u * s, f = r + h, d = t + c, v = e + h, g = i + c, p = (f + v) / 2, y = (d + g) / 2, m = v - f, _ = g - d, b = m * m + _ * _, w = n - a, x = f * g - v * d, S = (_ < 0 ? -1 : 1) * ga(ra(0, w * w * b - x * x)), A = (x * _ - m * S) / b, M = (-x * m - _ * S) / b, D = (x * _ + m * S) / b, C = (-x * m + _ * S) / b, k = A - p, L = M - y, P = D - p, E = C - y;
+  return k * k + L * L > P * P + E * E && (A = D, M = C), {
     cx: A,
     cy: M,
     x0: -h,
@@ -6681,15 +6681,15 @@ function JS(r, t) {
       else if (d > lu - Te)
         r.moveTo(h + i * Oi(l), c + i * Yr(l)), r.arc(h, c, i, l, u, !f), n > Te && (r.moveTo(h + n * Oi(u), c + n * Yr(u)), r.arc(h, c, n, u, l, f));
       else {
-        var g = void 0, p = void 0, y = void 0, m = void 0, _ = void 0, b = void 0, w = void 0, x = void 0, S = void 0, A = void 0, M = void 0, D = void 0, C = void 0, I = void 0, L = void 0, P = void 0, E = i * Oi(l), R = i * Yr(l), Y = n * Oi(u), O = n * Yr(u), z = d > Te;
+        var g = void 0, p = void 0, y = void 0, m = void 0, _ = void 0, b = void 0, w = void 0, x = void 0, S = void 0, A = void 0, M = void 0, D = void 0, C = void 0, k = void 0, L = void 0, P = void 0, E = i * Oi(l), R = i * Yr(l), Y = n * Oi(u), O = n * Yr(u), z = d > Te;
         if (z) {
           var Z = t.cornerRadius;
           Z && (e = QS(Z), g = e[0], p = e[1], y = e[2], m = e[3]);
           var J = Sv(i - n) / 2;
-          if (_ = Oe(J, y), b = Oe(J, m), w = Oe(J, g), x = Oe(J, p), M = S = ra(_, b), D = A = ra(w, x), (S > Te || A > Te) && (C = i * Oi(u), I = i * Yr(u), L = n * Oi(l), P = n * Yr(l), d < Wm)) {
-            var it = jS(E, R, L, P, C, I, Y, O);
+          if (_ = Oe(J, y), b = Oe(J, m), w = Oe(J, g), x = Oe(J, p), M = S = ra(_, b), D = A = ra(w, x), (S > Te || A > Te) && (C = i * Oi(u), k = i * Yr(u), L = n * Oi(l), P = n * Yr(l), d < Wm)) {
+            var it = jS(E, R, L, P, C, k, Y, O);
             if (it) {
-              var ft = E - it[0], gt = R - it[1], _t = C - it[0], Jt = I - it[1], Ye = 1 / Yr(KS((ft * _t + gt * Jt) / (ga(ft * ft + gt * gt) * ga(_t * _t + Jt * Jt))) / 2), ct = ga(it[0] * it[0] + it[1] * it[1]);
+              var ft = E - it[0], gt = R - it[1], _t = C - it[0], Jt = k - it[1], Ye = 1 / Yr(KS((ft * _t + gt * Jt) / (ga(ft * ft + gt * gt) * ga(_t * _t + Jt * Jt))) / 2), ct = ga(it[0] * it[0] + it[1] * it[1]);
               M = Oe(S, (i - ct) / (Ye + 1)), D = Oe(A, (n - ct) / (Ye - 1));
             }
           }
@@ -6697,14 +6697,14 @@ function JS(r, t) {
         if (!z)
           r.moveTo(h + E, c + R);
         else if (M > Te) {
-          var X = Oe(y, M), nt = Oe(m, M), F = po(L, P, E, R, i, X, f), W = po(C, I, Y, O, i, nt, f);
+          var X = Oe(y, M), nt = Oe(m, M), F = po(L, P, E, R, i, X, f), W = po(C, k, Y, O, i, nt, f);
           r.moveTo(h + F.cx + F.x0, c + F.cy + F.y0), M < S && X === nt ? r.arc(h + F.cx, c + F.cy, M, Ot(F.y0, F.x0), Ot(W.y0, W.x0), !f) : (X > 0 && r.arc(h + F.cx, c + F.cy, X, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, i, Ot(F.cy + F.y1, F.cx + F.x1), Ot(W.cy + W.y1, W.cx + W.x1), !f), nt > 0 && r.arc(h + W.cx, c + W.cy, nt, Ot(W.y1, W.x1), Ot(W.y0, W.x0), !f));
         } else
           r.moveTo(h + E, c + R), r.arc(h, c, i, l, u, !f);
         if (!(n > Te) || !z)
           r.lineTo(h + Y, c + O);
         else if (D > Te) {
-          var X = Oe(g, D), nt = Oe(p, D), F = po(Y, O, C, I, n, -nt, f), W = po(E, R, L, P, n, -X, f);
+          var X = Oe(g, D), nt = Oe(p, D), F = po(Y, O, C, k, n, -nt, f), W = po(E, R, L, P, n, -X, f);
           r.lineTo(h + F.cx + F.x0, c + F.cy + F.y0), D < A && X === nt ? r.arc(h + F.cx, c + F.cy, D, Ot(F.y0, F.x0), Ot(W.y0, W.x0), !f) : (nt > 0 && r.arc(h + F.cx, c + F.cy, nt, Ot(F.y0, F.x0), Ot(F.y1, F.x1), !f), r.arc(h, c, n, Ot(F.cy + F.y1, F.cx + F.x1), Ot(W.cy + W.y1, W.cx + W.x1), f), X > 0 && r.arc(h + W.cx, c + W.cy, X, Ot(W.y1, W.x1), Ot(W.y0, W.x0), !f));
         } else
           r.lineTo(h + Y, c + O), r.arc(h, c, n, u, l, f);
@@ -12260,10 +12260,10 @@ function Wh(r, t) {
     }, S = M(), A;
     w && (w.width = S.width * e, w.height = S.height * e, A = w.getContext("2d")), D(), c && Ip.put(v, w || x), u.image = w, u.svgElement = x, u.svgWidth = S.width, u.svgHeight = S.height;
     function M() {
-      for (var C = 1, I = 0, L = _.length; I < L; ++I)
-        C = Wd(C, _[I]);
-      for (var P = 1, I = 0, L = m.length; I < L; ++I)
-        P = Wd(P, m[I].length);
+      for (var C = 1, k = 0, L = _.length; k < L; ++k)
+        C = Wd(C, _[k]);
+      for (var P = 1, k = 0, L = m.length; k < L; ++k)
+        P = Wd(P, m[k].length);
       C *= P;
       var E = b * _.length * m.length;
       return {
@@ -12273,15 +12273,15 @@ function Wh(r, t) {
     }
     function D() {
       A && (A.clearRect(0, 0, w.width, w.height), o.backgroundColor && (A.fillStyle = o.backgroundColor, A.fillRect(0, 0, w.width, w.height)));
-      for (var C = 0, I = 0; I < y.length; ++I)
-        C += y[I];
+      for (var C = 0, k = 0; k < y.length; ++k)
+        C += y[k];
       if (C <= 0)
         return;
       for (var L = -b, P = 0, E = 0, R = 0; L < S.height; ) {
         if (P % 2 === 0) {
           for (var Y = E / 2 % m.length, O = 0, z = 0, Z = 0; O < S.width * 2; ) {
-            for (var J = 0, I = 0; I < p[R].length; ++I)
-              J += p[R][I];
+            for (var J = 0, k = 0; k < p[R].length; ++k)
+              J += p[R][k];
             if (J <= 0)
               break;
             if (z % 2 === 0) {
@@ -12985,8 +12985,8 @@ var Hi, Su, Mo, hr, Tu, Cu, Au, Bn, zn, Rp, $p, Mu, Op, Do, Np, m_, ae, Bp, __ =
           escapeConnect: p,
           batch: A
         } : M = A[0], this[Nt] = !1, !f) {
-          var I = this._messageCenter;
-          if (I.trigger(M.type, M), D) {
+          var k = this._messageCenter;
+          if (k.trigger(M.type, M), D) {
             var L = {
               type: "selectchanged",
               escapeConnect: p,
@@ -12995,7 +12995,7 @@ var Hi, Su, Mo, hr, Tu, Cu, Au, Bn, zn, Rp, $p, Mu, Op, Do, Np, m_, ae, Bp, __ =
               fromAction: c.type,
               fromActionPayload: c
             };
-            I.trigger(L.type, L);
+            k.trigger(L.type, L);
           }
         }
       }, Bn = function(c) {
@@ -13881,10 +13881,10 @@ function I_(r, t) {
   function v(M) {
     var D = f[M];
     if (D < 0) {
-      var C = i[M], I = U(C) ? C : {
+      var C = i[M], k = U(C) ? C : {
         name: C
-      }, L = new as(), P = I.name;
-      P != null && u.get(P) != null && (L.name = L.displayName = P), I.type != null && (L.type = I.type), I.displayName != null && (L.displayName = I.displayName);
+      }, L = new as(), P = k.name;
+      P != null && u.get(P) != null && (L.name = L.displayName = P), k.type != null && (L.type = k.type), k.displayName != null && (L.displayName = k.displayName);
       var E = a.length;
       return f[M] = E, L.storeDimIndex = M, a.push(L), L;
     }
@@ -13899,21 +13899,21 @@ function I_(r, t) {
       c.set(D, !1);
       return;
     }
-    var I = c.set(D, []);
+    var k = c.set(D, []);
     T(C, function(L, P) {
       var E = V(L) ? u.get(L) : L;
-      E != null && E < o && (I[P] = E, p(v(E), D, P));
+      E != null && E < o && (k[P] = E, p(v(E), D, P));
     });
   });
   var g = 0;
   T(e, function(M) {
-    var D, C, I, L;
+    var D, C, k, L;
     if (V(M))
       D = M, L = {};
     else {
       L = M, D = L.name;
       var P = L.ordinalMeta;
-      L.ordinalMeta = null, L = $({}, L), L.ordinalMeta = P, C = L.dimsDef, I = L.otherDims, L.name = L.coordDim = L.coordDimIndex = L.dimsDef = L.otherDims = null;
+      L.ordinalMeta = null, L = $({}, L), L.ordinalMeta = P, C = L.dimsDef, k = L.otherDims, L.name = L.coordDim = L.coordDimIndex = L.dimsDef = L.otherDims = null;
     }
     var E = c.get(D);
     if (E !== !1) {
@@ -13931,7 +13931,7 @@ function I_(r, t) {
             name: Z
           }), z.name = z.displayName = Z.name, z.defaultTooltip = Z.defaultTooltip;
         }
-        I && ht(z.otherDims, I);
+        k && ht(z.otherDims, k);
       });
     }
   });
@@ -14543,9 +14543,9 @@ function xD(r) {
         var e = t.getData(), i = t.coordinateSystem, n = i.getBaseAxis(), a = i.getOtherAxis(n), o = e.getDimensionIndex(e.mapDimension(a.dim)), s = e.getDimensionIndex(e.mapDimension(n.dim)), l = t.get("showBackground", !0), u = e.mapDimension(a.dim), h = e.getCalculationInfo("stackResultDimension"), c = Si(e, u) && !!e.getCalculationInfo("stackedOnSeries"), f = a.isHorizontal(), d = wD(n, a), v = N_(t), g = t.get("barMinHeight") || 0, p = h && e.getDimensionIndex(h), y = e.getLayout("size"), m = e.getLayout("offset");
         return {
           progress: function(_, b) {
-            for (var w = _.count, x = v && Je(w * 3), S = v && l && Je(w * 3), A = v && Je(w), M = i.master.getRect(), D = f ? M.width : M.height, C, I = b.getStore(), L = 0; (C = _.next()) != null; ) {
-              var P = I.get(c ? p : o, C), E = I.get(s, C), R = d, Y = void 0;
-              c && (Y = +P - I.get(o, C));
+            for (var w = _.count, x = v && Je(w * 3), S = v && l && Je(w * 3), A = v && Je(w), M = i.master.getRect(), D = f ? M.width : M.height, C, k = b.getStore(), L = 0; (C = _.next()) != null; ) {
+              var P = k.get(c ? p : o, C), E = k.get(s, C), R = d, Y = void 0;
+              c && (Y = +P - k.get(o, C));
               var O = void 0, z = void 0, Z = void 0, J = void 0;
               if (f) {
                 var it = i.dataToPoint([P, E]);
@@ -14733,8 +14733,8 @@ function kD(r, t, e) {
 }
 function ID(r, t, e, i) {
   var n = 1e4, a = s0, o = 0;
-  function s(D, C, I, L, P, E, R) {
-    for (var Y = new Date(C), O = C, z = Y[L](); O < I && O <= i[1]; )
+  function s(D, C, k, L, P, E, R) {
+    for (var Y = new Date(C), O = C, z = Y[L](); O < k && O <= i[1]; )
       R.push({
         value: O
       }), z += D, Y[P](z), O = Y.getTime();
@@ -14743,7 +14743,7 @@ function ID(r, t, e, i) {
       notAdd: !0
     });
   }
-  function l(D, C, I) {
+  function l(D, C, k) {
     var L = [], P = !C.length;
     if (!TD(nn(D), i[0], i[1], e)) {
       P && (C = [{
@@ -14785,13 +14785,13 @@ function ID(r, t, e, i) {
               O = DD(t), z = dl(e), Z = v0(e);
               break;
           }
-          s(O, R, Y, z, Z, J, L), D === "year" && I.length > 1 && E === 0 && I.unshift({
-            value: I[0].value - O
+          s(O, R, Y, z, Z, J, L), D === "year" && k.length > 1 && E === 0 && k.unshift({
+            value: k[0].value - O
           });
         }
       }
       for (var E = 0; E < L.length; E++)
-        I.push(L[E]);
+        k.push(L[E]);
       return L;
     }
   }
@@ -15681,11 +15681,11 @@ var Nf = (
       xn(s, g, {
         labelFetcher: l,
         labelDataIndex: i,
-        defaultText: I,
+        defaultText: k,
         inheritColor: S,
         defaultOpacity: x.opacity
       });
-      function I(E) {
+      function k(E) {
         return C ? e.getName(E) : Of(e, E);
       }
       this._sizeX = n[0] / 2, this._sizeY = n[1] / 2;
@@ -15892,10 +15892,10 @@ function hk(r, t, e, i, n, a, o, s) {
         (isNaN(A) || isNaN(M)) && (A = D, M = C), u.push(A, M), h.push(D, C), c.push(e[x], e[x + 1]), f.push(i[S], i[S + 1]), g.push(t.getRawIndex(b.idx1));
         break;
       case "+":
-        var I = b.idx, L = p.dataDimsForPoint, P = n.dataToPoint([t.get(L[0], I), t.get(L[1], I)]);
-        S = I * 2, u.push(P[0], P[1]), h.push(m[S], m[S + 1]);
-        var E = j_(p, n, t, I);
-        c.push(E[0], E[1]), f.push(i[S], i[S + 1]), g.push(t.getRawIndex(I));
+        var k = b.idx, L = p.dataDimsForPoint, P = n.dataToPoint([t.get(L[0], k), t.get(L[1], k)]);
+        S = k * 2, u.push(P[0], P[1]), h.push(m[S], m[S + 1]);
+        var E = j_(p, n, t, k);
+        c.push(E[0], E[1]), f.push(i[S], i[S + 1]), g.push(t.getRawIndex(k));
         break;
       case "-":
         w = !1;
@@ -15948,7 +15948,7 @@ function Kh(r, t, e, i, n, a, o, s, l) {
         if (l)
           for (; di(x, S) && A < i; )
             A++, w += a, x = t[w * 2], S = t[w * 2 + 1];
-        var M = 0.5, D = 0, C = 0, I = void 0, L = void 0;
+        var M = 0.5, D = 0, C = 0, k = void 0, L = void 0;
         if (A >= i || di(x, S))
           d = y, v = m;
         else {
@@ -15957,15 +15957,15 @@ function Kh(r, t, e, i, n, a, o, s, l) {
           if (s === "x") {
             O = Math.abs(P), z = Math.abs(E);
             var Z = D > 0 ? 1 : -1;
-            d = y - Z * O * o, v = m, I = y + Z * z * o, L = m;
+            d = y - Z * O * o, v = m, k = y + Z * z * o, L = m;
           } else if (s === "y") {
             O = Math.abs(R), z = Math.abs(Y);
             var J = C > 0 ? 1 : -1;
-            d = y, v = m - J * O * o, I = y, L = m + J * z * o;
+            d = y, v = m - J * O * o, k = y, L = m + J * z * o;
           } else
-            O = Math.sqrt(P * P + R * R), z = Math.sqrt(E * E + Y * Y), M = z / (z + O), d = y - D * o * (1 - M), v = m - C * o * (1 - M), I = y + D * o * M, L = m + C * o * M, I = fr(I, dr(x, y)), L = fr(L, dr(S, m)), I = dr(I, fr(x, y)), L = dr(L, fr(S, m)), D = I - y, C = L - m, d = y - D * O / z, v = m - C * O / z, d = fr(d, dr(u, y)), v = fr(v, dr(h, m)), d = dr(d, fr(u, y)), v = dr(v, fr(h, m)), D = y - d, C = m - v, I = y + D * z / O, L = m + C * z / O;
+            O = Math.sqrt(P * P + R * R), z = Math.sqrt(E * E + Y * Y), M = z / (z + O), d = y - D * o * (1 - M), v = m - C * o * (1 - M), k = y + D * o * M, L = m + C * o * M, k = fr(k, dr(x, y)), L = fr(L, dr(S, m)), k = dr(k, fr(x, y)), L = dr(L, fr(S, m)), D = k - y, C = L - m, d = y - D * O / z, v = m - C * O / z, d = fr(d, dr(u, y)), v = fr(v, dr(h, m)), d = dr(d, fr(u, y)), v = dr(v, fr(h, m)), D = y - d, C = m - v, k = y + D * z / O, L = m + C * z / O;
         }
-        r.bezierCurveTo(c, f, d, v, y, m), c = I, f = L;
+        r.bezierCurveTo(c, f, d, v, y, m), c = k, f = L;
       } else
         r.lineTo(y, m);
     }
@@ -16360,7 +16360,7 @@ var Tk = (
       }), x || d.remove(), o.add(p);
       var D = c ? !1 : e.get("step"), C;
       a && a.getArea && e.get("clip", !0) && (C = a.getArea(), C.width != null ? (C.x -= 0.1, C.y -= 0.1, C.width += 0.2, C.height += 0.2) : C.r0 && (C.r0 -= 0.5, C.r += 0.5)), this._clipShapeForSymbol = C;
-      var I = yk(s, a, n) || s.getVisual("style")[s.getVisual("drawType")];
+      var k = yk(s, a, n) || s.getVisual("style")[s.getVisual("drawType")];
       if (!(v && f.type === a.type && D === this._step))
         x && d.updateData(s, {
           isIgnore: A,
@@ -16369,9 +16369,9 @@ var Tk = (
           getSymbolPoint: function(_t) {
             return [h[_t * 2], h[_t * 2 + 1]];
           }
-        }), y && this._initSymbolLabelAnimation(s, a, C), D && (w && (w = vr(w, h, a, D, S)), h = vr(h, null, a, D, S)), v = this._newPolyline(h), m ? g = this._newPolygon(h, w) : g && (p.remove(g), g = this._polygon = null), c || this._initOrUpdateEndLabel(e, a, wi(I)), p.setClipPath(Eu(this, a, !0, e));
+        }), y && this._initSymbolLabelAnimation(s, a, C), D && (w && (w = vr(w, h, a, D, S)), h = vr(h, null, a, D, S)), v = this._newPolyline(h), m ? g = this._newPolygon(h, w) : g && (p.remove(g), g = this._polygon = null), c || this._initOrUpdateEndLabel(e, a, wi(k)), p.setClipPath(Eu(this, a, !0, e));
       else {
-        m && !g ? g = this._newPolygon(h, w) : g && !m && (p.remove(g), g = this._polygon = null), c || this._initOrUpdateEndLabel(e, a, wi(I));
+        m && !g ? g = this._newPolygon(h, w) : g && !m && (p.remove(g), g = this._polygon = null), c || this._initOrUpdateEndLabel(e, a, wi(k));
         var L = p.getClipPath();
         if (L) {
           var P = Eu(this, a, !1, e);
@@ -16400,7 +16400,7 @@ var Tk = (
         l.getLineStyle(),
         {
           fill: "none",
-          stroke: I,
+          stroke: k,
           lineJoin: "bevel"
         }
       )), Cs(v, e, "lineStyle"), v.style.lineWidth > 0 && e.get(["emphasis", "lineStyle", "width"]) === "bolder") {
@@ -16416,7 +16416,7 @@ var Tk = (
       }), g) {
         var it = s.getCalculationInfo("stackedOnSeries"), ft = 0;
         g.useStyle(ht(u.getAreaStyle(), {
-          fill: I,
+          fill: k,
           opacity: 0.7,
           lineJoin: "bevel",
           decal: s.getVisual("style").decal
@@ -16556,26 +16556,26 @@ var Tk = (
         var c = n.getLayout("points"), f = n.hostModel, d = f.get("connectNulls"), v = s.get("precision"), g = s.get("distance") || 0, p = l.getBaseAxis(), y = p.isHorizontal(), m = p.inverse, _ = i.shape, b = m ? y ? _.x : _.y + _.height : y ? _.x + _.width : _.y, w = (y ? g : 0) * (m ? -1 : 1), x = (y ? 0 : -g) * (m ? -1 : 1), S = y ? "x" : "y", A = wk(c, b, S), M = A.range, D = M[1] - M[0], C = void 0;
         if (D >= 1) {
           if (D > 1 && !d) {
-            var I = ng(c, M[0]);
+            var k = ng(c, M[0]);
             u.attr({
-              x: I[0] + w,
-              y: I[1] + x
+              x: k[0] + w,
+              y: k[1] + x
             }), o && (C = f.getRawValue(M[0]));
           } else {
-            var I = h.getPointOn(b, S);
-            I && u.attr({
-              x: I[0] + w,
-              y: I[1] + x
+            var k = h.getPointOn(b, S);
+            k && u.attr({
+              x: k[0] + w,
+              y: k[1] + x
             });
             var L = f.getRawValue(M[0]), P = f.getRawValue(M[1]);
             o && (C = Sw(n, v, L, P, A.t));
           }
           a.lastFrameIndex = M[0];
         } else {
-          var E = e === 1 || a.lastFrameIndex > 0 ? M[0] : 0, I = ng(c, E);
+          var E = e === 1 || a.lastFrameIndex > 0 ? M[0] : 0, k = ng(c, E);
           o && (C = f.getRawValue(E)), u.attr({
-            x: I[0] + w,
-            y: I[1] + x
+            x: k[0] + w,
+            y: k[1] + x
           });
         }
         if (o) {
@@ -17006,32 +17006,32 @@ var $k = (
       o.removeClipPath();
       var p = e.get("roundCap", !0), y = e.get("showBackground", !0), m = e.getModel("backgroundStyle"), _ = m.get("borderRadius") || 0, b = [], w = this._backgroundEls, x = a && a.isInitSort, S = a && a.type === "changeAxisOrder";
       function A(C) {
-        var I = Oo[u.type](s, C), L = Gk(u, c, I);
+        var k = Oo[u.type](s, C), L = Gk(u, c, k);
         return L.useStyle(m.getItemStyle()), u.type === "cartesian2d" ? L.setShape("r", _) : L.setShape("cornerRadius", _), b[C] = L, L;
       }
       s.diff(l).add(function(C) {
-        var I = s.getItemModel(C), L = Oo[u.type](s, C, I);
+        var k = s.getItemModel(C), L = Oo[u.type](s, C, k);
         if (y && A(C), !(!s.hasValue(C) || !hg[u.type](L))) {
           var P = !1;
           v && (P = og[u.type](g, L));
           var E = sg[u.type](e, s, C, L, c, f, h.model, !1, p);
-          d && (E.forceLabelAnimation = !0), cg(E, s, C, I, L, e, c, u.type === "polar"), x ? E.attr({
+          d && (E.forceLabelAnimation = !0), cg(E, s, C, k, L, e, c, u.type === "polar"), x ? E.attr({
             shape: L
           }) : d ? lg(d, f, E, L, C, c, !1, !1) : ir(E, {
             shape: L
           }, e, C), s.setItemGraphicEl(C, E), o.add(E), E.ignore = P;
         }
-      }).update(function(C, I) {
+      }).update(function(C, k) {
         var L = s.getItemModel(C), P = Oo[u.type](s, C, L);
         if (y) {
           var E = void 0;
-          w.length === 0 ? E = A(I) : (E = w[I], E.useStyle(m.getItemStyle()), u.type === "cartesian2d" ? E.setShape("r", _) : E.setShape("cornerRadius", _), b[C] = E);
+          w.length === 0 ? E = A(k) : (E = w[k], E.useStyle(m.getItemStyle()), u.type === "cartesian2d" ? E.setShape("r", _) : E.setShape("cornerRadius", _), b[C] = E);
           var R = Oo[u.type](s, C), Y = nb(c, R, u);
           jt(E, {
             shape: Y
           }, f, C);
         }
-        var O = l.getItemGraphicEl(I);
+        var O = l.getItemGraphicEl(k);
         if (!s.hasValue(C) || !hg[u.type](P)) {
           o.remove(O);
           return;
@@ -17051,8 +17051,8 @@ var $k = (
           shape: P
         }, e, C, null), s.setItemGraphicEl(C, O), O.ignore = z, o.add(O);
       }).remove(function(C) {
-        var I = l.getItemGraphicEl(C);
-        I && Lh(I, e, C);
+        var k = l.getItemGraphicEl(C);
+        k && Lh(k, e, C);
       }).execute();
       var M = this._backgroundGroup || (this._backgroundGroup = new St());
       M.removeAll();
@@ -18281,7 +18281,7 @@ function s2(r, t, e, i) {
         var w = c[y];
         U(w) && w.textStyle && (b = new bt(w.textStyle, o, e.ecModel));
       }
-      var x = b.getTextColor() || e.get(["axisLine", "lineStyle", "color"]), S = n.dataToCoord(y), A = b.getShallow("align", !0) || h.textAlign, M = st(b.getShallow("alignMinLabel", !0), A), D = st(b.getShallow("alignMaxLabel", !0), A), C = b.getShallow("verticalAlign", !0) || b.getShallow("baseline", !0) || h.textVerticalAlign, I = st(b.getShallow("verticalAlignMinLabel", !0), C), L = st(b.getShallow("verticalAlignMaxLabel", !0), C), P = new Ht({
+      var x = b.getTextColor() || e.get(["axisLine", "lineStyle", "color"]), S = n.dataToCoord(y), A = b.getShallow("align", !0) || h.textAlign, M = st(b.getShallow("alignMinLabel", !0), A), D = st(b.getShallow("alignMaxLabel", !0), A), C = b.getShallow("verticalAlign", !0) || b.getShallow("baseline", !0) || h.textVerticalAlign, k = st(b.getShallow("verticalAlignMinLabel", !0), C), L = st(b.getShallow("verticalAlignMaxLabel", !0), C), P = new Ht({
         x: S,
         y: i.labelOffset + i.labelDirection * s,
         rotation: h.rotation,
@@ -18290,7 +18290,7 @@ function s2(r, t, e, i) {
         style: Mr(b, {
           text: m,
           align: p === 0 ? M : p === l.length - 1 ? D : A,
-          verticalAlign: p === 0 ? I : p === l.length - 1 ? L : C,
+          verticalAlign: p === 0 ? k : p === l.length - 1 ? L : C,
           fill: Q(x) ? x(
             // (1) In category axis with data zoom, tick is not the original
             // index of axis.data. So tick should not be exposed to user
@@ -19439,8 +19439,8 @@ var ic = St, Lg = Mt, Pg = 3, Eg = "label", Rg = "upperLabel", Z2 = Ka * 10, q2 
           return M.getId();
         }
         function A(M, D) {
-          var C = M != null ? m[M] : null, I = D != null ? _[D] : null, L = c(C, I, b, x);
-          L && g(C && C.viewChildren || [], I && I.viewChildren || [], L, w, x + 1);
+          var C = M != null ? m[M] : null, k = D != null ? _[D] : null, L = c(C, k, b, x);
+          L && g(C && C.viewChildren || [], k && k.viewChildren || [], L, w, x + 1);
         }
       }
       function p(m) {
@@ -19675,14 +19675,14 @@ function Q2(r, t, e, i, n, a, o, s, l, u) {
     return;
   if (l.add(C), C.x = h.x || 0, C.y = h.y || 0, C.markRedraw(), Bs(C).nodeWidth = d, Bs(C).nodeHeight = v, h.isAboveViewRoot)
     return C;
-  var I = _t("background", Lg, u, q2);
-  I && Z(C, I, w && h.upperLabelHeight);
+  var k = _t("background", Lg, u, q2);
+  k && Z(C, k, w && h.upperLabelHeight);
   var L = f.getModel("emphasis"), P = L.get("focus"), E = L.get("blurScope"), R = L.get("disabled"), Y = P === "ancestor" ? o.getAncestorsIndices() : P === "descendant" ? o.getDescendantIndices() : P;
   if (w)
-    Pa(C) && Qi(C, !1), I && (Qi(I, !R), c.setItemGraphicEl(o.dataIndex, I), Dh(I, Y, E));
+    Pa(C) && Qi(C, !1), k && (Qi(k, !R), c.setItemGraphicEl(o.dataIndex, k), Dh(k, Y, E));
   else {
     var O = _t("content", Lg, u, K2);
-    O && J(C, O), I.disableMorphing = !0, I && Pa(I) && Qi(I, !1), Qi(C, !R), c.setItemGraphicEl(o.dataIndex, C);
+    O && J(C, O), k.disableMorphing = !0, k && Pa(k) && Qi(k, !1), Qi(C, !R), c.setItemGraphicEl(o.dataIndex, C);
     var z = f.getShallow("cursor");
     z && O.attr("cursor", z), Dh(C, Y, E);
   }
@@ -22255,14 +22255,14 @@ var IL = new Mt({
                 C.axisDim = _.axisDim, C.axisIndex = _.axisIndex, C.axisType = _.axisType, C.axisId = _.axisId, C.axisValue = Rf(b.axis, {
                   value: w
                 }), C.axisValueLabel = x, C.marker = f.makeTooltipMarker("item", wi(C.color), l);
-                var I = ep(M.formatTooltip(D, !0, null)), L = I.frag;
+                var k = ep(M.formatTooltip(D, !0, null)), L = k.frag;
                 if (L) {
                   var P = Zn([M], a).get("valueFormatter");
                   S.blocks.push(P ? $({
                     valueFormatter: P
                   }, L) : L);
                 }
-                I.text && c.push(I.text), u.push(C);
+                k.text && c.push(k.text), u.push(C);
               }
             });
           }
@@ -23536,9 +23536,9 @@ var fP = function(r, t) {
                 var A = S.legendVisualProvider;
                 if (!A.containName(g))
                   return;
-                var M = A.indexOfName(g), D = A.getItemVisual(M, "style"), C = A.getItemVisual(M, "legendIcon"), I = ye(D.fill);
-                I && I[3] === 0 && (I[3] = 0.2, D = $($({}, D), {
-                  fill: er(I, "rgba")
+                var M = A.indexOfName(g), D = A.getItemVisual(M, "style"), C = A.getItemVisual(M, "legendIcon"), k = ye(D.fill);
+                k && k[3] === 0 && (k[3] = 0.2, D = $($({}, D), {
+                  fill: er(k, "rgba")
                 }));
                 var L = this._createItem(S, g, v, d, i, e, {}, D, C, c, a);
                 L.on("click", Gi(Dy, null, g, a, f)).on("mouseover", Gi(yc, null, g, a, f)).on("mouseout", Gi(mc, null, g, a, f)), n.ssr && L.eachChild(function(P) {
@@ -23601,17 +23601,17 @@ var fP = function(r, t) {
       }
       var A = s === "left" ? v + 5 : -5, M = s, D = o.get("formatter"), C = i;
       V(D) && D ? C = D.replace("{name}", i ?? "") : Q(D) && (C = D(i));
-      var I = p ? x.getTextColor() : a.get("inactiveColor");
+      var k = p ? x.getTextColor() : a.get("inactiveColor");
       w.add(new Ht({
         style: Mr(x, {
           text: C,
           x: A,
           y: g / 2,
-          fill: I,
+          fill: k,
           align: M,
           verticalAlign: "middle"
         }, {
-          inheritColor: I
+          inheritColor: k
         })
       }));
       var L = new Mt({
@@ -24066,7 +24066,7 @@ var Qu = function(r) {
               break;
             } else if (l) {
               u.copy(m), u.union(A);
-              var D = m.width * m.height, C = A.width * A.height, I = u.width * u.height, L = I - D - C;
+              var D = m.width * m.height, C = A.width * A.height, k = u.width * u.height, L = k - D - C;
               L < w && (w = L, x = S);
             }
           }
@@ -24278,8 +24278,8 @@ var DP = function() {
           A = p.__endIndex;
         else
           for (var D = d.dpr, C = 0; C < m.length; ++C) {
-            var I = m[C];
-            y.save(), y.beginPath(), y.rect(I.x * D, I.y * D, I.width * D, I.height * D), y.clip(), M(I), y.restore();
+            var k = m[C];
+            y.save(), y.beginPath(), y.rect(k.x * D, k.y * D, k.width * D, k.height * D), y.clip(), M(k), y.restore();
           }
       else
         y.save(), M(), y.restore();
@@ -24443,7 +24443,7 @@ class _c extends pe {
     kt(this, "height", 260);
   }
   render() {
-    return k`<div class="c"></div>`;
+    return I`<div class="c"></div>`;
   }
   firstUpdated() {
     this._chart = RM(this.renderRoot.querySelector("div.c")), this._ro = new ResizeObserver(() => this._chart.resize()), this._ro.observe(this), this._chart.on("click", (e) => this.dispatchEvent(new CustomEvent("point", { detail: e.data, bubbles: !0, composed: !0 }))), this._chart.on("brushEnd", (e) => {
@@ -24504,9 +24504,9 @@ const q = (r) => r == null ? "n/a" : r >= 1073741824 ? (r / 1073741824).toFixed(
   const e = (i = r == null ? void 0 : r.entities) == null ? void 0 : i[t];
   if (customElements.get("ha-state-icon")) {
     const l = ((n = r == null ? void 0 : r.states) == null ? void 0 : n[t]) ?? { entity_id: t, state: "unknown", attributes: {}, context: {} };
-    return k`<ha-state-icon .hass=${r} .stateObj=${l} .icon=${e == null ? void 0 : e.icon}></ha-state-icon>`;
+    return I`<ha-state-icon .hass=${r} .stateObj=${l} .icon=${e == null ? void 0 : e.icon}></ha-state-icon>`;
   }
-  return k`<ha-icon .icon=${(e == null ? void 0 : e.icon) || ((s = (o = (a = r == null ? void 0 : r.states) == null ? void 0 : a[t]) == null ? void 0 : o.attributes) == null ? void 0 : s.icon) || RP[t.split(".")[0]] || "mdi:help-circle-outline"}></ha-icon>`;
+  return I`<ha-icon .icon=${(e == null ? void 0 : e.icon) || ((s = (o = (a = r == null ? void 0 : r.states) == null ? void 0 : a[t]) == null ? void 0 : o.attributes) == null ? void 0 : s.icon) || RP[t.split(".")[0]] || "mdi:help-circle-outline"}></ha-icon>`;
 }, Ju = "#8353d1", Ry = (r, t, e) => r && getComputedStyle(r).getPropertyValue(t).trim() || e, jn = "#b5b5b5", $y = (r) => new Date(r * 1e3).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), Qn = {
   get(r, t) {
     try {
@@ -24596,7 +24596,7 @@ class bc extends pe {
   }
   render() {
     const e = this.data;
-    if (!e) return k`<div class="hint">Waiting for the first scan to finish.</div>`;
+    if (!e) return I`<div class="hint">Waiting for the first scan to finish.</div>`;
     const i = (this.history || []).at(-1), n = this.live || i, a = n ? `Database size = pages × page size, the figure SQLite tools report.
 ` + (n.main_bytes != null ? `On disk: main file ${q(n.main_bytes)} + write-ahead log ${q(n.wal_bytes || 0)}.
 ` : "") + `Exact: ${n.file_bytes.toLocaleString()} bytes (1 MB here = 1,048,576 bytes).` : "", o = e.items.filter((x) => x.used_in[0] === "Not referenced"), s = o.reduce((x, S) => x + S.total_bytes, 0), l = e.items.filter((x) => x.suggestion === "Remove history" || x.suggestion === "Disable"), u = l.reduce((x, S) => x + S.total_bytes, 0), h = e.items.filter((x) => x.retention && x.retention !== "Default"), c = [...new Set(h.map((x) => x.retention))], f = this.ret, d = f == null ? void 0 : f.last_run, v = d ? `Last run ${Kb(Math.max(0, Math.round(Date.now() / 1e3 - d.ts)))}` : "Has not run yet", g = [
@@ -24606,11 +24606,11 @@ class bc extends pe {
       "Change the time or turn it off in the integration options; to run it from your own automation instead, turn it off and call the db_storage_manager.run_retention action. Run retention now is in the menu beside Re-Scan. Rows it deletes are not backed up."
     ].join(`
 `), p = this.history || [], y = p.length > 1 ? (p.at(-1).ts - p[0].ts) / 86400 : 0, m = p.length ? new Date(p[0].ts * 1e3).toLocaleDateString([], { dateStyle: "medium" }) : null, _ = Math.floor(y), b = p.length ? _ < 1 ? `Under 1 day of data since first collection on ${m}` : `${_} day${_ === 1 ? "" : "s"} of data since first collection on ${m}` : "No data collected yet.", w = [7, 30, 90, 365].filter((x) => x <= y);
-    return k`
+    return I`
       <div class="kpis">
         <div class="kpi" title=${a + ((n == null ? void 0 : n.free_bytes) != null ? `
 Free: empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk.` : "")}>
-          <span>Database size</span><b>${q((n == null ? void 0 : n.file_bytes) ?? e.total_bytes)}</b>${(n == null ? void 0 : n.free_bytes) != null ? k`<span>~ ${q(n.free_bytes)} Free</span>` : ""}</div>
+          <span>Database size</span><b>${q((n == null ? void 0 : n.file_bytes) ?? e.total_bytes)}</b>${(n == null ? void 0 : n.free_bytes) != null ? I`<span>~ ${q(n.free_bytes)} Free</span>` : ""}</div>
         <div class="kpi click" title="Entities with no literal reference in your config. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Not referenced"] } }))}>
           <span>Not referenced in config</span><b>${q(s)}</b><span>${o.length} entities</span></div>
@@ -24630,7 +24630,7 @@ Free: empty space inside the database file left behind by deleted data. Reclaim 
         <div class="card"><h3>Database size over time
             <select @change=${(x) => this.dispatchEvent(new CustomEvent("days", { detail: +x.target.value }))}>
               <option value="0" ?selected=${!this.days || !w.includes(this.days)}>All data</option>
-              ${w.map((x) => k`<option value=${x} ?selected=${this.days === x}>Last ${x} days</option>`)}</select>
+              ${w.map((x) => I`<option value=${x} ?selected=${this.days === x}>Last ${x} days</option>`)}</select>
             <span class="tip" tabindex="0"><span class="info">?</span><span class="pop"><div>${b}</div>
               <div>Drag across the chart to drill into a period.</div>
               <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the data in the database.</div>
@@ -24646,7 +24646,7 @@ Free: empty space inside the database file left behind by deleted data. Reclaim 
     const i = [...e.items].sort((a, o) => o.total_bytes - a.total_bytes).slice(0, 12), n = Math.max(...i.map((a) => a.total_bytes), 1);
     return i.map((a) => {
       const o = a.used_in[0] === "Not referenced";
-      return k`<div class="tl" title=${`${a.entity_id}
+      return I`<div class="tl" title=${`${a.entity_id}
 ${o ? "Not referenced in config" : a.used_count + " places"}`}
         @click=${() => this.dispatchEvent(new CustomEvent("goto-entity", { detail: a.entity_id }))}>
         <i class=${o ? "un" : ""} style="width:${Math.max(2, a.total_bytes / n * 100)}%"></i>
@@ -24718,62 +24718,62 @@ class xc extends pe {
   }
   _facet(t, e) {
     const i = Math.max(...e.map((n) => n.bytes), 1);
-    return k`<div class="facet"><b>${qb[t] || t}</b>
-      ${t === "status" ? k` <span class="help" title=${IP}>?</span>` : G}
-      ${t === "suggestion" ? k` <span class="help" title=${PP}>?</span>` : G}
+    return I`<div class="facet"><b>${qb[t] || t}</b>
+      ${t === "status" ? I` <span class="help" title=${IP}>?</span>` : G}
+      ${t === "suggestion" ? I` <span class="help" title=${PP}>?</span>` : G}
       ${e.map((n) => {
       const a = (this.filters[t] || []).includes(n.value);
-      return n.other ? k`<div class="fr more" title="Show all of them" @click=${() => this._emit("expand", { facet: t, on: !0 })}><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i><span></span><span class="lbl">${n.value} ▾</span><span class="val">${q(n.bytes)}<small>${n.count}</small></span></div>` : k`<label class="fr ${n.count === 0 && !a ? "zero" : ""}"><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i>
-          ${n.other ? k`<span></span>` : k`<input type="checkbox" .checked=${a} @change=${(o) => this._toggleFilter(t, n.value, o.target.checked)}>`}
+      return n.other ? I`<div class="fr more" title="Show all of them" @click=${() => this._emit("expand", { facet: t, on: !0 })}><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i><span></span><span class="lbl">${n.value} ▾</span><span class="val">${q(n.bytes)}<small>${n.count}</small></span></div>` : I`<label class="fr ${n.count === 0 && !a ? "zero" : ""}"><i style="width:${Math.max(1, n.bytes / i * 100)}%"></i>
+          ${n.other ? I`<span></span>` : I`<input type="checkbox" .checked=${a} @change=${(o) => this._toggleFilter(t, n.value, o.target.checked)}>`}
           <span class="lbl" title=${n.value}>${n.value}</span><span class="val">${q(n.bytes)}<small>${n.count}</small></span></label>`;
     })}
-      ${(this.expand || []).includes(t) && e.length > 8 ? k`<div class="fr more" @click=${() => this._emit("expand", { facet: t, on: !1 })}><span></span><span class="lbl">Show fewer ▴</span><span></span></div>` : G}
-      ${t === "used_in" ? k`<div class="muted">An entity can appear under several kinds.</div>` : G}</div>`;
+      ${(this.expand || []).includes(t) && e.length > 8 ? I`<div class="fr more" @click=${() => this._emit("expand", { facet: t, on: !1 })}><span></span><span class="lbl">Show fewer ▴</span><span></span></div>` : G}
+      ${t === "used_in" ? I`<div class="muted">An entity can appear under several kinds.</div>` : G}</div>`;
   }
   _link(t, e, i) {
-    return k`<a href=${t} @click=${(n) => {
+    return I`<a href=${t} @click=${(n) => {
       n.preventDefault(), this._emit("navigate", t);
-    }}>${i ? k`<ha-icon class="tabicon" .icon=${i}></ha-icon>` : G}${e}</a>`;
+    }}>${i ? I`<ha-icon class="tabicon" .icon=${i}></ha-icon>` : G}${e}</a>`;
   }
   // Dashboards: "Main > <tab link> card gauge", so the tab itself is the link. Others link the item name.
   _locText(t) {
     const e = t.kind === "Dashboard" && t.link ? /^(view "[^"]*")(?:, )?(.*)$/.exec(t.where) : null;
-    return e ? k`${t.name} <span class="muted">›</span> ${this._link(t.link, e[1].slice(6, -1), t.icon)}${e[2] ? k` <span class="muted">${e[2]}</span>` : G}` : k`${t.link ? this._link(t.link, t.name) : t.name} <span class="muted">${t.where}</span>`;
+    return e ? I`${t.name} <span class="muted">›</span> ${this._link(t.link, e[1].slice(6, -1), t.icon)}${e[2] ? I` <span class="muted">${e[2]}</span>` : G}` : I`${t.link ? this._link(t.link, t.name) : t.name} <span class="muted">${t.where}</span>`;
   }
   _usageDetail() {
     var n, a, o, s, l;
     const t = this.usage;
     if (!t) return G;
-    const e = (n = t.dynamic_possible) != null && n.length ? k`<div class="warn">These templates loop over every entity of this type, so they may use it without naming it: ${t.dynamic_possible.join(", ")}.</div>` : G, i = t.entity_ids ? k`<b>${t.entity_ids.length} selected entit${t.entity_ids.length === 1 ? "y" : "ies"}</b> appear in these places (a number shows how many of them are in a place):` : k`<span class="ico" style="vertical-align:middle">${Vs(this.hass, t.entity_id)}</span> <b>${((s = (o = (a = this.data) == null ? void 0 : a.items) == null ? void 0 : o.find((u) => u.entity_id === t.entity_id)) == null ? void 0 : s.name) || t.entity_id}</b> is referenced in:`;
-    return k`<div class="detail">${i}
-      <ul>${t.locations.length ? t.locations.map((u) => k`<li><span class="kind">${u.kind}</span>
-        ${this._locText(u)}${u.count > 1 ? k` <span class="cnt" title=${u.entities.join(`
-`)}>×${u.count}</span>` : G}</li>`) : k`<li class="muted">No literal reference found in automations, scripts, scenes, dashboards, helpers, the Energy dashboard or YAML files.</li>`}</ul>
-      ${e}<details><summary>What this scan can miss</summary><ul>${(((l = this.data) == null ? void 0 : l.caveats) || []).map((u) => k`<li>${u}</li>`)}</ul></details>
+    const e = (n = t.dynamic_possible) != null && n.length ? I`<div class="warn">These templates loop over every entity of this type, so they may use it without naming it: ${t.dynamic_possible.join(", ")}.</div>` : G, i = t.entity_ids ? I`<b>${t.entity_ids.length} selected entit${t.entity_ids.length === 1 ? "y" : "ies"}</b> appear in these places (a number shows how many of them are in a place):` : I`<span class="ico" style="vertical-align:middle">${Vs(this.hass, t.entity_id)}</span> <b>${((s = (o = (a = this.data) == null ? void 0 : a.items) == null ? void 0 : o.find((u) => u.entity_id === t.entity_id)) == null ? void 0 : s.name) || t.entity_id}</b> is referenced in:`;
+    return I`<div class="detail">${i}
+      <ul>${t.locations.length ? t.locations.map((u) => I`<li><span class="kind">${u.kind}</span>
+        ${this._locText(u)}${u.count > 1 ? I` <span class="cnt" title=${u.entities.join(`
+`)}>×${u.count}</span>` : G}</li>`) : I`<li class="muted">No literal reference found in automations, scripts, scenes, dashboards, helpers, the Energy dashboard or YAML files.</li>`}</ul>
+      ${e}<details><summary>What this scan can miss</summary><ul>${(((l = this.data) == null ? void 0 : l.caveats) || []).map((u) => I`<li>${u}</li>`)}</ul></details>
       <button @click=${() => this._emit("usage", null)}>Close</button></div>`;
   }
   render() {
     const t = this.data;
-    if (!t) return k`<div class="muted">Waiting for the first scan to finish.</div>`;
+    if (!t) return I`<div class="muted">Waiting for the first scan to finish.</div>`;
     const e = this._rows(), i = e.slice(0, this.shown), n = !!t.window, a = (f) => n ? f.win_bytes : f.total_bytes, o = Math.max(...i.map(a), 1), s = i.length > 0 && i.every((f) => this.selected.has(f.entity_id)), l = (t.items || []).filter((f) => this.selected.has(f.entity_id)).reduce((f, d) => f + a(d), 0), u = new Set((t.items || []).map((f) => f.entity_id)), h = [...this.selected].filter((f) => !u.has(f)).length, c = Object.entries(this.filters).flatMap(([f, d]) => d.map((v) => [f, v]));
-    return k`
+    return I`
       <div class="bar">
         <input type="search" placeholder="Search name or entity id" .value=${this.search} @input=${(f) => this._onSearch(f.target.value)} @change=${(f) => this._onSearch(f.target.value, !0)}>
-        <select @change=${(f) => this._emit("sort", f.target.value)} title="Sort">${Object.entries(OP).map(([f, d]) => k`<option value=${f} ?selected=${this.sort === f}>Sort: ${d}</option>`)}</select>
+        <select @change=${(f) => this._emit("sort", f.target.value)} title="Sort">${Object.entries(OP).map(([f, d]) => I`<option value=${f} ?selected=${this.sort === f}>Sort: ${d}</option>`)}</select>
         <button class="filtertoggle" @click=${() => {
       this._facetsOpen = !this._facetsOpen, this.requestUpdate();
     }}>Filters${c.length ? ` (${c.length})` : ""}</button>
       </div>
-      ${this.selected.size ? k`<div class="selbar"><b>${this.selected.size} selected</b>${h ? k` <span class="muted" title="These were ticked earlier and are not in the list now (filters, search or period changed). Actions still include them.">(${h} not in the current list)</span> <button title="Drop the selected entities that are not in the current list" @click=${() => this._emit("selected", new Set([...this.selected].filter((f) => u.has(f))))}>Keep only listed</button>` : G}
+      ${this.selected.size ? I`<div class="selbar"><b>${this.selected.size} selected</b>${h ? I` <span class="muted" title="These were ticked earlier and are not in the list now (filters, search or period changed). Actions still include them.">(${h} not in the current list)</span> <button title="Drop the selected entities that are not in the current list" @click=${() => this._emit("selected", new Set([...this.selected].filter((f) => u.has(f))))}>Keep only listed</button>` : G}
         <button class="x" title="Clear selection" aria-label="Clear selection" @click=${() => this._emit("selected", /* @__PURE__ */ new Set())}>✕</button>
         <span class="muted">≈ ${q(l)} of ${n ? "data written in this period" : "entity data"}</span>
-        ${this.selected.size < t.items.length ? k`<button @click=${() => this._emit("selected", new Set(t.items.map((f) => f.entity_id)))}>Select all ${t.items.length.toLocaleString()} matching</button>` : G}
+        ${this.selected.size < t.items.length ? I`<button @click=${() => this._emit("selected", new Set(t.items.map((f) => f.entity_id)))}>Select all ${t.items.length.toLocaleString()} matching</button>` : G}
         <span style="flex:1"></span>
         <button title="Turns these entities off in Home Assistant so they stop recording. Nothing is deleted and it can be undone from the History tab. Entities defined in your YAML files stay in those files; remove them there to get rid of them for good." @click=${() => this._emit("action", "disable")}>Disable</button>
         <button title="Deletes their long-term statistics, and optionally their recorded state history. Everything deleted is first saved in one compressed backup, so the whole action can be undone from the History tab." @click=${() => this._emit("action", "delete_history")}>Clear history</button>
         <button title="Disables them first so nothing is recorded again, then clears their history. Everything deleted is first saved in one compressed backup, and undoing from the History tab restores it and turns them back on." @click=${() => this._emit("action", "disable_and_clear")}>Disable + clear</button>
         <button title="Choose how many days of detailed states to keep (1, 3, 5, 7 or Home Assistant's default). Long-term statistics (graphs, Energy) are kept." @click=${() => this._emit("action", "reduce_retention")}>Change retention</button></div>` : G}
-      ${n ? k`<div class="banner"><span>≈ <b>${q((t.items || []).reduce((f, d) => f + (d.win_bytes || 0), 0))}</b> of <b>${(t.items || []).length.toLocaleString()}</b> entities changed between <b>${$y(t.window.from)}</b> and <b>${$y(t.window.to)}</b>.</span>
+      ${n ? I`<div class="banner"><span>≈ <b>${q((t.items || []).reduce((f, d) => f + (d.win_bytes || 0), 0))}</b> of <b>${(t.items || []).length.toLocaleString()}</b> entities changed between <b>${$y(t.window.from)}</b> and <b>${$y(t.window.to)}</b>.</span>
         <span class="info" title=${`Entities that wrote data in this period, with the estimated size of what they wrote.${this.growth != null ? `
 The database file changed by ${this.growth >= 0 ? "+" : "-"}${q(Math.abs(this.growth))} across it.` : ""}
 State history is only kept for ${t.window.keep_days} days, so older periods show long-term statistics only.`}>i</span>
@@ -24789,7 +24789,7 @@ State history is only kept for ${t.window.keep_days} days, so older periods show
               <div class="muted">The bar splits each entity's size between the two. Hover a size for the exact split.</div></span></span></span></div>
             ${i.map((f) => this._row(f, o, a))}
           </div>
-          ${e.length > this.shown ? k`<button style="margin-top:8px" @click=${() => this._emit("more")}>Show ${Math.min(100, e.length - this.shown)} more of ${e.length - this.shown} remaining</button>` : G}
+          ${e.length > this.shown ? I`<button style="margin-top:8px" @click=${() => this._emit("more")}>Show ${Math.min(100, e.length - this.shown)} more of ${e.length - this.shown} remaining</button>` : G}
         </div>
       </div>
 `;
@@ -24805,18 +24805,18 @@ State history is only kept for ${t.window.keep_days} days, so older periods show
   }
   _row(t, e, i) {
     const n = t.used_in[0] === "Not referenced", a = t.dynamic_possible ? ` +${t.dynamic_possible} dyn` : "", o = `${t.integration} · ${t.device} · ${t.status} · ${t.age}`;
-    return k`<div class="row ${this.selected.has(t.entity_id) ? "sel" : ""}">
+    return I`<div class="row ${this.selected.has(t.entity_id) ? "sel" : ""}">
       <input type="checkbox" .checked=${this.selected.has(t.entity_id)} @change=${(s) => this._toggleSel(t.entity_id, s.target.checked)}>
-      <span style="display:flex;gap:8px;align-items:center;min-width:0">${t.status === "Disabled" ? k`<span class="ico off" title="Disabled in Home Assistant"><ha-icon icon="mdi:cancel"></ha-icon></span>` : k`<span class="ico">${Vs(this.hass, t.entity_id)}</span>`}<a class="eid" href="#" title=${`${t.entity_id}
+      <span style="display:flex;gap:8px;align-items:center;min-width:0">${t.status === "Disabled" ? I`<span class="ico off" title="Disabled in Home Assistant"><ha-icon icon="mdi:cancel"></ha-icon></span>` : I`<span class="ico">${Vs(this.hass, t.entity_id)}</span>`}<a class="eid" href="#" title=${`${t.entity_id}
 ${o}`} style="overflow:hidden;text-overflow:ellipsis" @click=${(s) => {
       s.preventDefault(), this._moreInfo(t.entity_id);
     }}>${t.name || t.entity_id}</a>
-        ${t.retention_days ? k`<span class="ret" title=${`Retention rule: state history is kept for ${t.retention_days} days (Home Assistant's default is longer). Rows older than that are deleted every night.`}>${t.retention_days}d</span>` : G}
+        ${t.retention_days ? I`<span class="ret" title=${`Retention rule: state history is kept for ${t.retention_days} days (Home Assistant's default is longer). Rows older than that are deleted every night.`}>${t.retention_days}d</span>` : G}
         <button class="inspect" title="Inspect the raw data stored for this entity (states, attributes, statistics)" aria-label="Inspect stored data" @click=${() => this._emit("inspect", t)}><svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1m1 2v3h16V5H4m0 5v4h5v-4H4m7 0v4h9v-4h-9m-7 6v3h5v-3H4m7 0v3h9v-3h-9z"/></svg></button><button class="chip ${n ? "none" : "used"}" title=${n ? "No literal reference found in config" : `${t.used_count} reference${t.used_count === 1 ? "" : "s"}: ${t.used_in.join(", ")}`} @click=${() => this._emit("usage", t.entity_id)}>${n ? "0" : t.used_count} 🔗${a}</button></span>
       <span class="c-int muted">${t.integration}</span><span class="c-dev muted">${t.device}</span><span class="c-age muted">${t.age}</span><span class="c-status"><span class="sugg ${$P[t.suggestion] || ""}" title=${`${t.suggestion} (${(t.confidence || "").toLowerCase()} confidence)
 ${(t.reasons || []).join(`
 `)}`}>${t.suggestion}</span></span>
-      ${t.size_stale ? k`<span class="size stale" title="Out of date: this entity was changed by an action. Re-Scan refreshes it."><span>⟳</span></span>` : k`<span class="size" title=${this._splitTip(t, i(t))}><i class="bar2" style="width:${Math.max(2, i(t) / e * 100)}%"><b class="seg st" style="flex:${this._split(t)}"></b><b class="seg hs" style="flex:${1 - this._split(t)}"></b></i><span>${q(i(t))}</span></span>`}</div>`;
+      ${t.size_stale ? I`<span class="size stale" title="Out of date: this entity was changed by an action. Re-Scan refreshes it."><span>⟳</span></span>` : I`<span class="size" title=${this._splitTip(t, i(t))}><i class="bar2" style="width:${Math.max(2, i(t) / e * 100)}%"><b class="seg st" style="flex:${this._split(t)}"></b><b class="seg hs" style="flex:${1 - this._split(t)}"></b></i><span>${q(i(t))}</span></span>`}</div>`;
   }
 }
 kt(xc, "properties", {
@@ -24882,14 +24882,14 @@ class wc extends pe {
   render() {
     var n;
     const t = this.status;
-    if (!t || !((n = t.steps) != null && n.length)) return k`<div class="card"><h3>Starting scan…</h3><div class="track"><div class="fill run" style="width:5%"></div></div></div>`;
+    if (!t || !((n = t.steps) != null && n.length)) return I`<div class="card"><h3>Starting scan…</h3><div class="track"><div class="fill run" style="width:5%"></div></div></div>`;
     const e = t.steps.filter((a) => a.status === "done").length, i = Math.max(5, Math.round((e + (t.steps.some((a) => a.status === "running") ? 0.5 : 0)) / t.steps.length * 100));
-    return k`<div class="card">
+    return I`<div class="card">
       <h3>${this.first ? "First scan, building the inventory" : "Refreshing"} · ${Math.round(t.elapsed_s)} s</h3>
       <div class="sub">${this.first ? "This only happens once; results are saved and reloaded instantly after a restart. " : "You can keep browsing the previous results. "}Step ${Math.min(e + 1, t.steps.length)} of ${t.steps.length}.</div>
       <div class="track"><div class="fill ${t.running ? "run" : ""}" style="width:${i}%"></div></div>
-      ${t.steps.map((a) => k`<div class="st ${a.status}"><span>${a.status === "done" ? "✓" : a.status === "running" ? k`<span class="spin"></span>` : "○"}</span><span>${a.label}</span><span>${LP(a.ms)}</span></div>`)}
-      ${t.error ? k`<div class="err">${t.error}</div>` : ""}</div>`;
+      ${t.steps.map((a) => I`<div class="st ${a.status}"><span>${a.status === "done" ? "✓" : a.status === "running" ? I`<span class="spin"></span>` : "○"}</span><span>${a.label}</span><span>${LP(a.ms)}</span></div>`)}
+      ${t.error ? I`<div class="err">${t.error}</div>` : ""}</div>`;
   }
 }
 kt(wc, "properties", { status: { attribute: !1 }, first: { type: Boolean } }), kt(wc, "styles", Ir`
@@ -24978,11 +24978,11 @@ class Sc extends pe {
   _dlg() {
     if (!this.dlg) return G;
     const t = this._chosen(), e = t.reduce((a, o) => a + (o.backup_bytes || 0), 0), i = t.reduce((a, o) => a + (o.backup_files || 0), 0), n = t.filter((a) => this._undoable(a));
-    return k`<div class="modal" @click=${() => this.dlg = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
+    return I`<div class="modal" @click=${() => this.dlg = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
       <h3>Delete ${t.length} history record${t.length === 1 ? "" : "s"}?</h3>
       <div>This removes the records and ${i} backup file${i === 1 ? "" : "s"}, recovering <b>${q(e)}</b> of disk space.</div>
-      ${n.length ? k`<div class="warnbox"><b>${n.length}</b> of them can still be undone. Once deleted, their statistics can no longer be restored and disabled entities will not be turned back on.</div>` : G}
-      ${this.err ? k`<div class="err">${this.err}</div>` : G}
+      ${n.length ? I`<div class="warnbox"><b>${n.length}</b> of them can still be undone. Once deleted, their statistics can no longer be restored and disabled entities will not be turned back on.</div>` : G}
+      ${this.err ? I`<div class="err">${this.err}</div>` : G}
       <div class="btns"><button @click=${() => this.dlg = null}>Cancel</button><button class="danger" @click=${() => this._delete()}>Delete</button></div></div></div>`;
   }
   _detail(t) {
@@ -25002,55 +25002,55 @@ class Sc extends pe {
       var p, y, m, _;
       return ((y = (p = g.steps) == null ? void 0 : p.statistics) == null ? void 0 : y.snapshot) || ((_ = (m = g.steps) == null ? void 0 : m.states) == null ? void 0 : _.backup);
     }), f = (v = t.backup_names) == null ? void 0 : v[0];
-    return k`<div class="detail">
-      ${t.undone_ts ? k`<div class="muted" style="margin-bottom:4px">Undone ${this._when(t.undone_ts)}</div>` : G}
-      ${t.error ? k`<div class="muted" style="margin-bottom:4px">${t.error}</div>` : G}
-      ${c ? k`<div class="gsum">Backup: <b>${t.backup_files ? q(t.backup_bytes) : "no file on disk"}</b> ${f ? k`<span title=${f}>(${f})</span>` : G} <span class="muted">compressed, one file for the whole action</span></div>` : G}
-      ${o.length ? k`<div class="gsum">${e.length > 1 ? "Same for all:" : "Result:"} ${o.join(" · ")} <span class="info" title=${h}>i</span></div>` : G}
-      <table><tr><th>Entity</th>${a.map(([, g, , p]) => k`<th title=${p}>${g}</th>`)}<th class="r" title="Estimated database space freed: long-term statistics plus any state history cleared. Not the size of the backup.">Est. freed</th>${c ? k`<th class="r" title="Rows of this entity saved in the action's backup file">Backed up</th>` : G}${u ? k`<th>Notes</th>` : G}</tr>
+    return I`<div class="detail">
+      ${t.undone_ts ? I`<div class="muted" style="margin-bottom:4px">Undone ${this._when(t.undone_ts)}</div>` : G}
+      ${t.error ? I`<div class="muted" style="margin-bottom:4px">${t.error}</div>` : G}
+      ${c ? I`<div class="gsum">Backup: <b>${t.backup_files ? q(t.backup_bytes) : "no file on disk"}</b> ${f ? I`<span title=${f}>(${f})</span>` : G} <span class="muted">compressed, one file for the whole action</span></div>` : G}
+      ${o.length ? I`<div class="gsum">${e.length > 1 ? "Same for all:" : "Result:"} ${o.join(" · ")} <span class="info" title=${h}>i</span></div>` : G}
+      <table><tr><th>Entity</th>${a.map(([, g, , p]) => I`<th title=${p}>${g}</th>`)}<th class="r" title="Estimated database space freed: long-term statistics plus any state history cleared. Not the size of the backup.">Est. freed</th>${c ? I`<th class="r" title="Rows of this entity saved in the action's backup file">Backed up</th>` : G}${u ? I`<th>Notes</th>` : G}</tr>
         ${e.map((g) => {
       var w, x;
       const p = (w = g.steps) == null ? void 0 : w.statistics, y = g.est_stats_bytes != null ? `Long-term statistics ${q(g.est_stats_bytes)}${g.est_states_bytes ? ` + state history ${q(g.est_states_bytes)}` : ""}` : "", m = (x = g.steps) == null ? void 0 : x.states, _ = ((p == null ? void 0 : p.statistics) || 0) + ((p == null ? void 0 : p.short_term) || 0) + ((m == null ? void 0 : m.rows) || 0), b = p != null && p.snapshot || m != null && m.backup ? ((p == null ? void 0 : p.exists) ?? (m == null ? void 0 : m.exists)) === !1 ? p != null && p.snapshot_removed || m != null && m.backup_removed ? "removed" : "missing" : `${si(_)} rows` : "";
-      return k`<tr><td class="ent" title=${g.entity_id}>${g.name}<span class="id">${g.entity_id}</span></td>
-            ${a.map(([, , S]) => k`<td title=${S(g)}>${S(g) || "–"}</td>`)}
+      return I`<tr><td class="ent" title=${g.entity_id}>${g.name}<span class="id">${g.entity_id}</span></td>
+            ${a.map(([, , S]) => I`<td title=${S(g)}>${S(g) || "–"}</td>`)}
             <td class="r" title=${y}>${g.est_bytes ? q(g.est_bytes) : "–"}</td>
-            ${c ? k`<td class="r" title=${p != null && p.snapshot || m != null && m.backup ? `${si(p == null ? void 0 : p.statistics)} long-term, ${si(p == null ? void 0 : p.short_term)} 5-minute statistics rows and ${si(m == null ? void 0 : m.rows)} state rows saved in ${(p == null ? void 0 : p.snapshot) || (m == null ? void 0 : m.backup)}${((p == null ? void 0 : p.exists) ?? (m == null ? void 0 : m.exists)) === !1 ? p != null && p.snapshot_removed || m != null && m.backup_removed ? `
+            ${c ? I`<td class="r" title=${p != null && p.snapshot || m != null && m.backup ? `${si(p == null ? void 0 : p.statistics)} long-term, ${si(p == null ? void 0 : p.short_term)} 5-minute statistics rows and ${si(m == null ? void 0 : m.rows)} state rows saved in ${(p == null ? void 0 : p.snapshot) || (m == null ? void 0 : m.backup)}${((p == null ? void 0 : p.exists) ?? (m == null ? void 0 : m.exists)) === !1 ? p != null && p.snapshot_removed || m != null && m.backup_removed ? `
 Removed after the undo restored it` : `
 The file is no longer on disk` : ""}` : "Nothing needed backing up"}>${b || "–"}</td>` : G}
-            ${u ? k`<td title=${th(g)}>${th(g) || "–"}</td>` : G}</tr>`;
+            ${u ? I`<td title=${th(g)}>${th(g) || "–"}</td>` : G}</tr>`;
     })}</table></div>`;
   }
   render() {
     const t = this.actions;
-    if (!t) return k`<div class="muted">Loading…</div>`;
+    if (!t) return I`<div class="muted">Loading…</div>`;
     const e = this.usage, i = this._chosen(), n = i.reduce((o, s) => o + (s.backup_bytes || 0), 0), a = t.length > 0 && t.every((o) => this.sel.has(o.id));
-    return k`
+    return I`
       <div class="card"><b>Undo data</b>
         <span title=${e ? `Backup files: ${e.path}
-History records: ${e.journal_path}` : ""}>${e ? k`<b>${q(e.bytes + e.journal_bytes)}</b> in use: ${e.files} backup file${e.files === 1 ? "" : "s"} (${q(e.bytes)}) and the record database (${q(e.journal_bytes)})` : "Checking…"}</span>
-        ${e ? k`<span class="muted">Stored in ${e.path.replace(/\/snapshots$/, "")}</span>` : G}
-        ${e != null && e.unlinked_files ? k`<span class="muted" title="Backup files in the folder that no history record points to, for example from records deleted by hand. They are safe to delete from the folder.">${e.unlinked_files} file${e.unlinked_files === 1 ? "" : "s"} not linked to any record (${q(e.unlinked_bytes)})</span>` : G}
+History records: ${e.journal_path}` : ""}>${e ? I`<b>${q(e.bytes + e.journal_bytes)}</b> in use: ${e.files} backup file${e.files === 1 ? "" : "s"} (${q(e.bytes)}) and the record database (${q(e.journal_bytes)})` : "Checking…"}</span>
+        ${e ? I`<span class="muted">Stored in ${e.path.replace(/\/snapshots$/, "")}</span>` : G}
+        ${e != null && e.unlinked_files ? I`<span class="muted" title="Backup files in the folder that no history record points to, for example from records deleted by hand. They are safe to delete from the folder.">${e.unlinked_files} file${e.unlinked_files === 1 ? "" : "s"} not linked to any record (${q(e.unlinked_bytes)})</span>` : G}
         <span class="sp"></span><span class="info" title=${zP}>i</span></div>
-      ${this.freedMsg ? k`<div class="card" style="border-color:var(--success-color,green)">${this.freedMsg} <span class="sp"></span><button @click=${() => {
+      ${this.freedMsg ? I`<div class="card" style="border-color:var(--success-color,green)">${this.freedMsg} <span class="sp"></span><button @click=${() => {
       this.freedMsg = null, this.requestUpdate();
     }}>Dismiss</button></div>` : G}
-      ${t.length ? k`
-      ${i.length ? k`<div class="selbar"><b>${i.length} selected</b><span class="muted">${q(n)} of backup files would be recovered</span><span style="flex:1"></span>
+      ${t.length ? I`
+      ${i.length ? I`<div class="selbar"><b>${i.length} selected</b><span class="muted">${q(n)} of backup files would be recovered</span><span style="flex:1"></span>
         <button @click=${() => this.sel = /* @__PURE__ */ new Set()}>Clear</button><button class="danger" @click=${() => {
       this.err = null, this.dlg = !0;
     }}>Delete selected…</button></div>` : G}
       <div class="tablewrap"><div class="row head"><input type="checkbox" .checked=${a} @change=${(o) => this.sel = o.target.checked ? new Set(t.map((s) => s.id)) : /* @__PURE__ */ new Set()} title="Select all"><span>When</span><span class="c2">Action</span><span class="c3 r" title="Estimated database space freed, not the size of the backup">Est. freed</span><span class="c4 r" title="Compressed backup file for this action">Backup</span><span class="c5">Status</span><span></span></div>
-      ${t.map((o) => k`
+      ${t.map((o) => I`
         <div class="row item ${this.sel.has(o.id) ? "sel" : ""}" @click=${() => this.open = this.open === o.id ? null : o.id}>
           <input type="checkbox" .checked=${this.sel.has(o.id)} @click=${(s) => s.stopPropagation()} @change=${(s) => this._toggle(o.id, s.target.checked)}>
           <span>${this._when(o.ts)}</span><span class="c2"><b>${NP[o.kind] || o.kind}</b> · ${o.entities.length} entit${o.entities.length === 1 ? "y" : "ies"}</span>
           <span class="c3 r muted">${o.kind === "disable" || o.kind === "reset_retention" ? "n/a" : q(o.est_bytes)}</span>
           <span class="c4 r muted" title=${o.backup_files ? `${o.backup_files} backup file${o.backup_files === 1 ? "" : "s"} on disk` : "No backup files on disk for this action"}>${o.backup_files ? q(o.backup_bytes) : "–"}</span>
           <span class="c5"><span class="chip ${o.status}">${BP[o.status] || o.status}</span></span>
-          <span>${this._undoable(o) ? k`<button ?disabled=${this.busy} @click=${(s) => {
+          <span>${this._undoable(o) ? I`<button ?disabled=${this.busy} @click=${(s) => {
       s.stopPropagation(), this.dispatchEvent(new CustomEvent("undo", { detail: o }));
     }}>Undo</button>` : G}</span></div>
-        ${this.open === o.id ? this._detail(o) : G}`)}</div>` : k`<div class="tablewrap"><div class="empty">No actions yet. Select entities on the Entities tab and choose an action; every change is recorded here so it can be undone.</div></div>`}
+        ${this.open === o.id ? this._detail(o) : G}`)}</div>` : I`<div class="tablewrap"><div class="empty">No actions yet. Select entities on the Entities tab and choose an action; every change is recorded here so it can be undone.</div></div>`}
       ${this._dlg()}`;
   }
 }
@@ -25130,19 +25130,19 @@ class Tc extends pe {
   _v(t, e) {
     if (t === null || typeof t != "object") return String(t);
     const i = this._all.has(e);
-    return k`<button class="jall" @click=${() => {
+    return I`<button class="jall" @click=${() => {
       const n = new Set(this._all);
       i ? n.delete(e) : n.add(e), this._all = n;
     }}>${i ? "Collapse all" : "Expand all"}</button>${this._jv(t, i, 0, !0)}`;
   }
   // Collapsible JSON: the top level and its first item start open; "Expand all" opens everything.
   _jv(t, e, i, n) {
-    if (t === null || typeof t != "object") return k`<span class="j-${t === null ? "null" : typeof t}">${JSON.stringify(t)}</span>`;
+    if (t === null || typeof t != "object") return I`<span class="j-${t === null ? "null" : typeof t}">${JSON.stringify(t)}</span>`;
     const a = Array.isArray(t), o = a ? t.map((l, u) => [u, l]) : Object.entries(t);
-    if (!o.length) return k`<span class="j-null">${a ? "[]" : "{}"}</span>`;
+    if (!o.length) return I`<span class="j-null">${a ? "[]" : "{}"}</span>`;
     const s = o.slice(0, 3).map(([l, u]) => (a ? "" : `${l}: `) + (typeof u == "object" && u ? Array.isArray(u) ? "[…]" : "{…}" : JSON.stringify(u))).join(", ");
-    return k`<details ?open=${e || i === 0 || i === 1 && n}><summary>${a ? `Array(${o.length})` : `Object(${o.length})`} <span class="muted">${s}${o.length > 3 ? ", …" : ""}</span></summary>
-      <div class="jc">${o.map(([l, u], h) => k`<div><span class="jk">${l}</span>: ${this._jv(u, e, i + 1, h === 0)}</div>`)}</div></details>`;
+    return I`<details ?open=${e || i === 0 || i === 1 && n}><summary>${a ? `Array(${o.length})` : `Object(${o.length})`} <span class="muted">${s}${o.length > 3 ? ", …" : ""}</span></summary>
+      <div class="jc">${o.map(([l, u], h) => I`<div><span class="jk">${l}</span>: ${this._jv(u, e, i + 1, h === 0)}</div>`)}</div></details>`;
   }
   _pick(t) {
     this.sel = t;
@@ -25156,27 +25156,27 @@ class Tc extends pe {
     }));
   }
   _list(t) {
-    return k`<table><thead><tr><th>Updated</th><th>State</th><th class="num" title="How many attributes are stored with this row">Attrs</th></tr></thead><tbody>
+    return I`<table><thead><tr><th>Updated</th><th>State</th><th class="num" title="How many attributes are stored with this row">Attrs</th></tr></thead><tbody>
       ${t.map((e) => {
       const i = e.state === "unavailable" || e.state === "unknown";
-      return k`<tr class="r ${e.id === this.sel ? "on" : ""}" @click=${() => this._pick(e.id)}>
+      return I`<tr class="r ${e.id === this.sel ? "on" : ""}" @click=${() => this._pick(e.id)}>
           <td class="time">${this._t(e.ts)}</td><td><span class="st ${i ? "dim" : ""}">${e.state}</span></td><td class="num">${Object.keys(e.attributes).length}</td></tr>`;
     })}</tbody></table>`;
   }
   _grid(t) {
-    return k`<table class="grid"><thead><tr><th>${this.kind === "short_term" ? "Period start" : "Hour"}</th><th class="num">Mean</th><th class="num">Min</th><th class="num">Max</th><th class="num">State</th><th class="num">Sum</th></tr></thead><tbody>
-      ${t.map((e) => k`<tr><td class="time">${this._t(e.ts)}</td><td class="num">${this._n(e.mean)}</td><td class="num">${this._n(e.min)}</td><td class="num">${this._n(e.max)}</td><td class="num">${this._n(e.state)}</td><td class="num">${this._n(e.sum)}</td></tr>`)}</tbody></table>`;
+    return I`<table class="grid"><thead><tr><th>${this.kind === "short_term" ? "Period start" : "Hour"}</th><th class="num">Mean</th><th class="num">Min</th><th class="num">Max</th><th class="num">State</th><th class="num">Sum</th></tr></thead><tbody>
+      ${t.map((e) => I`<tr><td class="time">${this._t(e.ts)}</td><td class="num">${this._n(e.mean)}</td><td class="num">${this._n(e.min)}</td><td class="num">${this._n(e.max)}</td><td class="num">${this._n(e.state)}</td><td class="num">${this._n(e.sum)}</td></tr>`)}</tbody></table>`;
   }
   _detail(t) {
-    if (!t) return k`<div class="muted">Select a row to see everything stored for it.</div>`;
+    if (!t) return I`<div class="muted">Select a row to see everything stored for it.</div>`;
     if (this.kind === "states") {
       const e = Object.keys(t.attributes);
-      return k`<h4>${this._t(t.ts)}</h4><div class="kv">
+      return I`<h4>${this._t(t.ts)}</h4><div class="kv">
         <i>state</i><span class="st">${t.state}</span>
         <i>last_updated</i><span>${this._t(t.ts)}</span>
         <i>last_changed</i><span>${this._t(t.changed_ts)}</span>
         <div class="sep"></div>
-        ${e.length ? e.map((i) => k`<i>${i}</i><span>${this._v(t.attributes[i], `${t.id}:${i}`)}</span>`) : k`<i>attributes</i><span class="muted">none</span>`}
+        ${e.length ? e.map((i) => I`<i>${i}</i><span>${this._v(t.attributes[i], `${t.id}:${i}`)}</span>`) : I`<i>attributes</i><span class="muted">none</span>`}
         <div class="sep"></div>
         <i>stored attribute size</i><span>${q(t.attr_bytes)} <span class="muted">(shared with other rows that have the same attributes)</span></span>
         <i>row id</i><span>${t.id}</span></div>`;
@@ -25184,18 +25184,18 @@ class Tc extends pe {
   }
   render() {
     const t = this.data, e = (t == null ? void 0 : t.rows) || [], i = this.page * this.size + 1, n = this.page * this.size + e.length;
-    return k`<div class="dlg" @click=${(a) => a.stopPropagation()}>
+    return I`<div class="dlg" @click=${(a) => a.stopPropagation()}>
       <header><span class="ico">${Vs(this.hass, this.entityId)}</span>
         <div class="t"><b>${this.name || this.entityId}</b><div class="muted">${this.entityId} · what the recorder has stored, newest first${this.kind === "states" ? ". Pick a row to see all of it." : ""}</div></div>
         <button class="x" title="Close" @click=${() => this.dispatchEvent(new CustomEvent("close"))}>✕</button></header>
-      <div class="tabs">${XP.map(([a, o]) => k`<button class=${this.kind === a ? "on" : ""} @click=${() => this._tab(a)}>${o}</button>`)}</div>
-      ${this.error || !t || !e.length ? k`<div class="body" style="display:block"><div class="empty">${this.error ? this.error : t ? this.kind === "states" ? "No state history is stored for this entity (it may be older than the recorder retention, or excluded)." : "No statistics are stored for this entity." : "Loading…"}</div></div>` : this.kind !== "states" ? k`<div class="body" style="display:block;overflow:auto"><div style="padding:0 18px">${this._grid(e)}</div></div>` : k`<div class="body"><div class="list" tabindex="0" @keydown=${(a) => this._key(a)}>${this._list(e)}</div><div class="detail">${this._detail(e.find((a) => a.id === this.sel))}</div></div>`}
+      <div class="tabs">${XP.map(([a, o]) => I`<button class=${this.kind === a ? "on" : ""} @click=${() => this._tab(a)}>${o}</button>`)}</div>
+      ${this.error || !t || !e.length ? I`<div class="body" style="display:block"><div class="empty">${this.error ? this.error : t ? this.kind === "states" ? "No state history is stored for this entity (it may be older than the recorder retention, or excluded)." : "No statistics are stored for this entity." : "Loading…"}</div></div>` : this.kind !== "states" ? I`<div class="body" style="display:block;overflow:auto"><div style="padding:0 18px">${this._grid(e)}</div></div>` : I`<div class="body"><div class="list" tabindex="0" @keydown=${(a) => this._key(a)}>${this._list(e)}</div><div class="detail">${this._detail(e.find((a) => a.id === this.sel))}</div></div>`}
       <footer>
         <button ?disabled=${this.page === 0 || this.loading} @click=${() => this._load(this.page - 1)}>‹ Newer</button>
         <button ?disabled=${!(t != null && t.next) || this.loading} @click=${() => this._load(this.page + 1)}>Older ›</button>
         <span class="muted">${e.length ? `Rows ${i.toLocaleString()}–${n.toLocaleString()}` : ""}${this._total != null ? ` of ${this._total.toLocaleString()}` : ""}${this.loading ? " · loading…" : ""}</span>
         <span style="flex:1"></span><span class="muted">Rows per page</span>
-        <select @change=${(a) => this._resize(+a.target.value)}>${ZP.map((a) => k`<option value=${a} ?selected=${this.size === a}>${a}</option>`)}</select></footer>
+        <select @change=${(a) => this._resize(+a.target.value)}>${ZP.map((a) => I`<option value=${a} ?selected=${this.size === a}>${a}</option>`)}</select></footer>
     </div>`;
   }
 }
@@ -25241,14 +25241,14 @@ kt(Tc, "properties", {
     .empty{padding:30px;text-align:center;color:var(--secondary-text-color)}
     @media (max-width:800px){.body{grid-template-columns:1fr;overflow:auto}.list{max-height:40vh;padding:0 12px}.detail{border-left:none;border-top:1px solid var(--divider-color)}}`);
 customElements.define("db-inspect", Tc);
-const Uo = (r) => r == null ? "Indefinitely" : r < 12 ? `${r} months` : r % 12 ? `${(r / 12).toFixed(1)} years` : `${r / 12} year${r === 12 ? "" : "s"}`, Wi = (r) => `${Math.round(r).toLocaleString()} rows`, eh = (r) => k`<span class="tip" tabindex="0"><span class="info">?</span><span class="pop">${r}</span></span>`, rh = (r, t) => (r || []).slice(Math.max(0, t)).reduce((e, i) => e + i, 0);
+const Uo = (r) => r == null ? "Indefinitely" : r < 12 ? `${r} months` : r % 12 ? `${(r / 12).toFixed(1)} years` : `${r / 12} year${r === 12 ? "" : "s"}`, Wi = (r) => `${Math.round(r).toLocaleString()} rows`, eh = (r) => I`<span class="tip" tabindex="0"><span class="info">?</span><span class="pop">${r}</span></span>`, rh = (r, t) => (r || []).slice(Math.max(0, t)).reduce((e, i) => e + i, 0);
 class Cc extends pe {
   updated(t) {
     t.has("cfg") && this.cfg && !this._init && (this._init = !0, this._reset(), this._predict());
   }
   _reset() {
     const t = this.cfg;
-    this.days = t.recorder.effective_days, this.stats = t.stats_keep_months, this.energy = t.energy_stats_keep_months;
+    this.days = t.recorder.running_days, this.stats = t.stats_keep_months, this.energy = t.energy_stats_keep_months;
   }
   async _predict() {
     try {
@@ -25261,7 +25261,7 @@ class Cc extends pe {
     this.busy = !0, this.err = null;
     try {
       const i = await this.ws("settings_set", t);
-      this.dispatchEvent(new CustomEvent("saved", { detail: i })), this.cfg = i, this.msg = e, "keep_days" in t && (this.days = i.recorder.effective_days), "stats_keep_months" in t && (this.stats = i.stats_keep_months, this.energy = i.energy_stats_keep_months);
+      this.dispatchEvent(new CustomEvent("saved", { detail: i })), this.cfg = i, this.msg = e, "stats_keep_months" in t && (this.stats = i.stats_keep_months, this.energy = i.energy_stats_keep_months);
     } catch (i) {
       this.err = i.message || JSON.stringify(i);
     }
@@ -25271,32 +25271,42 @@ class Cc extends pe {
   _statesPred(t) {
     var o;
     const e = (o = this.pred) == null ? void 0 : o.states, i = this.cfg.recorder.running_days;
-    if (!e) return k`<div class="pred">Working out what this would change…</div>`;
+    if (!e) return I`<div class="pred">Working out what this would change…</div>`;
     const n = e.bytes_per_row, a = (s) => n ? `about ${q(s * n)} (${Wi(s)})` : Wi(s);
     if (t < i) {
       const s = rh(e.hist, t);
-      return k`<div class="pred free">Frees ${a(s)}: the states older than ${t} day${t === 1 ? "" : "s"}. They are deleted by Home Assistant's nightly purge after the restart; Reclaim free space then returns the room to the disk.</div>`;
+      return I`<div class="pred free">Frees ${a(s)}: the states older than ${t} day${t === 1 ? "" : "s"}. They are deleted by Home Assistant's nightly purge after the restart; Reclaim free space then returns the room to the disk.</div>`;
     }
     if (t > i) {
       const s = e.rate_per_day * (t - i);
-      return k`<div class="pred grow">Grows by ${a(s)} over the next ${t - i} days, at the last week's pace (${Wi(e.rate_per_day)} a day), then stays about level.</div>`;
+      return I`<div class="pred grow">Grows by ${a(s)} over the next ${t - i} days, at the last week's pace (${Wi(e.rate_per_day)} a day), then stays about level.</div>`;
     }
-    return k`<div class="pred">No change from what Home Assistant keeps now (${Wi(e.rows)}${n ? `, about ${q(e.rows * n)}` : ""}).</div>`;
+    return I`<div class="pred">No change from what Home Assistant keeps now (${Wi(e.rows)}${n ? `, about ${q(e.rows * n)}` : ""}).</div>`;
   }
   _statesCard() {
-    const t = this.cfg.recorder, e = Math.max(30, t.effective_days, t.running_days), i = k`<code>recorder: purge_keep_days</code> in <code>${t.file}</code>`, n = t.kind === "unsupported";
-    return k`<div class="card"><h3>State history (default retention)${eh(k`<p>How many days of detailed states Home Assistant keeps for every entity: its <code>recorder: purge_keep_days</code> setting.</p>
-        <p>Saving writes that one line in your YAML (the old file is kept as a .dbs_backup copy) and takes effect when Home Assistant restarts.</p>
+    const t = this.cfg.recorder, e = t.running_days, i = Math.max(30, e), n = `recorder:
+  purge_keep_days: ${this.days}`;
+    return I`<div class="card"><h3>State history (default retention)${eh(I`<p>How many days of detailed states Home Assistant keeps for every entity: its <code>recorder: purge_keep_days</code> setting (10 days if it is not set).</p>
+        <p>This page does not change your configuration. Pick a value to see its effect, then set it in your YAML yourself and restart Home Assistant.</p>
         <p>Entities with their own retention rule keep their rule when it is shorter.</p>`)}</h3>
-      <p class="muted">${t.configured_days == null ? k`Now ${t.effective_days} days: Home Assistant's default, because <code>${t.file}</code> has no <code>purge_keep_days</code> yet. Saving adds it.` : k`Now ${t.configured_days} days, set by ${i}.`}</p>
-      ${t.restart_needed ? k`<div class="warn">Your configuration says <b>${t.effective_days} days</b>, but Home Assistant is running with <b>${t.running_days}</b>. Restart Home Assistant to apply it.
-        <button class="b" style="margin-left:8px" @click=${() => this.ask = { restart: !0 }}>Restart…</button></div>` : G}
-      ${n ? k`<div class="warn err">${t.reason}</div>` : G}
-      <div class="row"><input type="range" min="1" max=${e} .value=${String(this.days)} ?disabled=${n} @input=${(a) => this.days = +a.target.value}>
+      <p class="muted">Home Assistant is running with ${e} day${e === 1 ? "" : "s"}.</p>
+      <div class="row"><input type="range" min="1" max=${i} .value=${String(this.days)} @input=${(a) => this.days = +a.target.value}>
         <span class="val">${this.days} day${this.days === 1 ? "" : "s"}</span></div>
       ${this._statesPred(this.days)}
-      <div class="row"><button class="b" ?disabled=${this.days === t.effective_days} @click=${() => this.days = t.effective_days}>Undo change</button>
-        <button class="b go" ?disabled=${n || this.busy || this.days === t.effective_days} @click=${() => this.ask = { days: this.days }}>Save…</button></div></div>`;
+      ${this.days !== e ? I`<div class="yaml"><p>To use ${this.days} days, set this in your <code>configuration.yaml</code> (or wherever your <code>recorder:</code> configuration is), then restart Home Assistant:</p>
+        <pre>${n}</pre>
+        <div class="row"><button class="b" @click=${() => this._copy(n)}>${this.copied ? "Copied" : "Copy"}</button>
+          <a class="link" href="https://www.home-assistant.io/integrations/recorder/#purge_keep_days" target="_blank" rel="noreferrer">Recorder documentation</a>
+          <span style="flex:1"></span>
+          <button class="b" @click=${() => this.days = e}>Undo change</button>
+          <button class="b" @click=${() => this.ask = { restart: !0 }}>Restart…</button></div></div>` : G}</div>`;
+  }
+  async _copy(t) {
+    try {
+      await navigator.clipboard.writeText(t), this.copied = !0, setTimeout(() => this.copied = !1, 1500);
+    } catch {
+      this.err = "Copy failed: select the text and copy it yourself.";
+    }
   }
   // --- long-term statistics ------------------------------------------------------------------
   _steps() {
@@ -25304,31 +25314,31 @@ class Cc extends pe {
   }
   _stepper(t, e) {
     const i = this._steps(), n = i.indexOf(t);
-    return k`<span class="step"><button ?disabled=${n <= 0} aria-label="Shorter" @click=${() => e(i[n - 1])}>−</button><span>${Uo(t)}</span>
+    return I`<span class="step"><button ?disabled=${n <= 0} aria-label="Shorter" @click=${() => e(i[n - 1])}>−</button><span>${Uo(t)}</span>
       <button ?disabled=${n >= i.length - 1} aria-label="Longer" @click=${() => e(i[n + 1])}>+</button></span>`;
   }
   _statsPred(t, e) {
     var h;
     const i = (h = this.pred) == null ? void 0 : h.statistics;
-    if (!i) return k`<div class="pred">Working out what this would change…</div>`;
+    if (!i) return I`<div class="pred">Working out what this would change…</div>`;
     const n = i.bytes_per_row, a = rh(t, 0), o = (c) => n ? `about ${q(c * n)}` : Wi(c), s = (t == null ? void 0 : t.length) > 1 ? t[1] : (t == null ? void 0 : t[0]) || 0;
-    if (e == null) return k`<div class="pred">Keeps everything: ${o(a)} now, growing by ${o(s * 12)} a year.</div>`;
+    if (e == null) return I`<div class="pred">Keeps everything: ${o(a)} now, growing by ${o(s * 12)} a year.</div>`;
     const l = rh(t, e), u = a - l;
-    return k`<div class="pred ${l ? "free" : ""}">${l ? k`Frees ${o(l)} at the next monthly run, keeping ${o(u)}.` : k`Frees nothing yet: you have less than ${Uo(e)} of these (${o(a)}).`}
+    return I`<div class="pred ${l ? "free" : ""}">${l ? I`Frees ${o(l)} at the next monthly run, keeping ${o(u)}.` : I`Frees nothing yet: you have less than ${Uo(e)} of these (${o(a)}).`}
       Will likely grow to around ${s && n ? q(s * e * n) : Wi(s * e)}.</div>`;
   }
   _statsCard() {
     var o;
     const t = this.cfg, e = (o = this.pred) == null ? void 0 : o.statistics, i = t.retention, n = this.stats !== t.stats_keep_months || this.energy !== t.energy_stats_keep_months, a = t.last_stats_trim;
-    return k`<div class="card"><h3>Long-term statistics${eh(k`<p>Hourly averages and totals behind history graphs beyond the state history, and the Energy dashboard. Home Assistant keeps them forever.</p>
+    return I`<div class="card"><h3>Long-term statistics${eh(I`<p>Hourly averages and totals behind history graphs beyond the state history, and the Energy dashboard. Home Assistant keeps them forever.</p>
         <p>A limit here deletes older hourly rows once a month, in the first nightly retention run of the month${i.run_at ? ` (at ${i.run_at})` : ""}. Deleted rows are not backed up.</p>
         <p>Energy dashboard statistics have their own setting, so you can keep them longer to compare years.</p>`)}</h3>
-      ${i.run_at ? G : k`<div class="warn">The nightly retention run is off in the integration options, so limits here are only applied by Run retention now.</div>`}
+      ${i.run_at ? G : I`<div class="warn">The nightly retention run is off in the integration options, so limits here are only applied by Run retention now.</div>`}
       <div class="row"><span class="lab"><b>All other statistics</b></span>${this._stepper(this.stats, (s) => this.stats = s)}</div>
       ${this._statsPred(e == null ? void 0 : e.other, this.stats)}
-      <div class="row" style="margin-top:14px"><span class="lab"><b>Energy dashboard statistics</b><div class="muted">${e ? k`<a class="link" title="List them on the Entities tab" @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Energy dashboard"] } }))}>${e.energy_count} statistic${e.energy_count === 1 ? "" : "s"} used by the Energy dashboard</a>` : ""}</div></span>${this._stepper(this.energy, (s) => this.energy = s)}</div>
+      <div class="row" style="margin-top:14px"><span class="lab"><b>Energy dashboard statistics</b><div class="muted">${e ? I`<a class="link" title="List them on the Entities tab" @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Energy dashboard"] } }))}>${e.energy_count} statistic${e.energy_count === 1 ? "" : "s"} used by the Energy dashboard</a>` : ""}</div></span>${this._stepper(this.energy, (s) => this.energy = s)}</div>
       ${this._statsPred(e == null ? void 0 : e.energy, this.energy)}
-      ${a ? k`<p class="muted">Last applied ${new Date(a.ts * 1e3).toLocaleString()}: ${a.rows.toLocaleString()} rows deleted.</p>` : G}
+      ${a ? I`<p class="muted">Last applied ${new Date(a.ts * 1e3).toLocaleString()}: ${a.rows.toLocaleString()} rows deleted.</p>` : G}
       <div class="row"><button class="b" ?disabled=${!n} @click=${() => {
       this.stats = t.stats_keep_months, this.energy = t.energy_stats_keep_months;
     }}>Undo change</button>
@@ -25337,34 +25347,32 @@ class Cc extends pe {
   _dialog() {
     const t = this.ask;
     if (!t) return G;
-    const e = this.cfg.recorder, i = this.cfg.retention;
-    let n, a, o, s = "Save", l = !1;
+    const e = this.cfg.retention;
+    let i, n, a, o = "Save", s = !1;
     if (t.restart)
-      n = "Restart Home Assistant?", a = k`Home Assistant restarts now and is unavailable for a minute or two.`, s = "Restart", o = async () => {
+      i = "Restart Home Assistant?", n = I`Save your YAML change first. Home Assistant checks the configuration, restarts and is unavailable for a minute or two.`, o = "Restart", a = async () => {
         this.ask = null, await this.hass.callService("homeassistant", "restart");
       };
-    else if (t.days != null)
-      n = `Keep ${t.days} days of state history?`, a = k`Writes <code>purge_keep_days: ${t.days}</code> under <code>recorder:</code> in <code>${e.file}</code>. The current file is copied to <code>${e.file}.dbs_backup</code> first. It takes effect when Home Assistant restarts.`, o = () => this._save({ keep_days: t.days }, "Saved. Restart Home Assistant to apply the new state retention.");
     else {
-      const u = i.next_run ? new Date(i.next_run * 1e3).toLocaleString() : "the next Run retention now", h = t.stats != null && (this.cfg.stats_keep_months == null || t.stats < this.cfg.stats_keep_months) || t.energy != null && (this.cfg.energy_stats_keep_months == null || t.energy < this.cfg.energy_stats_keep_months);
-      l = h, n = "Change long-term statistics retention?", a = k`All other statistics: <b>${Uo(t.stats)}</b>. Energy dashboard statistics: <b>${Uo(t.energy)}</b>.<br>
-        ${h ? k`Older hourly statistics are <b>deleted permanently</b> (no backup) at ${u}, then once a month.` : k`Nothing is deleted by this change.`}`, o = () => this._save({ stats_keep_months: t.stats, energy_stats_keep_months: t.energy }, "Saved long-term statistics retention.");
+      const l = e.next_run ? new Date(e.next_run * 1e3).toLocaleString() : "the next Run retention now", u = t.stats != null && (this.cfg.stats_keep_months == null || t.stats < this.cfg.stats_keep_months) || t.energy != null && (this.cfg.energy_stats_keep_months == null || t.energy < this.cfg.energy_stats_keep_months);
+      s = u, i = "Change long-term statistics retention?", n = I`All other statistics: <b>${Uo(t.stats)}</b>. Energy dashboard statistics: <b>${Uo(t.energy)}</b>.<br>
+        ${u ? I`Older hourly statistics are <b>deleted permanently</b> (no backup) at ${l}, then once a month.` : I`Nothing is deleted by this change.`}`, a = () => this._save({ stats_keep_months: t.stats, energy_stats_keep_months: t.energy }, "Saved long-term statistics retention.");
     }
-    return k`<div class="modal" @click=${() => this.ask = null}><div class="dlg" @click=${(u) => u.stopPropagation()}><h3>${n}</h3><div style="font-size:13px">${a}</div>
-      <div class="row"><button class="b" @click=${() => this.ask = null}>Cancel</button><button class="b go" style=${l ? "background:var(--error-color,#db4437);border-color:var(--error-color,#db4437)" : ""} ?disabled=${this.busy} @click=${o}>${s}</button></div></div></div>`;
+    return I`<div class="modal" @click=${() => this.ask = null}><div class="dlg" @click=${(l) => l.stopPropagation()}><h3>${i}</h3><div style="font-size:13px">${n}</div>
+      <div class="row"><button class="b" @click=${() => this.ask = null}>Cancel</button><button class="b go" style=${s ? "background:var(--error-color,#db4437);border-color:var(--error-color,#db4437)" : ""} ?disabled=${this.busy} @click=${a}>${o}</button></div></div></div>`;
   }
   render() {
     const t = this.cfg;
-    return t ? k`
-      ${this.err ? k`<div class="warn err">${this.err}</div>` : G}
-      ${this.msg ? k`<div class="warn ok">${this.msg} <button class="b" style="margin-left:8px" @click=${() => this.msg = null}>Dismiss</button></div>` : G}
+    return t ? I`
+      ${this.err ? I`<div class="warn err">${this.err}</div>` : G}
+      ${this.msg ? I`<div class="warn ok">${this.msg} <button class="b" style="margin-left:8px" @click=${() => this.msg = null}>Dismiss</button></div>` : G}
       <div class="card"><h3>Display</h3>
         <label class="chk"><input type="checkbox" .checked=${t.hide_automations} ?disabled=${this.busy}
           @change=${(e) => this._save({ hide_automations: e.target.checked }, null)}>
-          <span><b>Hide automations</b>${eh(k`Leaves automation entities out of the Overview figures and charts and the Entities list. Pick Automation in the Type filter to list them anyway.`)}</span></label></div>
+          <span><b>Hide automations</b>${eh(I`Leaves automation entities out of the Overview figures and charts and the Entities list. Pick Automation in the Type filter to list them anyway.`)}</span></label></div>
       ${this._statesCard()}
       ${this._statsCard()}
-      ${this._dialog()}` : k`<div class="muted">Loading settings…</div>`;
+      ${this._dialog()}` : I`<div class="muted">Loading settings…</div>`;
   }
 }
 kt(Cc, "properties", {
@@ -25376,6 +25384,7 @@ kt(Cc, "properties", {
   stats: { state: !0 },
   energy: { state: !0 },
   ask: { state: !0 },
+  copied: { state: !0 },
   busy: { state: !0 },
   msg: { state: !0 },
   err: { state: !0 }
@@ -25403,6 +25412,7 @@ kt(Cc, "properties", {
     .tip{position:relative;display:inline-flex;vertical-align:middle;margin-left:6px;font-weight:400} .tip .pop{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:15;width:300px;text-align:left;white-space:normal;font-size:12px;line-height:1.45;color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.35);padding:10px 12px}
     .tip:hover .pop,.tip:focus .pop{display:block} .pop p{margin:0 0 6px}
     .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--secondary-text-color);color:var(--secondary-text-color);font-size:11px;cursor:help}
+    .yaml{margin-top:10px} pre{margin:6px 0;padding:8px 10px;border-radius:8px;background:var(--secondary-background-color);font-size:12px;user-select:all;overflow-x:auto}
     a.link{color:var(--primary-color);cursor:pointer;text-decoration:none} a.link:hover{text-decoration:underline}`);
 customElements.define("db-settings", Cc);
 const qP = [1, 3, 5, 7, "default"];
@@ -25481,16 +25491,16 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
     const t = this.reclaim;
     if (!t) return "";
     const e = t.before && t.now ? t.before.file_bytes - t.now.file_bytes : 0, i = t.before && (t.before.free_bytes ?? 0) < 1048576 && !t.before.expired_rows;
-    return t.phase === "confirm" ? k`<div class="modal" @click=${() => this.reclaim = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
+    return t.phase === "confirm" ? I`<div class="modal" @click=${() => this.reclaim = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
       <h3>Reclaim free space</h3>
-      <div>${t.before ? k`The database file is <b>${q(t.before.file_bytes)}</b> with <b>${q(t.before.free_bytes)}</b> of empty space.${t.before.expired_rows ? k` The repack also deletes states older than the recorder's ${t.before.keep_days}-day limit: ${t.before.expired_rows.toLocaleString()} rows${t.before.expired_bytes ? `, about ${q(t.before.expired_bytes)}` : ""}.` : ""}` : "Checking the file…"}
+      <div>${t.before ? I`The database file is <b>${q(t.before.file_bytes)}</b> with <b>${q(t.before.free_bytes)}</b> of empty space.${t.before.expired_rows ? I` The repack also deletes states older than the recorder's ${t.before.keep_days}-day limit: ${t.before.expired_rows.toLocaleString()} rows${t.before.expired_bytes ? `, about ${q(t.before.expired_bytes)}` : ""}.` : ""}` : "Checking the file…"}
         ${i && !((n = t.before) != null && n.expired_rows) ? "Too little to be worth a repack." : ""}</div>
       <ul><li>It can take several minutes on a small device, and recorder writes queue up meanwhile (nothing is lost).</li>
         <li>It needs free disk space roughly equal to the database size while it runs.</li>
         <li>Only do this when little else is going on; Home Assistant keeps running.</li></ul>
-      <div class="row"><button @click=${() => this.reclaim = null}>Cancel</button><button class="go" ?disabled=${!t.before || i} @click=${() => this._startReclaim()}>Reclaim</button></div></div></div>` : k`<div class="rcard"><h3>${t.phase === "running" ? "Reclaiming free space…" : e > 0 ? `Reclaimed ${q(e)}` : "Finished: nothing was left to reclaim"}</h3>
+      <div class="row"><button @click=${() => this.reclaim = null}>Cancel</button><button class="go" ?disabled=${!t.before || i} @click=${() => this._startReclaim()}>Reclaim</button></div></div></div>` : I`<div class="rcard"><h3>${t.phase === "running" ? "Reclaiming free space…" : e > 0 ? `Reclaimed ${q(e)}` : "Finished: nothing was left to reclaim"}</h3>
       <div class="sub">${t.phase === "running" ? `Database size ${q(t.before.file_bytes)} · empty space ${q(t.now.free_bytes)} · ${Math.round((Date.now() - t.started) / 1e3)} s. The size changes only when the repack finishes; this page keeps working.` : `Database size ${q(t.before.file_bytes)} → ${q(t.now.file_bytes)} · empty space ${q(t.before.free_bytes)} → ${q(t.now.free_bytes)}`}</div>
-      ${t.phase === "done" ? k`<button style="margin-top:8px" class="rescan" @click=${() => this.reclaim = null}>Dismiss</button>` : ""}</div>`;
+      ${t.phase === "done" ? I`<button style="margin-top:8px" class="rescan" @click=${() => this.reclaim = null}>Dismiss</button>` : ""}</div>`;
   }
   async _loadActions() {
     try {
@@ -25585,10 +25595,10 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
     const t = this.job;
     if (!t) return "";
     const e = t.total ? Math.round(t.done / t.total * 100) : 5;
-    if (t.running) return k`<div class="rcard"><h3>${t.label}…</h3><div class="sub">${t.phase} · ${t.done} of ${t.total} · ${Math.round(t.elapsed_s)} s</div>
+    if (t.running) return I`<div class="rcard"><h3>${t.label}…</h3><div class="sub">${t.phase} · ${t.done} of ${t.total} · ${Math.round(t.elapsed_s)} s</div>
       <div style="height:6px;border-radius:3px;background:var(--divider-color);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.max(5, e)}%;background:var(--primary-color);transition:width .4s"></div></div></div>`;
     const i = t.result;
-    return k`<div class="rcard"><h3>${t.error ? "Something went wrong" : t.label === "Undo" ? "Undo finished" : "Done"}</h3>
+    return I`<div class="rcard"><h3>${t.error ? "Something went wrong" : t.label === "Undo" ? "Undo finished" : "Done"}</h3>
       <div class="sub">${t.error || (t.label === "Undo" ? `Status: ${i == null ? void 0 : i.status}.` : "Recorded in History, where you can undo it. Sizes of the changed entities are refreshed.")}</div>
       <div style="margin-top:8px"><button class="rescan" @click=${() => {
       this.tab = "history", this._loadActions(), this.job = null;
@@ -25600,28 +25610,28 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
     if (!t) return "";
     if (t.undo) {
       const u = t.undo;
-      return k`<div class="modal" @click=${() => this.modal = null}><div class="dlg" @click=${(h) => h.stopPropagation()}>
+      return I`<div class="modal" @click=${() => this.modal = null}><div class="dlg" @click=${(h) => h.stopPropagation()}>
         <h3>Undo this action?</h3>
         <div>${u.summary}. Re-enables entities, restores rules, statistics and state history from the backup, then deletes the backup.</div>
         <div class="row"><button @click=${() => this.modal = null}>Cancel</button><button class="go" @click=${() => this._runUndo()}>Undo</button></div></div></div>`;
     }
     const e = t.pv, i = e.entities.length, n = t.kind === "reduce_retention", a = n && t.days === "default", o = n, s = t.kind !== "disable" && !o, l = e.entities.slice(0, 8);
-    return k`<div class="modal" @click=${() => this.modal = null}><div class="dlg wide" @click=${(u) => u.stopPropagation()}>
+    return I`<div class="modal" @click=${() => this.modal = null}><div class="dlg wide" @click=${(u) => u.stopPropagation()}>
       <h3>${e.label}: ${i} entit${i === 1 ? "y" : "ies"}</h3>
-      ${n ? k`<div>Keep detailed <b>states</b> for</div>
-        <div class="seg">${qP.map((u) => k`<button class=${t.days === u ? "on" : ""} @click=${() => this._retChange({ days: u })}>${u === "default" ? `default (${e.default_days}d)` : `${u}d`}</button>`)}</div>
+      ${n ? I`<div>Keep detailed <b>states</b> for</div>
+        <div class="seg">${qP.map((u) => I`<button class=${t.days === u ? "on" : ""} @click=${() => this._retChange({ days: u })}>${u === "default" ? `default (${e.default_days}d)` : `${u}d`}</button>`)}</div>
         <div class="muted" style="margin:0 0 8px">Long-term statistics (history graphs, Energy) are not touched.</div>
-        ${a ? k`<div>Back to Home Assistant's default. Nothing is deleted.</div>` : k`<label class="chk" title="Saved in a backup first, so it can be undone. If unticked, the nightly retention job deletes them without a backup."><input type="checkbox" .checked=${t.applyNow} @change=${(u) => this._retChange({ applyNow: u.target.checked })}>
-          Delete older states now${e.est_bytes ? ` (${e.entities.reduce((u, h) => u + (h.rows || 0), 0).toLocaleString()} states, ${q(e.est_bytes)})` : ""}</label>`}` : s ? k`<div>Frees about <b>${q(e.est_bytes)}</b>. Backed up first; undo from History.</div>` : k`<div>Stops recording. Nothing is deleted.</div>`}
-      ${s ? k`<label class="chk"><input type="checkbox" .checked=${t.states} @change=${(u) => this._setStates(u.target.checked)}>
+        ${a ? I`<div>Back to Home Assistant's default. Nothing is deleted.</div>` : I`<label class="chk" title="Saved in a backup first, so it can be undone. If unticked, the nightly retention job deletes them without a backup."><input type="checkbox" .checked=${t.applyNow} @change=${(u) => this._retChange({ applyNow: u.target.checked })}>
+          Delete older states now${e.est_bytes ? ` (${e.entities.reduce((u, h) => u + (h.rows || 0), 0).toLocaleString()} states, ${q(e.est_bytes)})` : ""}</label>`}` : s ? I`<div>Frees about <b>${q(e.est_bytes)}</b>. Backed up first; undo from History.</div>` : I`<div>Stops recording. Nothing is deleted.</div>`}
+      ${s ? I`<label class="chk"><input type="checkbox" .checked=${t.states} @change=${(u) => this._setStates(u.target.checked)}>
         Also clear state history${e.est_states_bytes ? ` (${q(e.est_states_bytes)})` : ""}</label>` : ""}
-      ${e.warnings.includes("no_stats") ? k`<div class="warnbox">${e.entities.filter((u) => u.no_stats).length} have no long-term statistics, so their history is gone once cleared (Undo restores it).</div>` : ""}
-      ${e.warnings.includes("no_effect") ? k`<div class="warnbox">Home Assistant already keeps this few days: no change.</div>` : ""}
-      ${e.warnings.includes("referenced") ? k`<div class="warnbox">Some are used in automations, dashboards or helpers and work only while enabled.</div>` : ""}
-      ${e.warnings.includes("active") ? k`<div class="warnbox">Some are still active and will record again within minutes. Use "Disable + clear".</div>` : ""}
-      <ul class="pl">${l.map((u) => k`<li><b>${u.name}</b>${u.notes.map((h) => k`<div class="muted">${h}</div>`)}</li>`)}
-        ${i > l.length ? k`<li class="muted">and ${i - l.length} more</li>` : ""}</ul>
-      ${i > 25 ? k`<div class="muted" style="margin-top:8px">Type <b>${i}</b> to confirm: <input class="conf" .value=${t.text} @input=${(u) => this.modal = { ...this.modal, text: u.target.value }}></div>` : ""}
+      ${e.warnings.includes("no_stats") ? I`<div class="warnbox">${e.entities.filter((u) => u.no_stats).length} have no long-term statistics, so their history is gone once cleared (Undo restores it).</div>` : ""}
+      ${e.warnings.includes("no_effect") ? I`<div class="warnbox">Home Assistant already keeps this few days: no change.</div>` : ""}
+      ${e.warnings.includes("referenced") ? I`<div class="warnbox">Some are used in automations, dashboards or helpers and work only while enabled.</div>` : ""}
+      ${e.warnings.includes("active") ? I`<div class="warnbox">Some are still active and will record again within minutes. Use "Disable + clear".</div>` : ""}
+      <ul class="pl">${l.map((u) => I`<li><b>${u.name}</b>${u.notes.map((h) => I`<div class="muted">${h}</div>`)}</li>`)}
+        ${i > l.length ? I`<li class="muted">and ${i - l.length} more</li>` : ""}</ul>
+      ${i > 25 ? I`<div class="muted" style="margin-top:8px">Type <b>${i}</b> to confirm: <input class="conf" .value=${t.text} @input=${(u) => this.modal = { ...this.modal, text: u.target.value }}></div>` : ""}
       <div class="row"><button @click=${() => this.modal = null}>Cancel</button>
         <button class="go ${s ? "danger" : ""}" ?disabled=${i > 25 && t.text.trim() !== String(i) || n && !a && e.warnings.includes("no_effect")} @click=${() => this._runAction()}>${e.label}</button></div></div></div>`;
   }
@@ -25716,14 +25726,14 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
   }
   _chips() {
     const t = Object.entries(this.filters).flatMap(([e, i]) => i.map((n) => [e, n]));
-    return !t.length && !this.search && !this.window ? "" : k`<span class="chips ${this.chipsIn ? "in" : "pending"}" title="Filters apply to the Entities tab">
-      ${this.window ? k`<span class="fchip" title="Only entities that wrote data in this period" @click=${() => {
+    return !t.length && !this.search && !this.window ? "" : I`<span class="chips ${this.chipsIn ? "in" : "pending"}" title="Filters apply to the Entities tab">
+      ${this.window ? I`<span class="fchip" title="Only entities that wrote data in this period" @click=${() => {
       this.window = null, this.shown = 100, this._loadEntities(!1);
     }}>Period: ${EP(...this.window)}${this._growth() != null ? ` (${this._growth() >= 0 ? "+" : "-"}${q(Math.abs(this._growth()))})` : ""} ✕</span>` : ""}
-      ${this.search ? k`<span class="fchip" @click=${() => {
+      ${this.search ? I`<span class="fchip" @click=${() => {
       this.search = "", this.shown = 100, this._loadEntities(!1);
     }}>Search: ${this.search} ✕</span>` : ""}
-      ${t.map(([e, i]) => k`<span class="fchip" @click=${() => {
+      ${t.map(([e, i]) => I`<span class="fchip" @click=${() => {
       this._filters({ ...this.filters, [e]: this.filters[e].filter((n) => n !== i) });
     }}>${qb[e] || e}: ${i} ✕</span>`)}
       <span class="fchip clear" @click=${() => {
@@ -25733,9 +25743,9 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
   render() {
     var e, i, n, a, o, s, l, u, h;
     const t = [["overview", "Overview"], ["entities", "Entities"], ["history", "History"], ["settings", "Settings"]];
-    return k`<div class="wrap">
-      <h2>${this.narrow ? k`<button class="menu" @click=${this._toggleMenu}>☰</button>` : ""}DB Storage${this._chips()}
-        ${this.all || this.data ? k`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
+    return I`<div class="wrap">
+      <h2>${this.narrow ? I`<button class="menu" @click=${this._toggleMenu}>☰</button>` : ""}DB Storage${this._chips()}
+        ${this.all || this.data ? I`<span class="scan"><span class="lastscan ${this._needsResync() ? "need" : ""}" title=${this._scanTip()}>${this._needsResync() ? "Re-Scan needed" : this._scanLabel()}</span>
           <span class="split">
             <button class="rescan main ${this._needsResync() ? "need" : ""}" ?disabled=${!!((e = this.progress) != null && e.running)} aria-label="Re-Scan"
               title="Re-Scan: re-reads the database and your configuration from scratch (table and entity sizes, last update times, new entities, and where each entity is used). Takes several seconds; the page keeps working meanwhile. After an action only the entities it changed are refreshed, automatically."
@@ -25745,7 +25755,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       c.stopPropagation(), this.menuOpen = !this.menuOpen;
     }}>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>
-            ${this.menuOpen ? k`<div class="menu-pop" @click=${(c) => c.stopPropagation()}>
+            ${this.menuOpen ? I`<div class="menu-pop" @click=${(c) => c.stopPropagation()}>
               <button @click=${() => {
       this.menuOpen = !1, this._loadEntities(!0);
     }}><b>Re-Scan</b><span>Refresh the sizes and where entities are used.</span></button>
@@ -25753,17 +25763,17 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
               <button @click=${() => {
       this.menuOpen = !1, this._openReclaim();
     }}><b>Reclaim free space…</b><span>Repack the database so space freed by deletions goes back to the disk.</span></button></div>` : ""}</span></span>` : ""}</h2>
-      <div class="tabs">${t.map(([c, f]) => k`<button class=${this.tab === c ? "on" : ""} @click=${() => {
+      <div class="tabs">${t.map(([c, f]) => I`<button class=${this.tab === c ? "on" : ""} @click=${() => {
       this.tab = c, c === "history" && this._loadActions(), c === "settings" && this._loadCfg();
     }}>${f}</button>`)}</div>
-      ${this.error ? k`<div class="err">${this.error}</div>` : ""}
+      ${this.error ? I`<div class="err">${this.error}</div>` : ""}
       ${this._reclaimUi()}
-      ${this.notice ? k`<div class="rcard"><h3>Retention</h3><div class="sub">${this.notice}</div><div style="margin-top:8px"><button class="rescan" @click=${() => this.notice = null}>Dismiss</button></div></div>` : ""}
+      ${this.notice ? I`<div class="rcard"><h3>Retention</h3><div class="sub">${this.notice}</div><div style="margin-top:8px"><button class="rescan" @click=${() => this.notice = null}>Dismiss</button></div></div>` : ""}
       ${this._jobUi()}
       ${this._modalUi()}
-      ${this.inspect ? k`<db-inspect .hass=${this.hass} .ws=${(c, f) => this._ws(c, f)} .entityId=${this.inspect.entity_id} .name=${this.inspect.name} @close=${() => this.inspect = null} @click=${() => this.inspect = null}></db-inspect>` : ""}
-      ${this.progress ? k`<db-progress .status=${this.progress} .first=${!this.data}></db-progress>` : ""}
-      ${this.tab === "overview" ? k`<db-overview .live=${this.live} .ret=${this.ret} .hass=${this.hass} .data=${this.all} .history=${this.history} .days=${this.days} .window=${this.window}
+      ${this.inspect ? I`<db-inspect .hass=${this.hass} .ws=${(c, f) => this._ws(c, f)} .entityId=${this.inspect.entity_id} .name=${this.inspect.name} @close=${() => this.inspect = null} @click=${() => this.inspect = null}></db-inspect>` : ""}
+      ${this.progress ? I`<db-progress .status=${this.progress} .first=${!this.data}></db-progress>` : ""}
+      ${this.tab === "overview" ? I`<db-overview .live=${this.live} .ret=${this.ret} .hass=${this.hass} .data=${this.all} .history=${this.history} .days=${this.days} .window=${this.window}
           @days=${(c) => {
       this.days = c.detail;
     }}
@@ -25776,7 +25786,7 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
           @goto-filter=${(c) => {
       this.search = "", this.window = null, this.filters = c.detail, this.tab = "entities", this.shown = 100, this.chipsIn = !1, this._loadEntities(!1);
     }}></db-overview>` : ""}
-      ${this.tab === "entities" ? k`<db-entities .hass=${this.hass} .data=${this.data} .filters=${this.filters} .search=${this.search} .sort=${this.sort} .expand=${this.expand} 
+      ${this.tab === "entities" ? I`<db-entities .hass=${this.hass} .data=${this.data} .filters=${this.filters} .search=${this.search} .sort=${this.sort} .expand=${this.expand} 
           .selected=${this.selected} .shown=${this.shown} .usage=${this.usage} .growth=${this._growth()} .busy=${!!((u = this.progress) != null && u.running)}
           @clearwindow=${() => {
       this.window = null, this.shown = 100, this._loadEntities(!1);
@@ -25790,11 +25800,11 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
       this.selected = c.detail, this.usage && this._loadUsage();
     }} @more=${() => this.shown += 100}
           @action=${(c) => this._askAction(c.detail)} @inspect=${(c) => this.inspect = c.detail} @refresh=${() => this._loadEntities(!0)} @usage=${(c) => this._loadUsage(c.detail)} @navigate=${(c) => this._go(c.detail)}></db-entities>` : ""}
-      ${this.tab === "settings" ? k`<db-settings .hass=${this.hass} .ws=${(c, f) => this._ws(c, f)} .cfg=${this.cfg} @saved=${(c) => this._cfgSaved(c.detail)}
+      ${this.tab === "settings" ? I`<db-settings .hass=${this.hass} .ws=${(c, f) => this._ws(c, f)} .cfg=${this.cfg} @saved=${(c) => this._cfgSaved(c.detail)}
           @goto-filter=${(c) => {
       this.search = "", this.window = null, this.filters = c.detail, this.tab = "entities", this.shown = 100, this.chipsIn = !1, this._loadEntities(!1);
     }}></db-settings>` : ""}
-      ${this.tab === "history" ? k`<db-history .actions=${this.actionsList} @navigate=${(c) => this._go(c.detail)} .ws=${(c, f) => this._ws(c, f)} .busy=${!!((h = this.job) != null && h.running)} @changed=${() => this._loadActions()} @undo=${(c) => this._askUndo(c.detail)}></db-history>` : ""}
+      ${this.tab === "history" ? I`<db-history .actions=${this.actionsList} @navigate=${(c) => this._go(c.detail)} .ws=${(c, f) => this._ws(c, f)} .busy=${!!((h = this.job) != null && h.running)} @changed=${() => this._loadActions()} @undo=${(c) => this._askUndo(c.detail)}></db-history>` : ""}
     </div>`;
   }
 }

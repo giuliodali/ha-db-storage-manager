@@ -1,8 +1,8 @@
 """The Settings page: display options, the recorder's default state retention, and long-term statistics retention.
 
 - Hide automations: a display option saved in .storage.
-- Default state retention is Home Assistant's own `recorder: purge_keep_days`, changed in the user's
-  YAML (see recorder_yaml) and applied by Home Assistant on its next restart.
+- Default state retention is Home Assistant's own `recorder: purge_keep_days`. The page only predicts the
+  effect of a value and shows the YAML to set; the user edits their configuration and restarts.
 - Long-term statistics are kept forever by Home Assistant. A limit set here (in 6-month steps, separately
   for the statistics the Energy dashboard uses) is applied once a month, by the first nightly retention
   run of the month, by deleting hourly statistics rows older than the limit. Nothing else changes them.
@@ -14,7 +14,6 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from homeassistant.components.recorder import Recorder, get_instance
@@ -25,7 +24,6 @@ from homeassistant.helpers.recorder import session_scope
 from homeassistant.helpers.storage import Store
 from sqlalchemy import bindparam, text
 
-from . import recorder_yaml
 from .const import DOMAIN
 from .recorder_ops import _read
 
@@ -40,8 +38,7 @@ DEFAULTS = {"hide_automations": True, "stats_keep_months": None, "energy_stats_k
 async def async_load(hass: HomeAssistant) -> None:
     store = Store(hass, 1, STORE_KEY)
     data = await store.async_load() or {}
-    hass.data[DOMAIN]["settings"] = {"store": store, "data": {**DEFAULTS, **{k: v for k, v in data.items() if k in DEFAULTS}},
-                                     "yaml_lock": asyncio.Lock()}
+    hass.data[DOMAIN]["settings"] = {"store": store, "data": {**DEFAULTS, **{k: v for k, v in data.items() if k in DEFAULTS}}}
 
 
 def get(hass: HomeAssistant) -> dict[str, Any]:
@@ -55,42 +52,11 @@ async def async_update(hass: HomeAssistant, patch: dict[str, Any]) -> dict[str, 
     return st["data"]
 
 
-# --- recorder keep days (YAML) ---------------------------------------------------------------
+# --- recorder keep days ----------------------------------------------------------------------
 
-async def recorder_status(hass: HomeAssistant) -> dict[str, Any]:
-    loc = await hass.async_add_executor_job(recorder_yaml.locate, hass.config.config_dir)
-    running = int(get_instance(hass).keep_days)
-    configured = loc["configured_days"]
-    effective = configured if configured is not None else recorder_yaml.HA_DEFAULT_KEEP_DAYS
-    return {"running_days": running, "configured_days": configured, "effective_days": effective,
-            "restart_needed": effective != running, "file": _rel(hass, loc["file"]), "kind": loc["kind"], "reason": loc["reason"]}
-
-
-def _rel(hass: HomeAssistant, path: str) -> str:
-    try:
-        return str(Path(path).relative_to(hass.config.config_dir))
-    except ValueError:
-        return path
-
-
-async def async_set_keep_days(hass: HomeAssistant, days: int) -> dict[str, Any]:
-    """Write purge_keep_days to the user's YAML (validated, backed up, atomic). Applies after a restart."""
-    from homeassistant.util.yaml import Secrets, load_yaml  # noqa: PLC0415
-
-    config_dir = hass.config.config_dir
-
-    def validate(tmp: Path, want: int) -> None:
-        data = load_yaml(tmp, Secrets(Path(config_dir)))
-        if not isinstance(data, dict):
-            raise ValueError("The edited file would not be a YAML mapping")
-        rec = data.get("recorder", data) if "recorder" in data else data
-        if not isinstance(rec, dict) or rec.get(recorder_yaml.KEY) != want:
-            raise ValueError("The edited file did not read back with the new purge_keep_days")
-
-    async with hass.data[DOMAIN]["settings"]["yaml_lock"]:
-        res = await hass.async_add_executor_job(recorder_yaml.write_keep_days, config_dir, days, validate)
-    _LOGGER.info("Set recorder purge_keep_days to %s in %s (backup %s); applies after a restart", days, res["file"], res.get("backup"))
-    return {**await recorder_status(hass), "backup": res.get("backup") and _rel(hass, res["backup"])}
+def recorder_status(hass: HomeAssistant) -> dict[str, Any]:
+    """The keep-days value the recorder is running with. Read only: the user sets it in their YAML."""
+    return {"running_days": int(get_instance(hass).keep_days)}
 
 
 # --- predictions ------------------------------------------------------------------------------

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.8
+
+- The Settings tab no longer edits your YAML. The default state retention slider still predicts the space a value frees or adds; for a new value it shows the `recorder: purge_keep_days` lines to put in your configuration yourself, with a Copy button, a link to the recorder documentation and a restart button. A `.dbs_backup` copy left by 1.0.7 can be deleted.
+
 ## 1.0.7
 
 - New **Settings** tab, showing what is configured now:

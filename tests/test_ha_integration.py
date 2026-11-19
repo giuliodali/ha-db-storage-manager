@@ -843,7 +843,7 @@ async def test_settings_page_loads_current_config_and_saves_display_option(recor
     s = (await _ws(client, "settings_get"))["result"]
     assert s["hide_automations"] is True and s["stats_keep_months"] is None and s["energy_stats_keep_months"] is None
     assert s["month_steps"][0] == 6 and s["month_steps"][-1] == 84
-    assert s["recorder"]["running_days"] >= 1 and s["recorder"]["file"] == "configuration.yaml"
+    assert s["recorder"]["running_days"] >= 1
     s = (await _ws(client, "settings_set", hide_automations=False))["result"]
     assert s["hide_automations"] is False
     assert (await _ws(client, "settings_set", stats_keep_months=5))["success"] is False      # 6-month steps only
@@ -851,30 +851,17 @@ async def test_settings_page_loads_current_config_and_saves_display_option(recor
     assert {"hist", "rate_per_day"} <= set(pred["states"]) and {"other", "energy"} <= set(pred["statistics"])
 
 
-async def test_default_retention_is_written_to_configuration_yaml(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
+async def test_default_retention_is_never_written_to_yaml(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
     import os
     path = hass.config.path("configuration.yaml")
-    had = os.path.exists(path)
-    old = open(path, encoding="utf-8").read() if had else None
-    try:
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write("default_config:\n\nrecorder:\n  commit_interval: 5  # keep\n")
-        await _setup(hass)
-        client = await hass_ws_client(hass)
-        res = await _ws(client, "settings_set", keep_days=30)
-        assert res["success"], res
-        rec = res["result"]["recorder"]
-        assert rec["configured_days"] == 30 and rec["restart_needed"] is True and rec["file"] == "configuration.yaml"
-        assert open(path, encoding="utf-8").read() == "default_config:\n\nrecorder:\n  purge_keep_days: 30\n  commit_interval: 5  # keep\n"
-        assert os.path.exists(path + ".dbs_backup")
-    finally:
-        if had:
-            with open(path, "w", encoding="utf-8") as fh:
-                fh.write(old)
-        elif os.path.exists(path):
-            os.remove(path)
-        if os.path.exists(path + ".dbs_backup"):
-            os.remove(path + ".dbs_backup")
+    before = open(path, encoding="utf-8").read() if os.path.exists(path) else None
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, "settings_set", keep_days=30))["success"] is False   # no longer accepted
+    s = (await _ws(client, "settings_get"))["result"]
+    assert set(s["recorder"]) == {"running_days"}
+    after = open(path, encoding="utf-8").read() if os.path.exists(path) else None
+    assert after == before and not os.path.exists(path + ".dbs_backup")
 
 
 async def test_long_term_statistics_limit_trims_monthly_and_spares_energy(recorder_mock, enable_custom_integrations, hass, hass_ws_client, monkeypatch) -> None:
