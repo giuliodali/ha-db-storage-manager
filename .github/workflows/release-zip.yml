@@ -1,0 +1,47 @@
+name: Release zip
+
+# Builds db_storage_manager.zip and attaches it to the GitHub release. HACS (hacs.json: zip_release)
+# downloads this asset, so GitHub's download_count increments and the catalog can track installs.
+# The zip holds the contents of custom_components/db_storage_manager/ at its root, which is the
+# layout HACS expects: it extracts the zip straight into config/custom_components/db_storage_manager/.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:   # Actions > Release zip > Run workflow, to (re)attach the zip to an existing release
+    inputs:
+      tag:
+        description: Release tag, for example v1.0.8
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+      - name: Check the tag matches manifest.json
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          manifest=$(python3 -c "import json;print(json.load(open('custom_components/db_storage_manager/manifest.json'))['version'])")
+          # Pre-release tags such as v1.0.9-beta.1 are compared on their base version.
+          tag="${TAG#[vV]}"; tag="${tag%%-*}"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::Tag $TAG does not match manifest.json version $manifest"
+            exit 1
+          fi
+      - name: Build the zip
+        working-directory: custom_components/db_storage_manager
+        run: |
+          test -f frontend/db-storage-panel.js
+          zip -r -X ../../db_storage_manager.zip . -x '__pycache__/*' '*/__pycache__/*' '*.pyc'
+          unzip -l ../../db_storage_manager.zip | grep -E 'manifest.json|db-storage-panel.js'
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$TAG" db_storage_manager.zip --clobber
