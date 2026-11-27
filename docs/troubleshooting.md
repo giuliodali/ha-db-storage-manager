@@ -23,3 +23,15 @@
 **How do I report a problem?** Open an issue with your Home Assistant and integration versions and the log lines from `custom_components.db_storage_manager`.
 
 **automations.yaml has garbage after the DB Storage automation (version 1.0.4 and earlier).** Overlapping rewrites could corrupt it. Open the file, delete everything from `- id: db_storage_retention` to the end of that automation block, and remove any stray lines after it (leftover fragments such as `etention` or a repeated `data:` / `mode: record`). Check Settings → Developer tools → YAML → Check configuration, then restart. From 1.0.6 the integration no longer writes to `automations.yaml` at all; 1.0.5 left a copy of the file as `automations.yaml.dbs_backup`, which you can delete.
+
+**How do I capture debug logs?** Add this to `configuration.yaml` and restart (or call **Developer tools > Actions > `logger.set_level`** with `custom_components.db_storage_manager: debug`):
+
+```yaml
+logger:
+  default: warning
+  logs:
+    custom_components.db_storage_manager: debug
+    homeassistant.components.recorder: info
+```
+
+Reproduce the problem, then take the lines from **Settings > System > Logs** (filter on `db_storage_manager`) or **Download full log**. When reporting, include the Home Assistant version, your database type and version, and the recorder `db_url` without the password. Remove anything private.

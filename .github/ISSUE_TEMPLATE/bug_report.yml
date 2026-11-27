@@ -5,7 +5,7 @@ body:
     id: versions
     attributes:
       label: Versions
-      description: Home Assistant, DB Storage Manager, and your recorder database type (SQLite is the supported one)
+      description: Home Assistant version and install type, DB Storage Manager version, and your recorder database with its version (SQLite, PostgreSQL, MariaDB or MySQL)
     validations:
       required: true
   - type: textarea
@@ -18,4 +18,4 @@ body:
     id: logs
     attributes:
       label: Log lines
-      description: From Settings > System > Logs, filtered on db_storage_manager. Remove anything private.
+      description: From Settings > System > Logs, filtered on db_storage_manager. For database problems, turn on debug logging first (logger, custom_components.db_storage_manager - see docs/troubleshooting.md), reproduce, and paste the lines. Remove anything private, and leave the password out of the recorder db_url.
