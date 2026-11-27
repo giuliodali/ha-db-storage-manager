@@ -28,6 +28,12 @@ async def _setup(hass):
     return entry
 
 
+def _dialect(hass) -> str:
+    """The database the recorder runs on (pytest --dburl chooses it; SQLite by default)."""
+    from homeassistant.components.recorder import get_instance
+    return get_instance(hass).engine.dialect.name
+
+
 async def _ws(client, type_, **kw):
     await client.send_json_auto_id({"type": f"db_storage/{type_}", **kw})
     return await client.receive_json()
@@ -48,7 +54,13 @@ async def test_scan(recorder_mock, enable_custom_integrations, hass, hass_ws_cli
     assert res["success"], res
     names = {t["table"] for t in res["result"]["tables"]}
     assert {"states", "statistics", "statistics_meta"} <= names
-    assert res["result"]["exact"] is True
+    dialect = _dialect(hass)
+    assert res["result"]["dialect"] == dialect and res["result"]["supported"] is True
+    assert res["result"]["exact"] is (dialect in ("sqlite", "postgresql"))   # MySQL/MariaDB report engine statistics
+    assert all(t["bytes"] > 0 for t in res["result"]["tables"] if t["table"] in ("states", "statistics"))
+    assert res["result"]["total_bytes"] >= res["result"]["tables"][0]["bytes"]
+    if dialect == "postgresql":
+        assert res["result"]["free_bytes"] is None            # PostgreSQL has no cheap exact figure
 
 
 async def test_delete_and_restore_statistics(recorder_mock, enable_custom_integrations, hass, hass_ws_client) -> None:
@@ -383,8 +395,14 @@ async def test_db_size_reports_logical_size_and_checkpoint(recorder_mock, enable
     client = await hass_ws_client(hass)
     res = (await _ws(client, "db_size"))["result"]
     assert res["file_bytes"] > 0 and "wal_bytes" in res and "main_bytes" in res
-    assert res["file_bytes"] >= res["free_bytes"]
+    if _dialect(hass) == "postgresql":
+        assert res["free_bytes"] is None
+    else:
+        assert res["file_bytes"] >= res["free_bytes"]
     cp = (await _ws(client, "db_size", checkpoint=True))["result"]
+    if _dialect(hass) != "sqlite":
+        assert cp["checkpoint"] is None and cp["wal_bytes"] == 0 and cp["main_bytes"] is None   # no write-ahead log file to fold
+        return
     assert cp["checkpoint"] is not None           # [busy, log frames, checkpointed frames]
     assert cp["wal_bytes"] == 0 or cp["checkpoint"][0] == 1
 
