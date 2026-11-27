@@ -555,6 +555,7 @@ async def ws_entities(hass, connection, msg) -> None:
             "dynamic_sources": inv["usage"].dynamic_sources[:50],
             "caveats": CAVEATS,
             "total_bytes": inv["scan"].get("total_bytes"),
+            "dialect": inv["scan"].get("dialect"),
             "match_count": len(matches),
             "match_bytes": sum(i[size_key] for i in matches),
             "items": matches[: msg["limit"]],

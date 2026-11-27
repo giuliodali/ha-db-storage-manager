@@ -78,7 +78,10 @@ export class DbOverview extends LitElement {
     if (!d) return html`<div class="hint">Waiting for the first scan to finish.</div>`;
     const last = (this.history || []).at(-1);
     const cur = this.live || last;  // live reading when we have it; the latest snapshot otherwise
-    const sizeTip = cur ? `Database size = pages × page size, the figure SQLite tools report.\n` +
+    const dialect = d.dialect || "sqlite";
+    const sizeTip = cur ? (dialect === "sqlite" ? `Database size = pages × page size, the figure SQLite tools report.\n` :
+      dialect === "postgresql" ? `Database size as PostgreSQL reports it (pg_database_size), including indexes.\n` :
+      `Database size as the storage engine reports it: tables, indexes and empty space (approximate).\n`) +
       (cur.main_bytes != null ? `On disk: main file ${fmtBytes(cur.main_bytes)} + write-ahead log ${fmtBytes(cur.wal_bytes || 0)}.\n` : "") +
       `Exact: ${cur.file_bytes.toLocaleString()} bytes (1 MB here = 1,048,576 bytes).` : "";
     const notRef = d.items.filter((i) => i.used_in[0] === "Not referenced");

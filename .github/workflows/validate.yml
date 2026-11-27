@@ -30,3 +30,106 @@ jobs:
           python-version: "3.13"
       - run: pip install pytest-homeassistant-custom-component home-assistant-frontend
       - run: pytest -q
+
+  # The SQL the integration runs, and then the whole integration suite on a real Home Assistant
+  # recorder, against each database the recorder supports.
+  postgresql:
+    name: PostgreSQL ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["14", "16", "17"]
+    services:
+      db:
+        image: postgres:${{ matrix.version }}
+        env:
+          POSTGRES_PASSWORD: pw
+          POSTGRES_DB: dbs_sql
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DBS_TEST_REQUIRE: postgresql
+      DBS_TEST_POSTGRES_URL: postgresql://postgres:pw@127.0.0.1:5432/dbs_sql
+      RECORDER_DB_URL: postgresql://postgres:pw@127.0.0.1:5432/ha_recorder
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pytest-homeassistant-custom-component home-assistant-frontend psycopg2-binary sqlalchemy-utils
+      - name: SQL tests
+        run: pytest -q tests/test_multidb.py -k postgresql
+      - name: Integration tests on a PostgreSQL recorder
+        run: pytest -q --dburl="$RECORDER_DB_URL"
+
+  mariadb:
+    name: MariaDB ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["10.11", "11.4"]
+    services:
+      db:
+        image: mariadb:${{ matrix.version }}
+        env:
+          MARIADB_ROOT_PASSWORD: pw
+          MARIADB_DATABASE: dbs_sql
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      DBS_TEST_REQUIRE: mariadb
+      DBS_TEST_MARIADB_URL: mysql://root:pw@127.0.0.1:3306/dbs_sql?charset=utf8mb4
+      RECORDER_DB_URL: mysql://root:pw@127.0.0.1:3306/ha_recorder
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo apt-get install -y libmariadb-dev pkg-config
+      - run: pip install pytest-homeassistant-custom-component home-assistant-frontend mysqlclient sqlalchemy-utils
+      - name: SQL tests
+        run: pytest -q tests/test_multidb.py -k mariadb
+      - name: Integration tests on a MariaDB recorder
+        run: pytest -q --dburl="$RECORDER_DB_URL"
+
+  mysql:
+    name: MySQL ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["8.4"]
+    services:
+      db:
+        image: mysql:${{ matrix.version }}
+        env:
+          MYSQL_ROOT_PASSWORD: pw
+          MYSQL_DATABASE: dbs_sql
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -ppw"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    env:
+      DBS_TEST_REQUIRE: mysql
+      DBS_TEST_MYSQL_URL: mysql://root:pw@127.0.0.1:3306/dbs_sql?charset=utf8mb4
+      RECORDER_DB_URL: mysql://root:pw@127.0.0.1:3306/ha_recorder
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo apt-get install -y libmysqlclient-dev pkg-config
+      - run: pip install pytest-homeassistant-custom-component home-assistant-frontend mysqlclient sqlalchemy-utils
+      - name: SQL tests
+        run: pytest -q tests/test_multidb.py -k mysql
+      - name: Integration tests on a MySQL recorder
+        run: pytest -q --dburl="$RECORDER_DB_URL"

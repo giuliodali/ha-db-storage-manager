@@ -24597,29 +24597,31 @@ class bc extends pe {
   render() {
     const e = this.data;
     if (!e) return I`<div class="hint">Waiting for the first scan to finish.</div>`;
-    const i = (this.history || []).at(-1), n = this.live || i, a = n ? `Database size = pages × page size, the figure SQLite tools report.
-` + (n.main_bytes != null ? `On disk: main file ${q(n.main_bytes)} + write-ahead log ${q(n.wal_bytes || 0)}.
-` : "") + `Exact: ${n.file_bytes.toLocaleString()} bytes (1 MB here = 1,048,576 bytes).` : "", o = e.items.filter((x) => x.used_in[0] === "Not referenced"), s = o.reduce((x, S) => x + S.total_bytes, 0), l = e.items.filter((x) => x.suggestion === "Remove history" || x.suggestion === "Disable"), u = l.reduce((x, S) => x + S.total_bytes, 0), h = e.items.filter((x) => x.retention && x.retention !== "Default"), c = [...new Set(h.map((x) => x.retention))], f = this.ret, d = f == null ? void 0 : f.last_run, v = d ? `Last run ${Kb(Math.max(0, Math.round(Date.now() / 1e3 - d.ts)))}` : "Has not run yet", g = [
-      `Entities that keep less state history than Home Assistant's ${(f == null ? void 0 : f.default_days) ?? "default number of"} days. Click to see them.`,
-      d ? `Last run ${new Date(d.ts * 1e3).toLocaleString()}: ${d.rows.toLocaleString()} rows deleted for ${d.entities} entit${d.entities === 1 ? "y" : "ies"}.` : "The retention job has not run yet.",
-      f != null && f.run_at ? `Runs nightly at ${f.run_at}.` : "Nightly run is off (see the integration options).",
+    const i = (this.history || []).at(-1), n = this.live || i, a = e.dialect || "sqlite", o = n ? (a === "sqlite" ? `Database size = pages × page size, the figure SQLite tools report.
+` : a === "postgresql" ? `Database size as PostgreSQL reports it (pg_database_size), including indexes.
+` : `Database size as the storage engine reports it: tables, indexes and empty space (approximate).
+`) + (n.main_bytes != null ? `On disk: main file ${q(n.main_bytes)} + write-ahead log ${q(n.wal_bytes || 0)}.
+` : "") + `Exact: ${n.file_bytes.toLocaleString()} bytes (1 MB here = 1,048,576 bytes).` : "", s = e.items.filter((S) => S.used_in[0] === "Not referenced"), l = s.reduce((S, A) => S + A.total_bytes, 0), u = e.items.filter((S) => S.suggestion === "Remove history" || S.suggestion === "Disable"), h = u.reduce((S, A) => S + A.total_bytes, 0), c = e.items.filter((S) => S.retention && S.retention !== "Default"), f = [...new Set(c.map((S) => S.retention))], d = this.ret, v = d == null ? void 0 : d.last_run, g = v ? `Last run ${Kb(Math.max(0, Math.round(Date.now() / 1e3 - v.ts)))}` : "Has not run yet", p = [
+      `Entities that keep less state history than Home Assistant's ${(d == null ? void 0 : d.default_days) ?? "default number of"} days. Click to see them.`,
+      v ? `Last run ${new Date(v.ts * 1e3).toLocaleString()}: ${v.rows.toLocaleString()} rows deleted for ${v.entities} entit${v.entities === 1 ? "y" : "ies"}.` : "The retention job has not run yet.",
+      d != null && d.run_at ? `Runs nightly at ${d.run_at}.` : "Nightly run is off (see the integration options).",
       "Change the time or turn it off in the integration options; to run it from your own automation instead, turn it off and call the db_storage_manager.run_retention action. Run retention now is in the menu beside Re-Scan. Rows it deletes are not backed up."
     ].join(`
-`), p = this.history || [], y = p.length > 1 ? (p.at(-1).ts - p[0].ts) / 86400 : 0, m = p.length ? new Date(p[0].ts * 1e3).toLocaleDateString([], { dateStyle: "medium" }) : null, _ = Math.floor(y), b = p.length ? _ < 1 ? `Under 1 day of data since first collection on ${m}` : `${_} day${_ === 1 ? "" : "s"} of data since first collection on ${m}` : "No data collected yet.", w = [7, 30, 90, 365].filter((x) => x <= y);
+`), y = this.history || [], m = y.length > 1 ? (y.at(-1).ts - y[0].ts) / 86400 : 0, _ = y.length ? new Date(y[0].ts * 1e3).toLocaleDateString([], { dateStyle: "medium" }) : null, b = Math.floor(m), w = y.length ? b < 1 ? `Under 1 day of data since first collection on ${_}` : `${b} day${b === 1 ? "" : "s"} of data since first collection on ${_}` : "No data collected yet.", x = [7, 30, 90, 365].filter((S) => S <= m);
     return I`
       <div class="kpis">
-        <div class="kpi" title=${a + ((n == null ? void 0 : n.free_bytes) != null ? `
+        <div class="kpi" title=${o + ((n == null ? void 0 : n.free_bytes) != null ? `
 Free: empty space inside the database file left behind by deleted data. Reclaim free space (the arrow beside Re-Scan) returns it to the disk.` : "")}>
           <span>Database size</span><b>${q((n == null ? void 0 : n.file_bytes) ?? e.total_bytes)}</b>${(n == null ? void 0 : n.free_bytes) != null ? I`<span>~ ${q(n.free_bytes)} Free</span>` : ""}</div>
         <div class="kpi click" title="Entities with no literal reference in your config. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Not referenced"] } }))}>
-          <span>Not referenced in config</span><b>${q(s)}</b><span>${o.length} entities</span></div>
+          <span>Not referenced in config</span><b>${q(l)}</b><span>${s.length} entities</span></div>
         <div class="kpi click" title="Entities whose history is leftover (orphaned or disabled) or that look unused and stale. Click to review them."
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { suggestion: ["Remove history", "Disable"] } }))}>
-          <span>Cleanup candidates</span><b>${q(u)}</b><span>${l.length} entities</span></div>
-        <div class="kpi ${h.length ? "click" : ""}" title=${g}
-          @click=${() => h.length && this.dispatchEvent(new CustomEvent("goto-filter", { detail: { retention: c } }))}>
-          <span>Reduced retention</span><b>${h.length} entit${h.length === 1 ? "y" : "ies"}</b><span>${v}</span></div>
+          <span>Cleanup candidates</span><b>${q(h)}</b><span>${u.length} entities</span></div>
+        <div class="kpi ${c.length ? "click" : ""}" title=${p}
+          @click=${() => c.length && this.dispatchEvent(new CustomEvent("goto-filter", { detail: { retention: f } }))}>
+          <span>Reduced retention</span><b>${c.length} entit${c.length === 1 ? "y" : "ies"}</b><span>${g}</span></div>
       </div>
       <div class="grid">
         <div class="card tree"><h3>By integration and type</h3>
@@ -24628,17 +24630,17 @@ Free: empty space inside the database file left behind by deleted data. Reclaim 
           <div class="key"><span><i style="background:var(--primary-color)"></i>Used in config</span><span><i style="background:var(--accent-color,#ff9800)"></i>Not referenced</span></div>
           <div class="toplist">${this._top(e)}</div></div>
         <div class="card"><h3>Database size over time
-            <select @change=${(x) => this.dispatchEvent(new CustomEvent("days", { detail: +x.target.value }))}>
-              <option value="0" ?selected=${!this.days || !w.includes(this.days)}>All data</option>
-              ${w.map((x) => I`<option value=${x} ?selected=${this.days === x}>Last ${x} days</option>`)}</select>
-            <span class="tip" tabindex="0"><span class="info">?</span><span class="pop"><div>${b}</div>
+            <select @change=${(S) => this.dispatchEvent(new CustomEvent("days", { detail: +S.target.value }))}>
+              <option value="0" ?selected=${!this.days || !x.includes(this.days)}>All data</option>
+              ${x.map((S) => I`<option value=${S} ?selected=${this.days === S}>Last ${S} days</option>`)}</select>
+            <span class="tip" tabindex="0"><span class="info">?</span><span class="pop"><div>${w}</div>
               <div>Drag across the chart to drill into a period.</div>
               <div><i style="background:var(--ha-color-primary-20,#488fc2)"></i><b>Everything else</b><br>States, attributes, events and the rest of the data in the database.</div>
               <div><i style="background:var(--ha-color-border-primary-loud,${Ju})"></i><b>Long-term statistics</b><br>Hourly and 5-minute statistics behind history graphs and Energy.</div>
               <div><i style="background:${jn}"></i><b>Free Space/Undo Data</b><br>Empty space inside the database file left by deleted data (returned to the disk by a repack), plus the compressed backups that let actions be undone, which are kept beside the database.</div></span></span></h3>
           <div class="key"><span><i style="background:var(--ha-color-primary-20,#488fc2)"></i>Everything else</span><span><i style="background:var(--ha-color-border-primary-loud,${Ju})"></i>Long-term statistics</span><span><i style="background:${jn}"></i>Free Space/Undo Data</span></div>
           <db-chart style="--h:250px" brush .rev=${[this.history, this.days, this.window]} .build=${this._historyOpt}
-            @range=${(x) => this.dispatchEvent(new CustomEvent("goto-window", { detail: x.detail }))}></db-chart></div>
+            @range=${(S) => this.dispatchEvent(new CustomEvent("goto-window", { detail: S.detail }))}></db-chart></div>
       </div>`;
   }
   // Clicking a box filters Entities to that integration and type; clicking a title, to the integration.
@@ -25466,40 +25468,40 @@ The scan took ${(t.timings_ms.total_ms / 1e3).toFixed(1)} s`;
     this.reclaim = { phase: "running", before: t, now: t, started: Date.now() };
     try {
       await this._ws("reclaim", { confirm: !0 });
-    } catch (n) {
-      this.error = n.message || JSON.stringify(n), this.reclaim = null;
+    } catch (a) {
+      this.error = a.message || JSON.stringify(a), this.reclaim = null;
       return;
     }
-    const e = Math.max(1048576, t.free_bytes * 0.05);
-    for (let n = 0; n < 300; n++) {
-      await new Promise((a) => setTimeout(a, 4e3));
+    const e = t.free_bytes != null, i = Math.max(1048576, (t.free_bytes || 0) * 0.05);
+    for (let a = 0; a < (e ? 300 : 90); a++) {
+      await new Promise((o) => setTimeout(o, 4e3));
       try {
-        const a = await this._ws("db_size");
-        if (this.reclaim = { ...this.reclaim, now: a }, this.live = a, (a.free_bytes ?? 0) <= e) break;
+        const o = await this._ws("db_size");
+        if (this.reclaim = { ...this.reclaim, now: o }, this.live = o, e ? (o.free_bytes ?? 0) <= i : o.file_bytes < t.file_bytes * 0.99) break;
       } catch {
       }
     }
-    let i = this.reclaim.now;
+    let n = this.reclaim.now;
     try {
-      i = await this._ws("db_size", { checkpoint: !0 }), await this._ws("sample_now"), await this._loadHistory();
+      n = await this._ws("db_size", { checkpoint: !0 }), await this._ws("sample_now"), await this._loadHistory();
     } catch {
     }
-    this.live = i, this.reclaim = { ...this.reclaim, now: i, phase: "done" };
+    this.live = n, this.reclaim = { ...this.reclaim, now: n, phase: "done" };
   }
   _reclaimUi() {
     var n;
     const t = this.reclaim;
     if (!t) return "";
-    const e = t.before && t.now ? t.before.file_bytes - t.now.file_bytes : 0, i = t.before && (t.before.free_bytes ?? 0) < 1048576 && !t.before.expired_rows;
+    const e = t.before && t.now ? t.before.file_bytes - t.now.file_bytes : 0, i = t.before && t.before.free_bytes != null && t.before.free_bytes < 1048576 && !t.before.expired_rows;
     return t.phase === "confirm" ? I`<div class="modal" @click=${() => this.reclaim = null}><div class="dlg" @click=${(a) => a.stopPropagation()}>
       <h3>Reclaim free space</h3>
-      <div>${t.before ? I`The database file is <b>${q(t.before.file_bytes)}</b> with <b>${q(t.before.free_bytes)}</b> of empty space.${t.before.expired_rows ? I` The repack also deletes states older than the recorder's ${t.before.keep_days}-day limit: ${t.before.expired_rows.toLocaleString()} rows${t.before.expired_bytes ? `, about ${q(t.before.expired_bytes)}` : ""}.` : ""}` : "Checking the file…"}
+      <div>${t.before ? I`The database is <b>${q(t.before.file_bytes)}</b>${t.before.free_bytes != null ? I` with <b>${q(t.before.free_bytes)}</b> of empty space` : ""}.${t.before.expired_rows ? I` The repack also deletes states older than the recorder's ${t.before.keep_days}-day limit: ${t.before.expired_rows.toLocaleString()} rows${t.before.expired_bytes ? `, about ${q(t.before.expired_bytes)}` : ""}.` : ""}` : "Checking the file…"}
         ${i && !((n = t.before) != null && n.expired_rows) ? "Too little to be worth a repack." : ""}</div>
       <ul><li>It can take several minutes on a small device, and recorder writes queue up meanwhile (nothing is lost).</li>
         <li>It needs free disk space roughly equal to the database size while it runs.</li>
         <li>Only do this when little else is going on; Home Assistant keeps running.</li></ul>
       <div class="row"><button @click=${() => this.reclaim = null}>Cancel</button><button class="go" ?disabled=${!t.before || i} @click=${() => this._startReclaim()}>Reclaim</button></div></div></div>` : I`<div class="rcard"><h3>${t.phase === "running" ? "Reclaiming free space…" : e > 0 ? `Reclaimed ${q(e)}` : "Finished: nothing was left to reclaim"}</h3>
-      <div class="sub">${t.phase === "running" ? `Database size ${q(t.before.file_bytes)} · empty space ${q(t.now.free_bytes)} · ${Math.round((Date.now() - t.started) / 1e3)} s. The size changes only when the repack finishes; this page keeps working.` : `Database size ${q(t.before.file_bytes)} → ${q(t.now.file_bytes)} · empty space ${q(t.before.free_bytes)} → ${q(t.now.free_bytes)}`}</div>
+      <div class="sub">${t.phase === "running" ? `Database size ${q(t.before.file_bytes)}${t.now.free_bytes != null ? ` · empty space ${q(t.now.free_bytes)}` : ""} · ${Math.round((Date.now() - t.started) / 1e3)} s. The size changes only when the repack finishes; this page keeps working.` : `Database size ${q(t.before.file_bytes)} → ${q(t.now.file_bytes)}${t.before.free_bytes != null ? ` · empty space ${q(t.before.free_bytes)} → ${q(t.now.free_bytes)}` : ""}`}</div>
       ${t.phase === "done" ? I`<button style="margin-top:8px" class="rescan" @click=${() => this.reclaim = null}>Dismiss</button>` : ""}</div>`;
   }
   async _loadActions() {

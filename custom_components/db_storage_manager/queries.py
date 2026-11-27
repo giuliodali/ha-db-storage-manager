@@ -6,7 +6,7 @@ import json
 import time
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
 RECORDER_TABLES = (
     "states",
@@ -20,7 +20,10 @@ RECORDER_TABLES = (
     "statistics_meta",
 )
 
-_TABLE_BYTES_SQL = text(
+STATS_TABLES = ("statistics", "statistics_short_term", "statistics_meta")
+MYSQL_DIALECTS = ("mysql", "mariadb")
+
+_SQLITE_TABLES_SQL = text(
     """
     SELECT m.tbl_name AS tbl, SUM(d.pgsize) AS bytes
     FROM dbstat d JOIN sqlite_master m ON d.name = m.name
@@ -28,7 +31,7 @@ _TABLE_BYTES_SQL = text(
     """
 )
 
-_PAGES_SQL = text(
+_SQLITE_PAGES_SQL = text(
     """
     SELECT (SELECT page_count FROM pragma_page_count) AS page_count,
            (SELECT freelist_count FROM pragma_freelist_count) AS freelist_count,
@@ -36,12 +39,99 @@ _PAGES_SQL = text(
     """
 )
 
+# Table, its indexes and its TOAST data, for the tables of the schema the recorder uses.
+_PG_TABLES_SQL = text(
+    """
+    SELECT c.relname AS tbl, pg_total_relation_size(c.oid) AS bytes
+    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = current_schema() AND c.relkind IN ('r', 'p', 'm')
+    ORDER BY bytes DESC
+    """
+)
 
-def page_stats(session) -> dict[str, int] | None:
-    """Page counts for SQLite, or None on other databases."""
-    if dialect_name(session) != "sqlite":
-        return None
-    p = session.execute(_PAGES_SQL).one()
+# data_length and index_length are what the storage engine reports; data_free is space inside the
+# tablespace that deleted rows left behind.
+_MYSQL_TABLES_SQL = text(
+    """
+    SELECT table_name AS tbl,
+           COALESCE(data_length, 0) + COALESCE(index_length, 0) AS bytes,
+           COALESCE(data_free, 0) AS free_bytes
+    FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'
+    """
+)
+
+
+def dialect_name(session) -> str:
+    return session.get_bind().dialect.name
+
+
+def _is_mysql(dialect: str) -> bool:
+    return dialect in MYSQL_DIALECTS
+
+
+def supported(dialect: str) -> bool:
+    return dialect == "sqlite" or dialect == "postgresql" or _is_mysql(dialect)
+
+
+def exact_sizes(dialect: str) -> bool:
+    """SQLite's dbstat and PostgreSQL's size functions are exact; MySQL and MariaDB report engine statistics."""
+    return dialect in ("sqlite", "postgresql")
+
+
+def floor_sql(dialect: str, expr: str) -> str:
+    """``expr`` rounded down to a whole number. SQLite's CAST truncates; the others round, so they FLOOR first."""
+    if dialect == "sqlite":
+        return f"CAST({expr} AS INTEGER)"
+    return f"CAST(FLOOR({expr}) AS {'SIGNED' if _is_mysql(dialect) else 'INTEGER'})"
+
+
+def state_histogram_sql(dialect: str, ids: bool = False):
+    """State rows per whole day of age, for all entities or (``ids``) only the named ones."""
+    day = floor_sql(dialect, f"(:now - {'s.' if ids else ''}last_updated_ts) / 86400")
+    if not ids:
+        return text(f"SELECT {day} AS d, COUNT(*) AS n FROM states GROUP BY d")
+    return text(
+        f"SELECT {day} AS d, COUNT(*) AS n FROM states s "
+        "JOIN states_meta sm ON sm.metadata_id = s.metadata_id WHERE sm.entity_id IN :ids GROUP BY d"
+    ).bindparams(bindparam("ids", expanding=True))
+
+
+def stats_histogram_sql(dialect: str):
+    """Long-term statistics rows per whole month of age, per statistic."""
+    month = floor_sql(dialect, "(:now - start_ts) / :month")
+    return text(f"SELECT metadata_id AS mid, {month} AS m, COUNT(*) AS n FROM statistics GROUP BY mid, m")
+
+
+# The extra derived table lets MySQL/MariaDB accept the LIMIT inside IN (...).
+TRIM_STATISTICS_SQL = text(
+    "DELETE FROM statistics WHERE id IN (SELECT id FROM (SELECT id FROM statistics "
+    "WHERE metadata_id IN :mids AND start_ts < :cut LIMIT :n) AS old)"
+).bindparams(bindparam("mids", expanding=True))
+
+
+def _mysql_tables(session) -> tuple[list[dict[str, Any]], int | None]:
+    """Per-table bytes and the free space inside the database, from information_schema."""
+    if dialect_name(session) == "mysql":
+        try:  # MySQL 8 caches these statistics for a day by default; MariaDB has no such setting
+            session.execute(text("SET SESSION information_schema_stats_expiry = 0"))
+        except Exception:  # noqa: BLE001 - older servers and MariaDB: use what they report
+            pass
+    rows = session.execute(_MYSQL_TABLES_SQL).all()
+    tables = sorted(({"table": str(r[0]).lower(), "bytes": int(r[1] or 0)} for r in rows),
+                    key=lambda t: t["bytes"], reverse=True)
+    frees = [int(r[2] or 0) for r in rows]
+    # With a shared tablespace every table reports the same free figure, so count it once.
+    free = frees[0] if frees and len(set(frees)) == 1 and len(frees) > 1 else sum(frees)
+    return tables, free
+
+
+def _pg_tables(session) -> list[dict[str, Any]]:
+    return [{"table": r.tbl, "bytes": int(r.bytes or 0)} for r in session.execute(_PG_TABLES_SQL).all()]
+
+
+def _sqlite_pages(session) -> dict[str, int]:
+    p = session.execute(_SQLITE_PAGES_SQL).one()
     return {
         "page_size": int(p.page_size),
         "page_count": int(p.page_count),
@@ -51,43 +141,70 @@ def page_stats(session) -> dict[str, int] | None:
     }
 
 
+def page_stats(session) -> dict[str, int | None] | None:
+    """Size of the database and the free space inside it, or None when this database can't say.
+
+    ``free_bytes`` is None on PostgreSQL, which has no cheap exact figure for reusable space.
+    """
+    dialect = dialect_name(session)
+    if dialect == "sqlite":
+        return _sqlite_pages(session)
+    if dialect == "postgresql":
+        total = session.execute(text("SELECT pg_database_size(current_database())")).scalar()
+        return {"total_bytes": int(total or 0), "free_bytes": None}
+    if _is_mysql(dialect):
+        tables, free = _mysql_tables(session)
+        used = sum(t["bytes"] for t in tables)
+        return {"total_bytes": used + (free or 0), "free_bytes": free}
+    return None
+
+
 def statistics_bytes(session) -> int | None:
-    """On-disk bytes of the long-term statistics tables (SQLite only)."""
-    if dialect_name(session) != "sqlite":
-        return None
-    row = session.execute(text(
-        "SELECT SUM(d.pgsize) FROM dbstat d JOIN sqlite_master m ON d.name = m.name "
-        "WHERE m.tbl_name IN ('statistics', 'statistics_short_term', 'statistics_meta')")).scalar()
-    return int(row or 0)
-
-
-def dialect_name(session) -> str:
-    return session.get_bind().dialect.name
+    """On-disk bytes of the long-term statistics tables, or None when this database can't say."""
+    dialect = dialect_name(session)
+    if dialect == "sqlite":
+        row = session.execute(text(
+            "SELECT SUM(d.pgsize) FROM dbstat d JOIN sqlite_master m ON d.name = m.name "
+            "WHERE m.tbl_name IN ('statistics', 'statistics_short_term', 'statistics_meta')")).scalar()
+        return int(row or 0)
+    if dialect == "postgresql":
+        return sum(t["bytes"] for t in _pg_tables(session) if t["table"] in STATS_TABLES)
+    if _is_mysql(dialect):
+        tables, _ = _mysql_tables(session)
+        return sum(t["bytes"] for t in tables if t["table"] in STATS_TABLES)
+    return None
 
 
 def table_sizes(session, with_rows: bool = True) -> dict[str, Any]:
-    """True on-disk bytes per table (indexes included) on SQLite.
+    """On-disk bytes per table (indexes included).
 
-    Other databases return estimates only, flagged by ``exact: False``.
+    Exact on SQLite and PostgreSQL. MySQL and MariaDB report the storage engine's own statistics
+    (``exact: False``). An unsupported database returns the table names without sizes.
     """
     timings: dict[str, float] = {}
     dialect = dialect_name(session)
-    out: dict[str, Any] = {"dialect": dialect, "exact": dialect == "sqlite"}
+    out: dict[str, Any] = {"dialect": dialect, "exact": exact_sizes(dialect), "supported": supported(dialect)}
 
+    t = time.monotonic()
     if dialect == "sqlite":
-        t = time.monotonic()
-        rows = session.execute(_TABLE_BYTES_SQL).all()
+        rows = session.execute(_SQLITE_TABLES_SQL).all()
         timings["dbstat_ms"] = round((time.monotonic() - t) * 1000, 1)
         out["tables"] = [{"table": r.tbl, "bytes": int(r.bytes or 0)} for r in rows]
-
         t = time.monotonic()
-        p = session.execute(_PAGES_SQL).one()
+        out.update(_sqlite_pages(session))
         timings["pages_ms"] = round((time.monotonic() - t) * 1000, 1)
-        out["page_size"] = int(p.page_size)
-        out["page_count"] = int(p.page_count)
-        out["freelist_count"] = int(p.freelist_count)
-        out["free_bytes"] = int(p.freelist_count) * int(p.page_size)
-        out["total_bytes"] = int(p.page_count) * int(p.page_size)
+    elif dialect == "postgresql":
+        out["tables"] = _pg_tables(session)
+        timings["sizes_ms"] = round((time.monotonic() - t) * 1000, 1)
+        pages = page_stats(session)
+        out["total_bytes"] = pages["total_bytes"]
+        out["free_bytes"] = None
+    elif _is_mysql(dialect):
+        tables, free = _mysql_tables(session)
+        timings["sizes_ms"] = round((time.monotonic() - t) * 1000, 1)
+        out["tables"] = tables
+        out["free_bytes"] = free
+        out["total_bytes"] = sum(x["bytes"] for x in tables) + (free or 0)
     else:
         out["tables"] = [{"table": name, "bytes": None} for name in RECORDER_TABLES]
 

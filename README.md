@@ -100,7 +100,7 @@ More in the docs below.
 
 ## Requirements
 
-- Home Assistant **2026.11** or newer, with the **recorder on SQLite** (the default). MariaDB and PostgreSQL are not supported.
+- Home Assistant **2026.11** or newer, with the recorder on **SQLite** (the default), **PostgreSQL** or **MariaDB/MySQL**. Nothing to configure: the integration uses whichever database the recorder uses. See [Databases](docs/databases.md) for what differs.
 - An administrator account (the panel is admin-only).
 
 ## Limits worth knowing

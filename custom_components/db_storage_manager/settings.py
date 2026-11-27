@@ -22,9 +22,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.recorder import session_scope
 from homeassistant.helpers.storage import Store
-from sqlalchemy import bindparam, text
+from sqlalchemy import text
 
 from .const import DOMAIN
+from .queries import TRIM_STATISTICS_SQL, dialect_name, state_histogram_sql, stats_histogram_sql
 from .recorder_ops import _read
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,13 +62,6 @@ def recorder_status(hass: HomeAssistant) -> dict[str, Any]:
 
 # --- predictions ------------------------------------------------------------------------------
 
-_STATE_HIST = text("SELECT CAST((:now - last_updated_ts) / 86400 AS INTEGER) AS d, COUNT(*) AS n FROM states GROUP BY d")
-_STATE_HIST_IDS = text(
-    "SELECT CAST((:now - s.last_updated_ts) / 86400 AS INTEGER) AS d, COUNT(*) AS n FROM states s "
-    "JOIN states_meta sm ON sm.metadata_id = s.metadata_id WHERE sm.entity_id IN :ids GROUP BY d"
-).bindparams(bindparam("ids", expanding=True))
-_STATS_HIST = text(
-    "SELECT metadata_id AS mid, CAST((:now - start_ts) / :month AS INTEGER) AS m, COUNT(*) AS n FROM statistics GROUP BY mid, m")
 _META = text("SELECT id, statistic_id FROM statistics_meta")
 
 
@@ -82,11 +76,11 @@ def _hist(rows, cap: int) -> list[int]:
 
 
 def _states_prediction(session, now: float, ruled: list[str]) -> dict[str, Any]:
-    total = _hist(session.execute(_STATE_HIST, {"now": now}).all(), 3650)
+    total = _hist(session.execute(state_histogram_sql(dialect_name(session)), {"now": now}).all(), 3650)
     # Growth if the default is raised comes only from entities without a rule of their own (a rule caps them).
     unruled = list(total)
     for i in range(0, len(ruled), 400):
-        for d, n in enumerate(_hist(session.execute(_STATE_HIST_IDS, {"now": now, "ids": ruled[i:i + 400]}).all(), 3650)):
+        for d, n in enumerate(_hist(session.execute(state_histogram_sql(dialect_name(session), ids=True), {"now": now, "ids": ruled[i:i + 400]}).all(), 3650)):
             if d < len(unruled):
                 unruled[d] -= n
     days = min(7, max(1, len(unruled) - 1))
@@ -98,7 +92,7 @@ def _stats_prediction(session, now: float, energy_ids: set[str]) -> dict[str, An
     meta = {mid: sid for mid, sid in session.execute(_META).all()}
     energy: list[int] = []
     other: list[int] = []
-    for mid, m, n in session.execute(_STATS_HIST, {"now": now, "month": MONTH_S}).all():
+    for mid, m, n in session.execute(stats_histogram_sql(dialect_name(session)), {"now": now, "month": MONTH_S}).all():
         h = energy if meta.get(mid) in energy_ids else other
         m = max(0, min(int(m or 0), 240))
         if m >= len(h):
@@ -173,11 +167,6 @@ async def async_energy_statistic_ids(hass: HomeAssistant) -> set[str]:
 
 # --- monthly long-term statistics trim ---------------------------------------------------------
 
-# The extra derived table lets MySQL/MariaDB accept the LIMIT inside IN (...).
-_DEL = text("DELETE FROM statistics WHERE id IN (SELECT id FROM (SELECT id FROM statistics "
-            "WHERE metadata_id IN :mids AND start_ts < :cut LIMIT :n) AS old)").bindparams(bindparam("mids", expanding=True))
-
-
 @dataclass(slots=True)
 class TrimStatisticsTask(RecorderTask):
     """Delete up to one batch of old hourly statistics on the recorder thread (so there is one writer)."""
@@ -194,7 +183,7 @@ class TrimStatisticsTask(RecorderTask):
                     for i in range(0, len(mids), 500):
                         if deleted >= TRIM_BATCH:
                             break
-                        deleted += session.execute(_DEL, {"mids": mids[i:i + 500], "cut": cut, "n": TRIM_BATCH - deleted}).rowcount or 0
+                        deleted += session.execute(TRIM_STATISTICS_SQL, {"mids": mids[i:i + 500], "cut": cut, "n": TRIM_BATCH - deleted}).rowcount or 0
         except Exception as err:  # noqa: BLE001
             self.loop.call_soon_threadsafe(lambda: self.future.done() or self.future.set_exception(err))
         else:

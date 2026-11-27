@@ -3,7 +3,7 @@
 ## Requirements
 
 - Home Assistant 2026.11 or newer.
-- The recorder on **SQLite** (the default). The size analysis uses SQLite's `dbstat`, so MariaDB and PostgreSQL aren't supported.
+- The recorder on **SQLite** (the default), **PostgreSQL** or **MariaDB/MySQL**. It is detected automatically; [Databases](databases.md) lists what differs.
 - An administrator account. The **DB Storage** sidebar item is hidden from other users.
 
 ## Install
