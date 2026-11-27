@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 - PostgreSQL and MariaDB/MySQL recorders are supported, detected automatically. Table sizes, the database size and its history come from each database's own size functions (exact on PostgreSQL, the storage engine's statistics on MariaDB/MySQL), the per-entity sizes still add up to the table sizes, and the free-space figure is left out where the database can't give one (PostgreSQL). The retention predictions round ages down on every database. Details in docs/databases.md.
 
