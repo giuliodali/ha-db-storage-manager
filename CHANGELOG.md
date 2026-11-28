@@ -2,11 +2,8 @@
 
 ## Unreleased
 
-- New **Disabled but referenced** value in the Referenced In filter, next to **Not referenced**. It lists entities that are disabled while an automation, script, dashboard, helper or YAML file still names them, with a warning triangle when there are any. Home Assistant gives no warning when you disable an entity something still uses, so those automations and templates stop working without an error. The scan now also lists disabled entities that have no history left, but only when something still names them; before, it could only list entities with recorded data. Those get the suggestion Review, since there is nothing to remove.
-- A reference from something that is itself switched off no longer counts as a use: a helper whose entities are all disabled (or whose config entry is disabled), or an automation that is turned off, or an automation, script or scene disabled in the registry.
-- New suggestion **Remove orphaned** for a helper, automation, script, scene or Energy cost sensor that is disabled (or an automation that is turned off) and that nothing uses, so it can be deleted. Hide automations no longer hides one of these. It also counts toward Cleanup candidates on the Overview. The scan lists such entities even when they have no history.
-- **Referenced In: Energy dashboard** no longer counts every cost sensor the Energy integration ever created. A cost sensor now counts only while its source entity is still in the Energy configuration. One left over from a source you removed (for example `solismodbus_daily_energy_imported_cost`) is no longer reported as used by the Energy dashboard, and if it is disabled and unused it gets **Remove orphaned**. The Energy statistics retention limit on the Settings tab follows the same rule.
-- **Health check after disabling.** The scan can't see dependencies inside an integration (some integrations compute one entity from others, as Solarman does for its battery sensors). Each scan now looks at the recorded history of the other entities from the same integration as anything you disabled in the last 14 days. One that was working then and has been unavailable ever since, going down within a day of the action, is flagged in the History tab and with a Home Assistant notification, with Undo one click away. Entities that dropped out and came back, or were already down, are ignored. **Check now** repeats it on demand.
+- **Disabled but referenced**: a new Referenced In filter that lists disabled entities your config still uses, with a warning triangle when there are any.
+- **Remove orphaned**: a new suggestion for a switched-off helper, automation, script, scene or Energy cost sensor that nothing uses and that can be deleted.
 
 ## 1.1.0
 
