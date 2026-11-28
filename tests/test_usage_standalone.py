@@ -121,9 +121,41 @@ def test_used_in_facet_is_multivalued():
          "integration": "i", "device": "d", "age": "This week"},
     ]
     f = {r["value"]: r["bytes"] for r in facets.build_facets(items)["used_in"]}
-    assert f == {"Not referenced": 30, "Automation": 10, "Dashboard": 10}
+    assert f == {"Not referenced": 30, "Disabled but referenced": 0, "Automation": 10, "Dashboard": 10}
     out = facets.apply_filters(items, {"used_in": ["Not referenced"]})
     assert [i["entity_id"] for i in out] == ["b"]
+
+
+def _item(eid, used_in, status, size=10):
+    return {"entity_id": eid, "used_in": used_in, "total_bytes": size, "status": status, "domain": "sensor",
+            "integration": "i", "device": "d", "age": "This week"}
+
+
+def test_disabled_but_referenced_facet():
+    items = [
+        _item("a", ["Automation", "Helper"], "Disabled", 40),   # disabled, still used: the warning
+        _item("b", ["Not referenced"], "Disabled", 30),         # disabled, unused: fine
+        _item("c", ["Automation"], "Active", 20),               # used and enabled: fine
+    ]
+    rows = facets.build_facets(items)["used_in"]
+    assert [r["value"] for r in rows[:2]] == ["Not referenced", "Disabled but referenced"]  # pinned next to each other
+    by = {r["value"]: r for r in rows}
+    assert (by["Disabled but referenced"]["count"], by["Disabled but referenced"]["bytes"]) == (1, 40)
+    assert by["Automation"]["count"] == 2   # the derived value does not take the real kinds away
+    out = facets.apply_filters(items, {"used_in": ["Disabled but referenced"]})
+    assert [i["entity_id"] for i in out] == ["a"]
+    assert "Disabled but referenced" not in items[0]["used_in"]   # derived on the fly, never stored
+
+
+def test_disabled_but_referenced_is_listed_at_zero_and_stays_when_crowded():
+    rows = facets.build_facets([_item("a", ["Automation"], "Active")])["used_in"]
+    by = {r["value"]: r for r in rows}
+    assert by["Disabled but referenced"]["count"] == 0   # always there, so it can be found
+    kinds = ["Automation", "Script", "Scene", "Dashboard", "Helper", "Energy dashboard", "YAML config", "Integration config"]
+    crowded = [_item(f"e{n}", [k], "Active", 100 - n) for n, k in enumerate(kinds)]
+    crowded.append(_item("x", ["Automation"], "Disabled", 1))
+    vals = [r["value"] for r in facets.build_facets(crowded, top=3)["used_in"]]
+    assert "Disabled but referenced" in vals[:2]   # not folded into "N more"
 
 
 def test_yaml_escape_in_alias_is_decoded():
@@ -163,3 +195,14 @@ def test_yaml_defined_entities_are_found_by_name_or_unique_id():
     hits, _ = scan_lines(m, lines, defs=True)
     assert hits == {"sensor.db_size": ["line 2 (defined here)"], "sensor.cmd_temp": ["line 7 (defined here)"]}
     assert scan_lines(m, lines)[0] == {}                      # only YAML config files are read this way
+
+
+def test_cost_sensors_count_only_while_their_source_is_in_the_energy_config():
+    regs = {"aaaa1111aaaa1111aaaa1111aaaa1111": "sensor.inverter_today_energy_import"}
+    costs = [("sensor.inverter_today_energy_import_cost", "aaaa1111aaaa1111aaaa1111aaaa1111_grid_cost"),
+             ("sensor.old_import_cost", "bbbb2222bbbb2222bbbb2222bbbb2222_grid_cost"),             # source no longer in the config
+             ("sensor.by_name", "sensor.not_in_registry_gas_cost")]                                # prefix is the entity id itself
+    sources = {"sensor.inverter_today_energy_import", "sensor.not_in_registry"}
+    out = usage.current_cost_sensors(costs, {**regs, "bbbb2222bbbb2222bbbb2222bbbb2222": "sensor.solismodbus_daily_energy_imported"}, sources)
+    assert out == {"sensor.inverter_today_energy_import_cost": "sensor.inverter_today_energy_import",
+                   "sensor.by_name": "sensor.not_in_registry"}

@@ -19,6 +19,14 @@ Before anything is deleted, everything an action clears is written to **one comp
 
 **Undo** (History tab) restores the whole batch. Only missing rows are added (matched on time), so anything recorded since is kept. Entities that were disabled are turned back on, but only if they are still disabled by that action. The backup file is then removed. An action can be undone once.
 
+## Health check after disabling
+
+The Referenced In scan reads your configuration. It can't see what an integration's own code reads, and some integrations compute one entity from others (Solarman's battery sensors, for example), so an entity can look unused and still be needed.
+
+So on each scan, the panel looks at the recorded state history of the other enabled entities from the same integration as anything you disabled in the last 14 days. An entity is flagged only if it was working when you disabled something, has had no working state since, is unavailable now, went down within a day of the action, and has been down for at least 3 hours. An entity that dropped out and came back is a blip and is ignored, and so is one that was already down before.
+
+When something is flagged, the action in the History tab shows a warning with the names and when each went down, a notification appears in Home Assistant, and **Undo** brings the disabled entities back. **Check now** on the action repeats the check on demand once 3 hours have passed. It is a hint, not proof: an entity can drop out for unrelated reasons that happen to follow your action.
+
 ## The History tab
 
 One line per entity. Columns: when, action, **Est. freed** (database space), **Backup** (file size on disk), status. Identical text across a group moves into an (i) tooltip.

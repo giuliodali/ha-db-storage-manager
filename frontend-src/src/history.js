@@ -54,6 +54,7 @@ export class DbHistory extends LitElement {
     .tablewrap{border:1px solid var(--divider-color);border-radius:12px;background:var(--card-background-color);overflow:hidden}
     .row{display:grid;grid-template-columns:28px 140px minmax(0,1fr) 100px 110px 120px 80px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--divider-color)}
     .row.head{font-size:12px;color:var(--secondary-text-color);background:var(--secondary-background-color)}
+    .healthwarn{--mdc-icon-size:18px;color:var(--warning-color,#ff9800);vertical-align:middle;margin-left:6px}
     .row.item{cursor:pointer} .row.item:hover{background:var(--secondary-background-color)} .row.sel{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
     .r{text-align:right;font-variant-numeric:tabular-nums}
     .chip{font-size:12px;border:1px solid var(--divider-color);border-radius:10px;padding:0 8px;line-height:18px;white-space:nowrap;display:inline-block}
@@ -90,6 +91,31 @@ export class DbHistory extends LitElement {
       a.entities.some((e) => e.steps?.disabled?.changed || e.steps?.retention ||
         (e.steps?.statistics?.deleted && e.steps.statistics.snapshot && !e.steps.statistics.snapshot_removed) ||
         (e.steps?.states?.purged && e.steps.states.backup && !e.steps.states.backup_removed));
+  }
+  async _recheck(a) {
+    this._checking = a.id; this._soon = null; this.requestUpdate();
+    try {
+      const r = await this.ws("health_check", { action_id: a.id });
+      if (r?.too_soon) this._soon = a.id;
+      this.dispatchEvent(new CustomEvent("changed"));
+    } catch (e) { this.err = e.message || JSON.stringify(e); }
+    this._checking = null; this.requestUpdate();
+  }
+  // After a disable: has anything else from the same integration been down ever since? An integration can read an entity you turn off.
+  _health(a) {
+    if (!["disable", "disable_and_clear"].includes(a.kind) || a.status === "undone" || !a.entities.some((e) => e.steps?.disabled?.changed)) return nothing;
+    const h = a.meta?.health;
+    const when = h?.checked ? this._when(h.checked) : null;
+    const btn = html`<button ?disabled=${this._checking === a.id} @click=${(e) => { e.stopPropagation(); this._recheck(a); }}>${this._checking === a.id ? "Checking…" : "Check now"}</button>`;
+    const bad = h?.broken || [];
+    if (bad.length) {
+      const mins = (s) => (s < 5400 ? `${Math.max(1, Math.round(s / 60))} min` : `${Math.round(s / 3600)} h`);
+      return html`<div class="warnbox"><b>⚠ ${bad.length} other entit${bad.length === 1 ? "y has" : "ies have"} been unavailable ever since this.</b> They were working when you disabled these, and have had no working state since${when ? ` (checked ${when})` : ""}:
+        <ul>${bad.map((b) => html`<li title=${b.entity_id}>${b.name} <span class="muted">${b.entity_id} · down ${this._when(b.down_since)}, ${mins(b.after_s)} after</span></li>`)}</ul>
+        That might be caused by what was disabled here, or be a coincidence. Undo this action and see whether they come back. ${btn}</div>`;
+    }
+    if (!h) return html`<div class="gsum">Health check: ${this._soon === a.id ? "too early to say, " : ""}runs on a scan once 3 hours have passed. It looks for other entities from the same integration that have been unavailable ever since. ${btn}</div>`;
+    return html`<div class="gsum">Health check: <b>${h.siblings}</b> other entit${h.siblings === 1 ? "y" : "ies"} from the same integration; none has been down ever since this (checked ${when}). A dropout that came back is ignored. ${btn}</div>`;
   }
   _toggle(id, on) { const s = new Set(this.sel); on ? s.add(id) : s.delete(id); this.sel = s; }
   _chosen() { return (this.actions || []).filter((a) => this.sel.has(a.id) && a.status !== "running"); }
@@ -139,6 +165,7 @@ export class DbHistory extends LitElement {
     return html`<div class="detail">
       ${a.undone_ts ? html`<div class="muted" style="margin-bottom:4px">Undone ${this._when(a.undone_ts)}</div>` : nothing}
       ${a.error ? html`<div class="muted" style="margin-bottom:4px">${a.error}</div>` : nothing}
+      ${this._health(a)}
       ${hasBackup ? html`<div class="gsum">Backup: <b>${a.backup_files ? fmtBytes(a.backup_bytes) : "no file on disk"}</b> ${file ? html`<span title=${file}>(${file})</span>` : nothing} <span class="muted">compressed, one file for the whole action</span></div>` : nothing}
       ${sum.length ? html`<div class="gsum">${ents.length > 1 ? "Same for all:" : "Result:"} ${sum.join(" · ")} <span class="info" title=${info}>i</span></div>` : nothing}
       <table><tr><th>Entity</th>${shown.map(([, l, , tip]) => html`<th title=${tip}>${l}</th>`)}<th class="r" title="Estimated database space freed: long-term statistics plus any state history cleared. Not the size of the backup.">Est. freed</th>${hasBackup ? html`<th class="r" title="Rows of this entity saved in the action's backup file">Backed up</th>` : nothing}${showNotes ? html`<th>Notes</th>` : nothing}</tr>
@@ -180,7 +207,7 @@ export class DbHistory extends LitElement {
           <span>${this._when(a.ts)}</span><span class="c2"><b>${KIND[a.kind] || a.kind}</b> · ${a.entities.length} entit${a.entities.length === 1 ? "y" : "ies"}</span>
           <span class="c3 r muted">${(a.kind === "disable" || a.kind === "reset_retention") ? "n/a" : fmtBytes(a.est_bytes)}</span>
           <span class="c4 r muted" title=${a.backup_files ? `${a.backup_files} backup file${a.backup_files === 1 ? "" : "s"} on disk` : "No backup files on disk for this action"}>${a.backup_files ? fmtBytes(a.backup_bytes) : "–"}</span>
-          <span class="c5"><span class="chip ${a.status}">${STATUS[a.status] || a.status}</span></span>
+          <span class="c5"><span class="chip ${a.status}">${STATUS[a.status] || a.status}</span>${a.meta?.health?.broken?.length && a.status !== "undone" ? html`<ha-icon class="healthwarn" icon="mdi:alert" title=${`${a.meta.health.broken.length} other entities have been unavailable ever since this. Open it for details.`}></ha-icon>` : nothing}</span>
           <span>${this._undoable(a) ? html`<button ?disabled=${this.busy} @click=${(e) => { e.stopPropagation(); this.dispatchEvent(new CustomEvent("undo", { detail: a })); }}>Undo</button>` : nothing}</span></div>
         ${this.open === a.id ? this._detail(a) : nothing}`)}</div>`}
       ${this._dlg()}`;

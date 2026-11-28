@@ -86,7 +86,7 @@ export class DbOverview extends LitElement {
       `Exact: ${cur.file_bytes.toLocaleString()} bytes (1 MB here = 1,048,576 bytes).` : "";
     const notRef = d.items.filter((i) => i.used_in[0] === "Not referenced");
     const notRefBytes = notRef.reduce((s, i) => s + i.total_bytes, 0);
-    const clean = d.items.filter((i) => i.suggestion === "Remove history" || i.suggestion === "Disable");
+    const clean = d.items.filter((i) => i.suggestion === "Remove history" || i.suggestion === "Remove orphaned" || i.suggestion === "Disable");
     const cleanBytes = clean.reduce((s, i) => s + i.total_bytes, 0);
     // Entities keeping less state history than Home Assistant's default (their retention facet value is not "Default").
     const reduced = d.items.filter((i) => i.retention && i.retention !== "Default");
@@ -116,7 +116,7 @@ export class DbOverview extends LitElement {
           @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { used_in: ["Not referenced"] } }))}>
           <span>Not referenced in config</span><b>${fmtBytes(notRefBytes)}</b><span>${notRef.length} entities</span></div>
         <div class="kpi click" title="Entities whose history is leftover (orphaned or disabled) or that look unused and stale. Click to review them."
-          @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { suggestion: ["Remove history", "Disable"] } }))}>
+          @click=${() => this.dispatchEvent(new CustomEvent("goto-filter", { detail: { suggestion: ["Remove history", "Remove orphaned", "Disable"] } }))}>
           <span>Cleanup candidates</span><b>${fmtBytes(cleanBytes)}</b><span>${clean.length} entities</span></div>
         <div class="kpi ${reduced.length ? "click" : ""}" title=${retTip}
           @click=${() => reduced.length && this.dispatchEvent(new CustomEvent("goto-filter", { detail: { retention: reducedVals } }))}>

@@ -8,7 +8,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 class Journal:
@@ -53,6 +53,9 @@ class Journal:
                 conn.execute("ALTER TABLE size_history ADD COLUMN undo_bytes INTEGER")
             if "stats_bytes" not in cols:  # v4: space taken by long-term statistics tables
                 conn.execute("ALTER TABLE size_history ADD COLUMN stats_bytes INTEGER")
+            acols = {r["name"] for r in conn.execute("PRAGMA table_info(actions)")}
+            if "meta_json" not in acols:  # v5: extra per-action data, such as the post-disable health check
+                conn.execute("ALTER TABLE actions ADD COLUMN meta_json TEXT")
             conn.execute(
                 "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', ?)",
                 (str(SCHEMA_VERSION),),
@@ -110,13 +113,13 @@ class Journal:
             return int(cur.lastrowid)
 
     def update_action(self, action_id: int, **fields: Any) -> None:
-        allowed = {"status", "entities", "undone_ts", "error", "summary", "est_bytes"}
+        allowed = {"status", "entities", "undone_ts", "error", "summary", "est_bytes", "meta"}
         if not fields or set(fields) - allowed:
             raise ValueError(f"cannot update {sorted(set(fields) - allowed)}")
         cols, vals = [], []
         for key, value in fields.items():
-            cols.append("entities_json = ?" if key == "entities" else f"{key} = ?")
-            vals.append(json.dumps(value) if key == "entities" else value)
+            cols.append({"entities": "entities_json = ?", "meta": "meta_json = ?"}.get(key, f"{key} = ?"))
+            vals.append(json.dumps(value) if key in ("entities", "meta") else value)
         with self._lock, self._connect() as conn:
             conn.execute(f"UPDATE actions SET {', '.join(cols)} WHERE id = ?", (*vals, action_id))
 
@@ -124,6 +127,7 @@ class Journal:
     def _action(row: sqlite3.Row) -> dict[str, Any]:
         d = dict(row)
         d["entities"] = json.loads(d.pop("entities_json"))
+        d["meta"] = json.loads(d.pop("meta_json", None) or "{}")
         return d
 
     def get_action(self, action_id: int) -> dict[str, Any] | None:

@@ -22,6 +22,34 @@ def test_orphaned_and_disabled_are_remove_history():
     assert any("2 references" in r for r in d["reasons"])
 
 
+def test_disabled_and_referenced_with_nothing_stored_is_review_not_remove_history():
+    d = _c(status="Disabled", used_count=2, total_bytes=0)
+    assert d["suggestion"] == "Review" and any("no history left" in r for r in d["reasons"])
+    assert _c(status="Disabled", used_count=0, total_bytes=0)["suggestion"] == "Remove history"   # unused: unchanged
+    assert _c(status="Disabled", used_count=2, total_bytes=500)["suggestion"] == "Remove history"  # has history: unchanged
+
+
+def test_disabled_unused_things_you_made_are_remove_orphaned():
+    for kw, kind in [({"defined_in": "Helper"}, "helper"), ({"domain": "automation", "defined_in": "YAML"}, "automation"),
+                     ({"domain": "script"}, "script"), ({"domain": "scene"}, "scene")]:
+        r = _c(status="Disabled", used_count=0, **kw)
+        assert r["suggestion"] == "Remove orphaned" and kind in " ".join(r["reasons"]), kw
+    assert _c(status="Disabled", used_count=0, total_bytes=0, defined_in="Helper")["suggestion"] == "Remove orphaned"  # even with no history
+    e = _c(status="Disabled", used_count=0, total_bytes=0, integration="energy", defined_in="YAML")
+    assert e["suggestion"] == "Remove orphaned" and any("energy cost sensor" in r for r in e["reasons"])  # a leftover Energy cost sensor
+    assert _c(status="Disabled", used_count=0, defined_in="Integration")["suggestion"] == "Remove history"  # an integration's entity can't be deleted
+    assert _c(status="Disabled", used_count=1, defined_in="Helper", total_bytes=0)["suggestion"] == "Review"  # still named: not orphaned
+    assert _c(status="Active", used_count=0, defined_in="Helper")["suggestion"] != "Remove orphaned"          # only when switched off
+
+
+def test_an_automation_turned_off_and_unused_is_remove_orphaned():
+    r = _c(domain="automation", turned_off=True, used_count=0, age="1 to 6 months")
+    assert r["suggestion"] == "Remove orphaned" and r["confidence"] == "Medium"
+    assert _c(domain="automation", turned_off=True, used_count=0, age="This week")["confidence"] == "Low"   # turned off recently
+    assert _c(domain="automation", turned_off=True, used_count=1)["suggestion"] == "Keep"   # something still uses it
+    assert _c(domain="automation", turned_off=False, used_count=0)["suggestion"] != "Remove orphaned"   # running automations are left alone
+
+
 def test_active_rules():
     assert _c(used_count=3)["suggestion"] == "Keep"
     assert _c(used_count=3, age="6+ months")["suggestion"] == "Review"

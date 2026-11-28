@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Disabled but referenced**: a new Referenced In filter that lists disabled entities your config still uses, with a warning triangle when there are any.
+- **Remove orphaned**: a new suggestion for a switched-off helper, automation, script, scene or Energy cost sensor that nothing uses and that can be deleted.
+
 ## 1.1.0
 
 - PostgreSQL and MariaDB/MySQL recorders are supported, detected automatically. Table sizes, the database size and its history come from each database's own size functions (exact on PostgreSQL, the storage engine's statistics on MariaDB/MySQL), the per-entity sizes still add up to the table sizes, and the free-space figure is left out where the database can't give one (PostgreSQL). The retention predictions round ages down on every database. Details in docs/databases.md.

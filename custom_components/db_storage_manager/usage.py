@@ -317,3 +317,21 @@ def merge_locations(usage: Usage, entity_ids: list[str]) -> list[dict[str, Any]]
         m["count"] = len(m["entities"])
         res.append(m)
     return sorted(res, key=lambda m: (m["kind"], m["name"], m.get("link") or ""))
+
+
+def current_cost_sensors(cost_sensors: list[tuple[str, str]], regid_to_entity: dict[str, str],
+                         sources: set[str]) -> dict[str, str]:
+    """Which of the Energy dashboard's cost sensors belong to a source it still has.
+
+    The Energy integration names each cost sensor ``<source>_<grid|gas|water>_<cost|compensation>``, where
+    ``<source>`` is the source entity's registry id (or its entity id when it is not in the registry). A sensor
+    left over from a source you have since removed is not used by the dashboard, however it got there.
+    Returns {cost sensor entity id: the source entity id}.
+    """
+    out: dict[str, str] = {}
+    for entity_id, unique_id in cost_sensors:
+        prefix = str(unique_id or "").rsplit("_", 2)[0]
+        source = regid_to_entity.get(prefix, prefix)
+        if source in sources:
+            out[entity_id] = source
+    return out

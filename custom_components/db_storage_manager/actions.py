@@ -16,12 +16,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 from homeassistant.components.recorder import get_instance
+from homeassistant.components import persistent_notification
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from . import retention
+from . import health, retention
 from .const import DOMAIN
-from .queries import states_older_than
+from .queries import state_before, states_after, states_older_than
 from .recorder_ops import _read, _snapshot_dir, clear_statistics, make_batch_backup, wait_purged
 from .backup import BATCH_SUFFIX
 from .snapshot import read_snapshot
@@ -305,6 +306,68 @@ async def _drop_rule(hass: HomeAssistant, eid: str, rec: dict[str, Any]) -> None
         rec["steps"]["retention"] = {"old": old, "new": None}
         await retention.async_set_rule(hass, eid, None)
         rec["notes"].append(f"Removed its {old}-day retention rule.")
+
+
+def _state_of(hass: HomeAssistant, eid: str) -> str | None:
+    st = hass.states.get(eid)
+    return st.state if st is not None else None
+
+
+def _siblings(ent_reg: er.EntityRegistry, changed: list[str], batch: set[str]) -> list[str]:
+    """The enabled entities that share a config entry with something the action disabled."""
+    entries = {reg.config_entry_id for e in changed if (reg := ent_reg.async_get(e)) is not None and reg.config_entry_id}
+    return sorted({reg.entity_id for entry_id in entries for reg in er.async_entries_for_config_entry(ent_reg, entry_id)
+                   if reg.disabled_by is None and reg.entity_id not in batch})
+
+
+async def evaluate_health(hass: HomeAssistant, action_id: int | None = None) -> dict[str, Any] | None:
+    """On a scan: which neighbours of what a recent Disable turned off have been down ever since?
+
+    Read from the recorded history, so there is nothing to poll: an entity that dropped out and came back
+    is a blip and is ignored. The outcome is stored on the action and shown in the History tab.
+    Returns the outcome for ``action_id``, or {"too_soon": True} when it is too early to say.
+    """
+    journal = hass.data[DOMAIN]["journal"]
+    now = time.time()
+    if action_id is None:
+        found = await hass.async_add_executor_job(journal.list_actions, 200)
+        found = [a for a in found if a["ts"] >= now - health.LOOK_BACK_DAYS * 86400]
+    else:
+        one = await hass.async_add_executor_job(journal.get_action, action_id)
+        found = [one] if one else []
+    ent_reg = er.async_get(hass)
+    out = None
+    for a in found:
+        changed = [r["entity_id"] for r in a["entities"] if (r.get("steps", {}).get("disabled") or {}).get("changed")]
+        if (a["kind"] not in ("disable", "disable_and_clear") or a["status"] in ("undone", "running", "failed", "interrupted")
+                or not changed):
+            continue
+        siblings = _siblings(ent_reg, changed, {r["entity_id"] for r in a["entities"]})
+        if not siblings:
+            continue
+        if now - a["ts"] < health.MIN_DOWN:
+            out = {"too_soon": True} if a["id"] == action_id else out
+            continue
+        cut = a["ts"]
+        before, after = await _read(hass, lambda session: (state_before(session, siblings, cut), states_after(session, siblings, cut)))
+        broken = health.judge(siblings, before, after, {e: _state_of(hass, e) for e in siblings}, cut, now)
+        for b in broken:
+            reg, st = ent_reg.async_get(b["entity_id"]), hass.states.get(b["entity_id"])
+            b["name"] = (st.attributes.get("friendly_name") if st else None) or (reg.name or reg.original_name if reg else None) or b["entity_id"]
+        previous = (a.get("meta") or {}).get("health")
+        res = health.result(now, len(siblings), broken, previous)
+        meta = {**(a.get("meta") or {}), "health": res}
+        await hass.async_add_executor_job(lambda: journal.update_action(a["id"], meta=meta))
+        nid = f"{DOMAIN}_health_{a['id']}"
+        if broken:
+            if any(b["entity_id"] not in (previous or {}).get("notified", []) for b in broken):
+                persistent_notification.async_create(
+                    hass, health.message(a["id"], a["summary"], broken), title="DB Storage: check what you disabled", notification_id=nid)
+        else:
+            persistent_notification.async_dismiss(hass, nid)
+        if a["id"] == action_id:
+            out = res
+    return out
 
 
 async def run_action(hass: HomeAssistant, kind: str, entity_ids: list[str], states: bool,

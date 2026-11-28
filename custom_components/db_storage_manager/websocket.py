@@ -54,6 +54,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
         ws_preview_action,
         ws_apply_action,
         ws_undo_action,
+        ws_health_check,
         ws_action_status,
         ws_actions,
         ws_backup_usage,
@@ -287,6 +288,28 @@ def _enrich(hass: HomeAssistant, entities: dict[str, dict[str, Any]], now: float
     return items
 
 
+_NO_DATA = {"last_ts": None, "states_rows": 0, "stats_rows": 0, "short_rows": 0, "states_w": 0.0, "attrs_w": 0.0,
+            "states_bytes": 0.0, "attrs_bytes": 0.0, "stats_bytes": 0.0, "total_bytes": 0.0}
+
+
+def _is_off(hass: HomeAssistant, eid: str) -> bool:
+    """An automation that has been turned off (it is still enabled in the registry)."""
+    st = hass.states.get(eid) if eid.startswith("automation.") else None
+    return st is not None and st.state == "off"
+
+
+def _disabled_without_history(hass: HomeAssistant, items: list[dict[str, Any]], now: float) -> list[dict[str, Any]]:
+    """Disabled entities (and automations turned off) with no recorded history, so the database scan never listed them.
+
+    They record nothing and retention purges what they had, yet your config can still name them. They are
+    scanned for references like any other entity and kept only if something does (see _do_scan).
+    """
+    have = {i["entity_id"] for i in items}
+    ent_reg = er.async_get(hass)
+    return _enrich(hass, {reg.entity_id: dict(_NO_DATA) for reg in ent_reg.entities.values()
+                          if (reg.disabled_by is not None or _is_off(hass, reg.entity_id)) and reg.entity_id not in have}, now)
+
+
 # Helpers you create in the UI: storage-based domains, and config-entry helpers (template, threshold, ...).
 _HELPER_PLATFORMS = {"input_boolean", "input_number", "input_select", "input_text", "input_datetime", "input_button",
                      "counter", "timer", "schedule", "person", "zone", "tag"}
@@ -315,6 +338,7 @@ def _live_flags(hass: HomeAssistant, ent_reg: er.EntityRegistry, it: dict[str, A
     reg = ent_reg.async_get(eid)
     it["status"] = ("Disabled" if reg.disabled_by else "Active") if reg else ("Active" if live is not None else "Orphaned")
     it["unavailable"] = bool(live is not None and live.state == "unavailable")
+    it["turned_off"] = _is_off(hass, eid)
     it["provider_gone"] = bool(live is not None and live.attributes.get("restored"))
     if reg is not None:
         it["defined_in"] = _defined_in(hass, reg)
@@ -390,29 +414,38 @@ async def _do_scan(hass: HomeAssistant, progress: dict[str, Any], full: bool = T
     scan, est = await _read(hass, run)
     now = time.time()
     items = _enrich(hass, est["entities"], now)
+    extra = _disabled_without_history(hass, items, now)   # judged for references below; kept only if referenced
 
     _step(progress, "config", "running")
     t_usage = time.monotonic()
     ent_reg = er.async_get(hass)
     registry_ids = {
-        reg.id: eid for eid in (i["entity_id"] for i in items)
+        reg.id: eid for eid in (i["entity_id"] for i in items + extra)
         if (reg := ent_reg.async_get(eid)) is not None
     }
     unique_ids: dict[str, str] = {}
     slugs: dict[str, list[str]] = {}
-    for i in items:  # entities defined in YAML: no config entry behind them
+    for i in items + extra:  # entities defined in YAML: no config entry behind them
         eid = i["entity_id"]
         reg = ent_reg.async_get(eid)
         if i["status"] != "External" and (reg is None and hass.states.get(eid) is not None or reg is not None and not reg.config_entry_id):
             if reg is not None and reg.unique_id:
                 unique_ids[str(reg.unique_id)] = eid
             slugs.setdefault(eid.split(".", 1)[1], []).append(eid)
-    matcher = Matcher({i["entity_id"] for i in items}, registry_ids, unique_ids, slugs, slugify)
+    matcher = Matcher({i["entity_id"] for i in items + extra}, registry_ids, unique_ids, slugs, slugify)
     own = {e.entry_id for e in hass.config_entries.async_entries(DOMAIN)}
     usage = await collect_usage(hass, matcher, own)
-    for it in items:
+    for it in items + extra:
         it.update(usage.summary(it["entity_id"], it["domain"]))
         it.update(classify(it))
+    # Keep those something still names, and the ones you made yourself (a helper, automation, script or scene that is
+    # switched off and unused can be deleted). The rest would only be hundreds of empty rows.
+    for it in extra:
+        reg = ent_reg.async_get(it["entity_id"])
+        it["defined_in"] = _defined_in(hass, reg) if reg is not None else "YAML"
+        it["turned_off"] = _is_off(hass, it["entity_id"])
+        it.update(classify(it))
+    items += [it for it in extra if it["used_in"][0] != "Not referenced" or it["suggestion"] == "Remove orphaned"]
     usage_ms = round((time.monotonic() - t_usage) * 1000, 1)
     _step(progress, "config", "done")
 
@@ -430,6 +463,10 @@ async def _do_scan(hass: HomeAssistant, progress: dict[str, Any], full: bool = T
     except Exception:  # noqa: BLE001 - persisting is best effort
         pass
     _step(progress, "finish", "done")
+    try:  # a scan is when disabled entities' neighbours are looked at again; never let that fail a scan
+        await actions.evaluate_health(hass)
+    except Exception:  # noqa: BLE001
+        pass
     return cache
 
 
@@ -522,7 +559,8 @@ async def ws_entities(hass, connection, msg) -> None:
         it.update(classify(it))
     base, size_key, window = inv["items"], "total_bytes", None
     if msg["exclude_domains"]:
-        base = [i for i in base if i["domain"] not in msg["exclude_domains"]]
+        # Hiding automations never hides one that is switched off and unused: that is a clean-up candidate.
+        base = [i for i in base if i["domain"] not in msg["exclude_domains"] or i.get("suggestion") == "Remove orphaned"]
     if msg.get("window"):
         start, end = msg["window"]
         if end <= start:
@@ -729,6 +767,18 @@ async def ws_undo_action(hass, connection, msg) -> None:
         connection.send_error(msg["id"], "busy", "Another action is still running")
         return
     connection.send_result(msg["id"], {"started": True})
+
+
+@websocket_api.websocket_command({vol.Required("type"): "db_storage/health_check", vol.Required("action_id"): int})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_health_check(hass, connection, msg) -> None:
+    """Check now which neighbours of what this action disabled have been down ever since."""
+    res = await actions.evaluate_health(hass, msg["action_id"])
+    if res is None:
+        connection.send_error(msg["id"], "no_health_check", "This action has no health check")
+        return
+    connection.send_result(msg["id"], res)
 
 
 @websocket_api.websocket_command({vol.Required("type"): "db_storage/action_status"})
