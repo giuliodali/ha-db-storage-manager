@@ -7,14 +7,14 @@ The search box matches names and entity ids as you type. The filter column on th
 | Filter | Meaning |
 |---|---|
 | **Suggestion** | What the tool advises (see below) |
-| **Referenced In 🔗** | Where the entity is used: Automation, Script, Scene, Dashboard, Helper, Energy, YAML config, or **Not referenced** |
+| **Referenced In 🔗** | Where the entity is used: Automation, Script, Scene, Dashboard, Helper, Energy, YAML config, or **Not referenced**. **Disabled but referenced** (with a warning triangle when above zero) lists disabled entities that your config still names, so whatever uses them has stopped working. A reference from something that is itself switched off (a disabled helper, or an automation, script or scene that is disabled or turned off) does not count. Disabled entities with no history left are listed here too when something still names them (the scan otherwise only lists entities that have recorded data) |
 | **Integration**, **Device**, **Type** | Where it comes from and its domain |
 | **Defined in** | Integration, Helper, YAML, YAML (no unique ID), External statistics |
 | **Retention** | Default, or the days of a retention rule (for example "3 days") |
 | **Status** | Active, Disabled, Orphaned (history only), External |
 | **Last update** | This week, 1 to 6 months, 6+ months |
 
-"N more" at the bottom of a list expands it. Automations are hidden by default (they are rarely the problem); turn off **Hide automations** on the Settings tab or filter on Type: automation to see them.
+"N more" at the bottom of a list expands it. Automations are hidden by default (they are rarely the problem), except a switched-off, unused one, which is a clean-up candidate; turn off **Hide automations** on the Settings tab or filter on Type: automation to see them.
 
 ## Suggestions
 
@@ -23,6 +23,7 @@ Hover a badge for the confidence and reasons.
 | Suggestion | Meaning |
 |---|---|
 | **Remove history** | The entity is gone or disabled (or imported statistics have stopped updating) and nothing references it, so its history is leftover. |
+| **Remove orphaned** | A helper, automation, script, scene or Energy cost sensor that is switched off (disabled, or for an automation, turned off) and that nothing uses, so it can be deleted (Settings > Devices & services > Helpers, or the automation, script or scene editor). Its leftover history can be cleared afterwards. Integration-provided entities and devices are never suggested for this, since they can't simply be deleted. |
 | **Disable** | Unreferenced and silent or unavailable for a long time. Disabling stops it recording. |
 | **Remove from YAML** | Defined in YAML without a unique ID, so Home Assistant can't disable it. Remove its entry from your YAML to stop it recording. |
 | **Review** | Unreferenced but still updating, or referenced only dynamically. Look before acting. |

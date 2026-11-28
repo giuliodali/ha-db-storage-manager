@@ -8,7 +8,20 @@ from __future__ import annotations
 
 from typing import Any
 
-SUGGESTIONS = ("Remove history", "Disable", "Remove from YAML", "Review", "Keep")
+SUGGESTIONS = ("Remove history", "Remove orphaned", "Disable", "Remove from YAML", "Review", "Keep")
+
+# Things you made, rather than something an integration provides, so they can simply be deleted.
+REMOVABLE_DOMAINS = {"automation": "automation", "script": "script", "scene": "scene"}
+
+
+def removable_kind(item: dict[str, Any]) -> str | None:
+    """'helper', 'automation', 'script', 'scene' or 'energy cost sensor' when the entity is one you made yourself (or the Energy dashboard made), else None."""
+    if item.get("defined_in") == "Helper":
+        return "helper"
+    if item.get("integration") == "energy":
+        return "energy cost sensor"   # one the Energy dashboard made; deleting a leftover one is safe
+    return REMOVABLE_DOMAINS.get(item.get("domain"))
+
 
 
 def classify(item: dict[str, Any]) -> dict[str, Any]:
@@ -57,9 +70,22 @@ def _classify(item: dict[str, Any]) -> dict[str, Any]:
         reasons.append("Disabled, so it no longer records new data.")
         if used:
             reasons.append(f"Still named in {used} reference{'s' if used != 1 else ''} in your config.")
+        kind = removable_kind(item)
+        if kind and not used:
+            reasons.append(f"Nothing in your config uses this {kind}, and it is switched off, so it can be deleted. "
+                           "Any history it has left can be cleared afterwards.")
+            return {"suggestion": "Remove orphaned", "confidence": "Medium", "reasons": reasons}
+        if used and item.get("total_bytes") == 0:
+            reasons.append("There is no history left to remove. Whatever uses it is working with an entity that no longer exists: "
+                           "turn it back on, or take it out of those places.")
+            return {"suggestion": "Review", "confidence": "Medium", "reasons": reasons}
         return {"suggestion": "Remove history", "confidence": "Medium" if used else "High", "reasons": reasons}
 
     # Active entities
+    if item.get("turned_off") and not used:
+        reasons.append("This automation is turned off and nothing in your config uses it, so it can probably be deleted. "
+                       "If you switch it back on now and then (a seasonal one, say), keep it.")
+        return {"suggestion": "Remove orphaned", "confidence": "Low" if item.get("age") == "This week" else "Medium", "reasons": reasons}
     if dead:
         what = "Its integration no longer provides it" if gone else "It is unavailable"
         reasons.append(f"{what} and has not updated for {item.get('age')}.")

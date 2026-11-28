@@ -1,7 +1,9 @@
 import { LitElement, html, css, nothing } from "lit";
 import { fmtBytes, fmtAge, FACET_LABELS, STATUS_HELP, SUGGEST_HELP, fmtDay, entityIcon, COLOR_STATS } from "./util.js";
 
-const SUG_CLASS = { "Remove history": "rm", Disable: "dis", "Remove from YAML": "dis", Review: "rev", Keep: "keep" };
+const SUG_CLASS = { "Remove history": "rm", "Remove orphaned": "rm", Disable: "dis", "Remove from YAML": "dis", Review: "rev", Keep: "keep" };
+const DISABLED_REF = "Disabled but referenced";
+const DISABLED_REF_HELP = "Disabled in Home Assistant, but an automation, script, dashboard, helper or YAML file still names it. Whatever uses it is working with an entity that no longer exists.";
 const SORTS = { size: "Size", name: "Name", age: "Last update" };
 
 export class DbEntities extends LitElement {
@@ -48,6 +50,8 @@ export class DbEntities extends LitElement {
     .sugg.rm{border-color:var(--error-color,#db4437);color:var(--error-color,#db4437)} .sugg.dis{border-color:var(--warning-color,orange);color:var(--warning-color,orange)} .sugg.keep{border-color:var(--success-color,green);color:var(--success-color,green)}
     .cnt{font-size:11px;border:1px solid var(--divider-color);border-radius:8px;padding:0 6px;color:var(--secondary-text-color);cursor:help} .tabicon{--mdc-icon-size:18px;vertical-align:middle;margin-right:4px;color:var(--secondary-text-color)}
     .ico{flex:0 0 auto;display:inline-flex;color:var(--secondary-text-color);--mdc-icon-size:20px} .ico.off{color:var(--warning-color,#ff9800)}
+    .warnrow{display:flex;align-items:center;gap:5px;min-width:0;line-height:1.2} .warnrow .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .warnicon{flex:0 0 16px;display:block;width:16px;height:16px;color:var(--warning-color,#ff9800)}
     .fr.zero{opacity:.45} .fr.more{color:var(--primary-color)} .fr.more:hover{background:color-mix(in srgb,var(--primary-color) 12%,transparent)}
     .detail{border:1px solid var(--primary-color);border-radius:10px;padding:8px 12px;margin:10px 0;background:var(--card-background-color)} .detail ul{margin:6px 0;padding-left:18px}
     .kind{font-size:11px;border:1px solid var(--divider-color);border-radius:8px;padding:0 6px;margin-right:4px} .warn{background:var(--secondary-background-color);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:12px}
@@ -95,7 +99,9 @@ export class DbEntities extends LitElement {
         if (r.other) return html`<div class="fr more" title="Show all of them" @click=${() => this._emit("expand", { facet: name, on: true })}><i style="width:${Math.max(1, (r.bytes / max) * 100)}%"></i><span></span><span class="lbl">${r.value} ▾</span><span class="val">${fmtBytes(r.bytes)}<small>${r.count}</small></span></div>`;
         return html`<label class="fr ${r.count === 0 && !on ? "zero" : ""}"><i style="width:${Math.max(1, (r.bytes / max) * 100)}%"></i>
           ${r.other ? html`<span></span>` : html`<input type="checkbox" .checked=${on} @change=${(e) => this._toggleFilter(name, r.value, e.target.checked)}>`}
-          <span class="lbl" title=${r.value}>${r.value}</span><span class="val">${fmtBytes(r.bytes)}<small>${r.count}</small></span></label>`;
+          ${name === "used_in" && r.value === DISABLED_REF
+            ? html`<span class="lbl warnrow" title=${r.count ? DISABLED_REF_HELP : "None found. " + DISABLED_REF_HELP}>${r.count ? html`<svg class="warnicon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M13 14H11V10H13M13 18H11V16H13M1 21H23L12 2L1 21Z"/></svg>` : nothing}<span class="txt">${r.value}</span></span>`
+            : html`<span class="lbl" title=${r.value}>${r.value}</span>`}<span class="val">${fmtBytes(r.bytes)}<small>${r.count}</small></span></label>`;
       })}
       ${(this.expand || []).includes(name) && rows.length > 8 ? html`<div class="fr more" @click=${() => this._emit("expand", { facet: name, on: false })}><span></span><span class="lbl">Show fewer ▴</span><span></span></div>` : nothing}
       ${name === "used_in" ? html`<div class="muted">An entity can appear under several kinds.</div>` : nothing}</div>`;

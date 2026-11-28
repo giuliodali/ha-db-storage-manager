@@ -12,7 +12,7 @@ from homeassistant.helpers import entity_registry as er
 
 from .const import LEGACY_RETENTION_AUTOMATION_ID
 from .usage import (
-    Matcher, Usage, dynamic_in, lovelace_label, scan_json, scan_lines, split_yaml_items, view_meta,
+    Matcher, Usage, current_cost_sensors, dynamic_in, lovelace_label, scan_json, scan_lines, split_yaml_items, view_meta,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ SPECIAL_YAML = {
 }
 
 
-def scan_yaml_dir(config_dir: str, matcher: Matcher, usage: Usage) -> None:
+def scan_yaml_dir(config_dir: str, matcher: Matcher, usage: Usage, skip_ids: frozenset[str] = frozenset()) -> None:
     """Blocking: walks the config folder. Run in an executor."""
     seen = 0
     for root, dirs, files in os.walk(config_dir):
@@ -58,6 +58,8 @@ def scan_yaml_dir(config_dir: str, matcher: Matcher, usage: Usage) -> None:
             if special:
                 kind, style, link_fmt = special
                 for item in split_yaml_items(lines, style):
+                    if item["id"] in skip_ids:
+                        continue  # disabled in the entity registry, so it uses nothing
                     if kind == "Automation" and item["id"] == LEGACY_RETENTION_AUTOMATION_ID:
                         continue  # the nightly automation older versions wrote names every entity with a rule, so it is not a real reference
                     chunk = lines[item["start"]:item["end"]]
@@ -92,9 +94,34 @@ async def _scan_dashboards(hass: HomeAssistant, matcher: Matcher, usage: Usage) 
         usage.add_dynamic("Dashboard", str(name), link, dyn)
 
 
-def _scan_config_entries(hass: HomeAssistant, matcher: Matcher, usage: Usage, own_entry_ids: set[str]) -> None:
+def disabled_sources(hass: HomeAssistant) -> tuple[set[str], frozenset[str]]:
+    """Things that are switched off, so what they reference does not count as used.
+
+    Returns (config entry ids, automation/script/scene ids). An automation counts as off when it is disabled or turned off. A config entry is off when it is disabled
+    itself or when every entity it owns is disabled (a template helper whose sensor you disabled, say).
+    """
+    reg = er.async_get(hass)
+    by_entry: dict[str, list[er.RegistryEntry]] = {}
+    for ent in reg.entities.values():
+        if ent.config_entry_id:
+            by_entry.setdefault(ent.config_entry_id, []).append(ent)
+    entries = {e.entry_id for e in hass.config_entries.async_entries()
+               if e.disabled_by is not None or (by_entry.get(e.entry_id) and all(x.disabled_by is not None for x in by_entry[e.entry_id]))}
+    def off(ent: er.RegistryEntry) -> bool:
+        if ent.disabled_by is not None:
+            return True
+        st = hass.states.get(ent.entity_id) if ent.platform == "automation" else None
+        return st is not None and st.state == "off"   # an automation you turned off in the UI is still enabled in the registry
+
+    yaml_ids = frozenset(str(ent.unique_id) for ent in reg.entities.values()
+                         if ent.platform in ("automation", "script", "scene") and ent.unique_id and off(ent))
+    return entries, yaml_ids
+
+
+def _scan_config_entries(hass: HomeAssistant, matcher: Matcher, usage: Usage, own_entry_ids: set[str],
+                         skip_entries: set[str] = frozenset()) -> None:
     for entry in hass.config_entries.async_entries():
-        if entry.entry_id in own_entry_ids:
+        if entry.entry_id in own_entry_ids or entry.entry_id in skip_entries:
             continue
         # Only the key paths of matches are recorded, never values, so secrets stay out.
         payload = {"data": dict(entry.data), "options": dict(entry.options)}
@@ -110,8 +137,8 @@ async def _scan_energy(hass: HomeAssistant, matcher: Matcher, usage: Usage) -> N
     """The Energy dashboard's configuration, through the energy integration's own manager.
 
     Besides the entities its configuration names, every statistic it names (including imported ones,
-    which are not entity ids) and the cost sensors the energy integration creates for it count as used
-    by the Energy dashboard. The Settings page keeps exactly this set under its own statistics limit.
+    which are not entity ids) and the cost sensors the energy integration still creates for it count as used
+    by the Energy dashboard. A cost sensor left over from a source that was removed does not. The Settings page keeps exactly this set under its own statistics limit.
     """
     if "energy" not in hass.config.components:
         return
@@ -127,9 +154,11 @@ async def _scan_energy(hass: HomeAssistant, matcher: Matcher, usage: Usage) -> N
     for sid in stat_ids_in(data or {}):
         if sid not in hits:  # imported statistics (source:id) are not entity ids, so the text match misses them
             hits[sid] = ["statistic"]
-    for ent in er.async_get(hass).entities.values():
-        if ent.platform == "energy":
-            hits.setdefault(ent.entity_id, []).append("cost sensor created by the Energy dashboard")
+    reg = er.async_get(hass)
+    costs = current_cost_sensors([(e.entity_id, e.unique_id) for e in reg.entities.values() if e.platform == "energy"],
+                                 {e.id: e.entity_id for e in reg.entities.values()}, set(hits) | set(stat_ids_in(data or {})))
+    for cost_id, source in costs.items():  # only those whose source is still in the Energy configuration
+        hits.setdefault(cost_id, []).append(f"cost sensor for {source}")
     if hits or dyn:
         usage.add("Energy dashboard", "Energy configuration", "/config/energy", hits)
         usage.add_dynamic("Energy dashboard", "Energy configuration", "/config/energy", dyn)
@@ -137,8 +166,9 @@ async def _scan_energy(hass: HomeAssistant, matcher: Matcher, usage: Usage) -> N
 
 async def collect_usage(hass: HomeAssistant, matcher: Matcher, own_entry_ids: set[str]) -> Usage:
     usage = Usage()
-    await hass.async_add_executor_job(scan_yaml_dir, hass.config.config_dir, matcher, usage)
+    skip_entries, skip_yaml = disabled_sources(hass)
+    await hass.async_add_executor_job(scan_yaml_dir, hass.config.config_dir, matcher, usage, skip_yaml)
     await _scan_dashboards(hass, matcher, usage)
-    _scan_config_entries(hass, matcher, usage, own_entry_ids)
+    _scan_config_entries(hass, matcher, usage, own_entry_ids, skip_entries)
     await _scan_energy(hass, matcher, usage)
     return usage

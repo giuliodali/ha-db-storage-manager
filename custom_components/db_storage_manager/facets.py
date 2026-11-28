@@ -6,7 +6,13 @@ from typing import Any
 
 FACETS = ("suggestion", "used_in", "integration", "device", "domain", "defined_in", "retention", "status", "age")
 AGE_ORDER = ("This week", "1 to 6 months", "6+ months", "No data")
-SUGGESTION_ORDER = ("Remove history", "Disable", "Remove from YAML", "Review", "Keep")
+SUGGESTION_ORDER = ("Remove history", "Remove orphaned", "Disable", "Remove from YAML", "Review", "Keep")
+# Not a place an entity is used: a derived value of the Referenced In facet for entities that are
+# disabled while something in the config still names them (those automations, templates and cards
+# quietly stop working). Computed when facets are built, so it follows a status change at once.
+NOT_REFERENCED = "Not referenced"
+DISABLED_REFERENCED = "Disabled but referenced"
+PINNED_USED_IN = (NOT_REFERENCED, DISABLED_REFERENCED)
 WEEK = 7 * 86400
 SIX_MONTHS = 183 * 86400
 
@@ -22,15 +28,20 @@ def age_bucket(last_ts: float | None, now: float) -> str:
     return "6+ months"
 
 
+def facet_values(item: dict[str, Any], facet: str) -> list[str]:
+    """The values an item has under a facet (a list for multi-valued facets such as Referenced In)."""
+    raw = item.get(facet)
+    vals = list(raw) if isinstance(raw, list) else [raw or "Unknown"]
+    if facet == "used_in" and item.get("status") == "Disabled" and vals and vals[0] != NOT_REFERENCED:
+        vals.append(DISABLED_REFERENCED)
+    return vals
+
+
 def _matches(item: dict[str, Any], filters: dict[str, list[str]], skip: str | None) -> bool:
     for facet, values in filters.items():
         if facet == skip or not values:
             continue
-        have = item.get(facet)
-        if isinstance(have, list):
-            if not set(have) & set(values):
-                return False
-        elif have not in values:
+        if not set(facet_values(item, facet)) & set(values):
             return False
     return True
 
@@ -50,29 +61,30 @@ def build_facets(
     filters = filters or {}
     out: dict[str, list[dict[str, Any]]] = {}
 
-    def values(it: dict[str, Any], facet: str) -> list[str]:
-        raw = it.get(facet)
-        return list(raw) if isinstance(raw, list) else [raw or "Unknown"]
-
     for facet in FACETS:
         # Rank values by their size across *all* items so the list never reshuffles when a
         # box is ticked; only the numbers shown next to each value follow the other filters.
         overall: dict[str, float] = {}
         for it in items:
-            for v in values(it, facet):
+            for v in facet_values(it, facet):
                 overall[v] = overall.get(v, 0.0) + it.get(size_key, 0)
+        if facet == "used_in":
+            for v in PINNED_USED_IN:  # always listed, even at zero, so the warning is there to find
+                overall.setdefault(v, 0.0)
         if facet == "suggestion":
             order = sorted(overall, key=lambda v: SUGGESTION_ORDER.index(v) if v in SUGGESTION_ORDER else 99)
         elif facet == "age":
             order = sorted(overall, key=lambda v: AGE_ORDER.index(v) if v in AGE_ORDER else 99)
         else:
             order = sorted(overall, key=lambda v: overall[v], reverse=True)
+        if facet == "used_in":
+            order = [v for v in PINNED_USED_IN if v in order] + [v for v in order if v not in PINNED_USED_IN]
 
         totals: dict[str, dict[str, float]] = {v: {"bytes": 0.0, "count": 0} for v in order}
         for it in items:
             if not _matches(it, filters, facet):
                 continue
-            for v in values(it, facet):
+            for v in facet_values(it, facet):
                 totals[v]["bytes"] += it.get(size_key, 0)
                 totals[v]["count"] += 1
 
@@ -83,7 +95,8 @@ def build_facets(
             out[facet] = [row(v) for v in order]
             continue
         ticked = set(filters.get(facet, []))
-        head = order if expand and facet in expand else order[:top] + [v for v in order[top:] if v in ticked]
+        pinned = set(PINNED_USED_IN) if facet == "used_in" else set()
+        head = order if expand and facet in expand else order[:top] + [v for v in order[top:] if v in ticked or v in pinned]
         rest = [v for v in order if v not in head]
         rows = [row(v) for v in head]
         if rest:

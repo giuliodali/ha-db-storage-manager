@@ -361,3 +361,38 @@ def states_older_than(session, entity_ids: list[str], cutoff_ts: float) -> dict[
         f"SELECT m.entity_id AS e, COUNT(*) AS n FROM states s JOIN states_meta m ON m.metadata_id = s.metadata_id "  # noqa: S608
         f"WHERE m.entity_id IN ({marks}) AND s.last_updated_ts < :cut GROUP BY m.entity_id"), params)
     return {r.e: int(r.n) for r in rows}
+
+
+def _in(prefix: str, ids: list[str]) -> tuple[str, dict[str, str]]:
+    return ",".join(f":{prefix}{n}" for n in range(len(ids))), {f"{prefix}{n}": e for n, e in enumerate(ids)}
+
+
+def state_before(session, entity_ids: list[str], cut_ts: float) -> dict[str, str | None]:
+    """The last recorded state of each entity before a time (None when nothing was recorded then)."""
+    out: dict[str, str | None] = {}
+    for i in range(0, len(entity_ids), 400):
+        marks, params = _in("e", entity_ids[i:i + 400])
+        rows = session.execute(text(
+            "SELECT m.entity_id AS e, s.state AS st FROM states s "  # noqa: S608
+            "JOIN states_meta m ON m.metadata_id = s.metadata_id "
+            "JOIN (SELECT s2.metadata_id AS mid, MAX(s2.last_updated_ts) AS mx FROM states s2 "
+            "      JOIN states_meta m2 ON m2.metadata_id = s2.metadata_id "
+            f"      WHERE m2.entity_id IN ({marks}) AND s2.last_updated_ts < :cut GROUP BY s2.metadata_id) t "
+            "ON t.mid = s.metadata_id AND t.mx = s.last_updated_ts"), params | {"cut": cut_ts})
+        out.update({r.e: r.st for r in rows})
+    return out
+
+
+def states_after(session, entity_ids: list[str], cut_ts: float) -> dict[str, tuple[int, float | None]]:
+    """Per entity since a time: (rows with a working state, time of the first unavailable/unknown row)."""
+    out: dict[str, tuple[int, float | None]] = {}
+    for i in range(0, len(entity_ids), 400):
+        marks, params = _in("e", entity_ids[i:i + 400])
+        rows = session.execute(text(
+            "SELECT m.entity_id AS e, "  # noqa: S608
+            "SUM(CASE WHEN s.state IN ('unavailable', 'unknown') THEN 0 ELSE 1 END) AS good, "
+            "MIN(CASE WHEN s.state IN ('unavailable', 'unknown') THEN s.last_updated_ts END) AS first_bad "
+            "FROM states s JOIN states_meta m ON m.metadata_id = s.metadata_id "
+            f"WHERE m.entity_id IN ({marks}) AND s.last_updated_ts >= :cut GROUP BY m.entity_id"), params | {"cut": cut_ts})
+        out.update({r.e: (int(r.good or 0), float(r.first_bad) if r.first_bad is not None else None) for r in rows})
+    return out
